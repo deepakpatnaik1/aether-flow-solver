@@ -72,7 +72,7 @@ const ChatInterface = () => {
 
       // Try different possible URL patterns for Supabase edge functions
       const possibleUrls = [
-        'https://f29e4c08-30c0-496d-946c-bdd3be783b28.supabase.co/functions/v1/chat-stream',
+        'https://vzedghqnndqxvelmwwpr.supabase.co/functions/v1/chat-stream',
         '/functions/v1/chat-stream',
         `${window.location.origin}/functions/v1/chat-stream`
       ];

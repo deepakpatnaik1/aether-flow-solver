@@ -214,7 +214,7 @@ const ChatInterface = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="model-selector">
                     <ChevronDown className="h-3 w-3 mr-1" />
-                    {selectedPersona ? personas.find(p => p.id === selectedPersona)?.name : 'Persona'}
+                    {selectedPersona ? personas.find(p => p.id === selectedPersona)?.name : ''}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-background border">

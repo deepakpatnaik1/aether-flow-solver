@@ -232,7 +232,12 @@ const ChatInterface = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="model-selector">
                     <ChevronDown className="h-3 w-3 mr-1" />
-                    {selectedPersona ? personas.find(p => p.id === selectedPersona)?.name : 'Persona'}
+                    {(() => {
+                      console.log('Dropdown render - selectedPersona:', selectedPersona);
+                      const foundPersona = personas.find(p => p.id === selectedPersona);
+                      console.log('Found persona:', foundPersona);
+                      return selectedPersona && foundPersona ? foundPersona.name : 'Persona';
+                    })()}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-background border">

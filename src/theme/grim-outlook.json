@@ -1,0 +1,270 @@
+{
+  "_description": "Grim Outlook Theme - Surgically transplanted from rainy-night.json with verified styling elements",
+  "_version": "1.0.0",
+  "_extractedFrom": "rainy-night-surgical-transplant", 
+  "name": "Grim Outlook",
+  
+  "inputBar": {
+    "_comment": "Main input container visual styling - transplanted from rainy-night",
+    "background": {
+      "_purpose": "Input bar transparency and glass blur effect",
+      "color": "rgba(0, 0, 0, 0.85)",
+      "_colorNote": "Controls input bar transparency. Change 0.85 to 0.9 = less see-through, 0.7 = more see-through. Safe range: 0.1-1.0",
+      "backdropFilter": "blur(20px)",
+      "_blurNote": "Glass blur effect behind input bar. Change 20px to 30px = more blur, 10px = less blur. Range: 5px-50px"
+    },
+    "border": {
+      "_purpose": "Input bar border styling with gradient glow",
+      "width": "2px",
+      "style": "solid", 
+      "gradientTop": "rgba(255, 255, 255, 0.3)",
+      "gradientBottom": "rgba(255, 255, 255, 0.1)",
+      "radius": "9px",
+      "_borderNote": "Gradient creates subtle glowing border effect. Change 0.3 to 0.5 = brighter glow"
+    },
+    "shadow": {
+      "_purpose": "Input bar depth and lighting effects",
+      "outer": "0 4px 12px rgba(0, 0, 0, 0.4)",
+      "inner": "inset 0 -2px 8px rgba(255, 255, 255, 0.08)",
+      "_shadowNote": "Outer shadow for depth, inner shadow for subtle bottom highlight. Change 0.4 to 0.6 = darker shadow"
+    }
+  },
+  
+  "filePreviewZone": {
+    "_comment": "File attachment preview area styling - transplanted from rainy-night",
+    "background": "rgba(255, 255, 255, 0.1)",
+    "_backgroundNote": "Subtle highlight to distinguish file area. Change 0.1 to 0.15 = more prominent file zone",
+    "border": {
+      "color": "rgba(255, 255, 255, 0.2)",
+      "radius": "6px"
+    },
+    "spacing": {
+      "padding": "8px",
+      "itemGap": "8px",
+      "marginBottom": "8px"
+    },
+    "filePreview": {
+      "_purpose": "Individual file preview card styling", 
+      "background": "rgba(0, 0, 0, 0.3)",
+      "borderRadius": "6px",
+      "padding": "8px",
+      "minWidth": "120px",
+      "maxWidth": "200px",
+      "_fileNote": "Dark background makes file previews stand out. Change 0.3 to 0.4 = darker file cards"
+    },
+    "image": {
+      "borderRadius": "4px",
+      "maxHeight": "60px",
+      "objectFit": "cover"
+    },
+    "fileIcon": {
+      "height": "40px",
+      "background": "rgba(255, 255, 255, 0.1)",
+      "borderRadius": "4px",
+      "color": "rgba(255, 255, 255, 0.7)",
+      "fontSize": "18px"
+    },
+    "fileName": {
+      "marginTop": "4px",
+      "fontSize": "12px",
+      "color": "rgba(223, 208, 184, 0.8)"
+    },
+    "removeButton": {
+      "_purpose": "File removal button styling",
+      "size": "20px",
+      "position": {
+        "top": "-6px",
+        "right": "-6px"
+      },
+      "background": "rgba(255, 0, 0, 0.8)",
+      "backgroundHover": "rgba(255, 0, 0, 1)",
+      "_removeNote": "Red X button. Change 0.8 to 0.6 = more transparent, 1.0 = always solid red"
+    }
+  },
+  
+  "textInput": {
+    "_comment": "Text input area styling - transplanted from rainy-night",
+    "typography": {
+      "color": "#DFD0B8",
+      "_textColorNote": "Warm off-white text color. Change #DFD0B8 to #FFFFFF = pure white, #E0C9A6 = warmer tone",
+      "placeholderColor": "rgba(223, 208, 184, 0.6)",
+      "_placeholderNote": "Placeholder text transparency. Change 0.6 to 0.8 = more visible placeholder",
+      "selectedColor": "rgba(223, 208, 184, 1)",
+      "_selectedNote": "Full opacity for selected dropdown items"
+    }
+  },
+  
+  "controlsRow": {
+    "_comment": "Bottom controls row styling - transplanted from rainy-night",
+    "plusButton": {
+      "_purpose": "File attachment button styling",
+      "icon": {
+        "color": "rgba(223, 208, 184, 0.7)",
+        "_iconNote": "Plus icon color. Change 0.7 to 1.0 = fully visible icon"
+      },
+      "backgroundHover": "rgba(255, 255, 255, 0.1)",
+      "_hoverNote": "Hover highlight. Change 0.1 to 0.2 = brighter hover effect"
+    },
+    "dropdownTrigger": {
+      "_purpose": "Model/persona/theme picker styling",
+      "color": "rgba(223, 208, 184, 0.7)",
+      "backgroundHover": "rgba(255, 255, 255, 0.1)",
+      "chevron": {
+        "color": "rgba(223, 208, 184, 0.5)",
+        "_chevronNote": "Arrow color. Change 0.5 to 0.8 = more visible arrows"
+      }
+    },
+    "statusIndicator": {
+      "_purpose": "Green connection status dot",
+      "color": "#00ff00",
+      "shadow": "0 0 4px #00ff00, 0 0 8px rgba(0, 255, 0, 0.5)",
+      "_statusNote": "Bright green with glow. Change #00ff00 to #22ff22 = softer green"
+    }
+  },
+  
+  "dropdown": {
+    "_comment": "Dropdown menu styling - transplanted from rainy-night",
+    "menu": {
+      "_purpose": "Dropdown container styling",
+      "background": "rgba(0, 0, 0, 0.9)",
+      "backdropFilter": "blur(20px)",
+      "border": "1px solid rgba(255, 255, 255, 0.2)",
+      "borderRadius": "8px",
+      "shadow": "0 8px 32px rgba(0, 0, 0, 0.4)",
+      "_menuNote": "Darker than input bar for hierarchy. Change 0.9 to 0.95 = less transparent dropdown"
+    },
+    "item": {
+      "_purpose": "Individual dropdown option styling",
+      "color": "rgba(223, 208, 184, 0.8)",
+      "backgroundHover": "rgba(255, 255, 255, 0.1)",
+      "backgroundSelected": "rgba(255, 255, 255, 0.15)",
+      "colorSelected": "rgba(223, 208, 184, 1)",
+      "_itemNote": "Text becomes fully opaque when selected. Change 0.15 to 0.2 = brighter selection"
+    },
+    "sectionHeader": {
+      "_purpose": "Category headers in dropdowns",
+      "color": "rgba(255, 255, 255, 0.9)",
+      "borderBottom": "1px solid rgba(255, 255, 255, 0.1)",
+      "_headerNote": "Section headers are brighter than items. Change 0.9 to 1.0 = pure white headers"
+    }
+  },
+  
+  "stencils": {
+    "_comment": "Horizontal lines extending from input bar - transplanted from rainy-night",
+    "_purpose": "Visual extension lines that frame the input bar",
+    "gradient": {
+      "left": "linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.5))",
+      "right": "linear-gradient(to left, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.5))",
+      "_gradientNote": "Fades from screen edges toward input bar. Change 0.5 to 0.7 = brighter connection to input bar"
+    }
+  },
+  
+  "globalBody": {
+    "_comment": "Overall page background styling - transplanted from rainy-night",
+    "background": "#222831",
+    "color": "#e0e0e0",
+    "transition": "all 0.3s ease",
+    "_bodyNote": "Dark page background. Change #222831 to #1a1a1a = darker, #2a3440 = lighter"
+  },
+  
+  "scrollback": {
+    "_comment": "MessageScrollback component styling - transplanted from rainy-night",
+    "layout": {
+      "_purpose": "Spacing and dimensions for scrollback layout",
+      "container": {
+        "height": "calc(100vh - 114px)",
+        "_heightNote": "Total height minus input bar and gap",
+        "defaultWidth": "650px",
+        "_defaultWidthNote": "Width on mobile/small screens",
+        "largeWidth": "800px",
+        "_largeWidthNote": "Width on desktop screens",
+        "maxWidth": "calc(100vw - 40px)",
+        "_maxWidthNote": "Maximum width with edge padding",
+        "breakpoint": "705px",
+        "_breakpointNote": "Viewport width where layout switches to desktop"
+      },
+      "messages": {
+        "paddingTop": "20px",
+        "paddingBottom": "20px",
+        "paddingRight": "16px",
+        "_paddingNote": "Message area internal spacing"
+      },
+      "message": {
+        "marginBottom": "32px",
+        "_messageSpacingNote": "Vertical gap between messages",
+        "paddingRight": "3px",
+        "_messagePaddingNote": "Right padding for border alignment"
+      },
+      "messageHeader": {
+        "marginBottom": "10px",
+        "_headerSpacingNote": "Space between role label and message content"
+      },
+      "messageContent": {
+        "marginLeft": "19px",
+        "_contentIndentNote": "Left indent for message text"
+      },
+      "roleLabel": {
+        "padding": "2px 8px",
+        "_labelPaddingNote": "Internal padding of role label badges"
+      },
+      "paragraph": {
+        "marginBottom": "12px",
+        "_paragraphSpacingNote": "Space between paragraphs in messages"
+      },
+      "bullet": {
+        "paddingLeft": "8px",
+        "_bulletIndentNote": "Left indent for bullet items",
+        "marginRight": "8px",
+        "_bulletSpacingNote": "Space between bullet and text"
+      }
+    },
+    "typography": {
+      "_purpose": "Text styling for scrollback",
+      "fontFamily": "'Lexend', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif",
+      "_fontFamilyNote": "Using Lexend for enhanced readability, matches input bar",
+      "fontSize": "13px",
+      "_fontSizeNote": "Base font size, matches input bar for consistency",
+      "lineHeight": "1.5",
+      "_lineHeightNote": "Line spacing multiplier for readability"
+    },
+    "message": {
+      "_purpose": "Message content styling",
+      "textColor": "#DFD0B8",
+      "_textColorNote": "Warm off-white for message body text. Matches input bar text color",
+      "boldWeight": "600",
+      "_boldWeightNote": "Font weight for bold text emphasis"
+    },
+    "roleLabel": {
+      "_purpose": "Role label badge styling for user and assistant",
+      "fontFamily": "'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif",
+      "fontSize": "11px",
+      "_fontSizeNote": "Smaller size for role labels to distinguish from content",
+      "fontWeight": "600",
+      "_fontWeightNote": "Semi-bold for role label emphasis",
+      "textTransform": "uppercase",
+      "_textTransformNote": "Uppercase for role labels",
+      "letterSpacing": "0.5px",
+      "_letterSpacingNote": "Slight letter spacing for uppercase text",
+      "borderRadius": "4px",
+      "_borderRadiusNote": "Corner rounding for role label badges",
+      "user": {
+        "_purpose": "Boss/User role label styling",
+        "textColor": "#ef4444",
+        "_userTextNote": "Red color for user identification",
+        "background": "rgba(239, 68, 68, 0.2)",
+        "_userBgNote": "Semi-transparent red background",
+        "borderColor": "rgba(239, 68, 68, 0.3)",
+        "_userBorderNote": "Slightly more opaque red border for definition"
+      },
+      "assistant": {
+        "_purpose": "Samara/Assistant role label styling",
+        "textColor": "#f97316",
+        "_assistantTextNote": "Orange color for assistant identification",
+        "background": "rgba(249, 115, 22, 0.2)",
+        "_assistantBgNote": "Semi-transparent orange background",
+        "borderColor": "rgba(249, 115, 22, 0.3)",
+        "_assistantBorderNote": "Slightly more opaque orange border for definition"
+      }
+    }
+  }
+}

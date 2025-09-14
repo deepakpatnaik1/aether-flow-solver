@@ -21,8 +21,11 @@ const ChatInterface = () => {
   const [selectedModel, setSelectedModel] = useState('gpt-5-2025-08-07');
   const [selectedPersona, setSelectedPersona] = useState<string | null>(() => {
     try {
-      return localStorage.getItem('selectedPersona');
-    } catch {
+      const stored = localStorage.getItem('selectedPersona');
+      console.log('Loading persona from localStorage:', stored);
+      return stored;
+    } catch (error) {
+      console.error('Failed to load persona from localStorage:', error);
       return null;
     }
   });
@@ -152,8 +155,10 @@ const ChatInterface = () => {
   useEffect(() => {
     try {
       if (selectedPersona) {
+        console.log('Saving persona to localStorage:', selectedPersona);
         localStorage.setItem('selectedPersona', selectedPersona);
       } else {
+        console.log('Removing persona from localStorage');
         localStorage.removeItem('selectedPersona');
       }
     } catch (error) {
@@ -233,7 +238,7 @@ const ChatInterface = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="model-selector">
                     <ChevronDown className="h-3 w-3 mr-1" />
-                    {selectedPersona ? personas.find(p => p.id === selectedPersona)?.name : ''}
+                    {selectedPersona ? personas.find(p => p.id === selectedPersona)?.name : 'Persona'}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-background border">

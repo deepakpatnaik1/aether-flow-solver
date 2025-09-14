@@ -187,7 +187,9 @@
   }
 
   .message-header {
-    @apply text-lg font-semibold text-foreground mt-2 mb-1;
+    @apply text-lg font-semibold text-foreground;
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.25rem !important;
   }
 
   .message-text {

@@ -218,9 +218,6 @@ const ChatInterface = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-background border">
-                  <DropdownMenuItem onClick={() => setSelectedPersona(null)}>
-                    None
-                  </DropdownMenuItem>
                   {personas.map((persona) => (
                     <DropdownMenuItem
                       key={persona.id}

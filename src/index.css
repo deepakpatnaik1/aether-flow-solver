@@ -169,7 +169,7 @@
   }
 
   .message-content {
-    @apply text-foreground leading-relaxed space-y-3;
+    @apply text-foreground leading-normal space-y-1;
   }
 
   .message-header {
@@ -177,14 +177,14 @@
   }
 
   .message-text {
-    @apply text-foreground/90;
+    @apply text-foreground/90 leading-snug;
   }
 
   .message-bullet {
-    @apply text-foreground/90 ml-4;
+    @apply text-foreground/90 ml-4 leading-snug;
   }
 
   .message-sub-bullet {
-    @apply text-foreground/80 ml-8 text-sm;
+    @apply text-foreground/80 ml-8 text-sm leading-snug;
   }
 }

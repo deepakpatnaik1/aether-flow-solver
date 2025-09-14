@@ -163,6 +163,8 @@
 
   .message-container {
     @apply space-y-2;
+    /* Offset to align with input text (button width + gap) */
+    margin-left: calc(2rem + 0.5rem); /* 32px button + 8px gap */
   }
 
   .persona-badge {

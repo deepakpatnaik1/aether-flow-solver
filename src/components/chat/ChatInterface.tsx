@@ -29,6 +29,7 @@ const ChatInterface = () => {
   ];
 
   const handleSendMessage = async () => {
+    console.log('handleSendMessage called with message:', message);
     if (!message.trim() || isLoading) return;
 
     const userMessage: Message = {
@@ -79,8 +80,11 @@ const ChatInterface = () => {
       let response;
       let lastError;
       
+      console.log('Attempting to call chat API with URLs:', possibleUrls);
+      
       for (const url of possibleUrls) {
         try {
+          console.log('Trying URL:', url);
           response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -92,9 +96,11 @@ const ChatInterface = () => {
             }),
           });
           
+          console.log('Response received:', response.status, response.statusText);
           if (response.ok) break;
           lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
         } catch (error) {
+          console.log('Fetch error for URL', url, ':', error);
           lastError = error as Error;
           continue;
         }

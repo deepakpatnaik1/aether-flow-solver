@@ -8,7 +8,7 @@ export const PersonaBadge: React.FC<PersonaBadgeProps> = ({ persona }) => {
   const getPersonaColor = (persona: string) => {
     switch (persona.toLowerCase()) {
       case 'boss':
-        return 'hsl(var(--primary))';
+        return 'hsl(var(--accent))';
       case 'samara':
         return 'hsl(var(--primary))';
       case 'claude':

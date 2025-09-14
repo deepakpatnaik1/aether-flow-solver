@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MessageList } from './MessageList';
 import { PersonaBadge } from './PersonaBadge';
-import { supabase } from '@/lib/supabase';
 
 interface Message {
   id: string;
@@ -70,20 +69,44 @@ const ChatInterface = () => {
         content: currentMessage
       });
 
-      const { data, error } = await supabase.functions.invoke('chat-stream', {
-        body: {
-          messages: apiMessages,
-          model: selectedModel
-        }
-      });
+      // Try different possible URL patterns for Supabase edge functions
+      const possibleUrls = [
+        'https://f29e4c08-30c0-496d-946c-bdd3be783b28.supabase.co/functions/v1/chat-stream',
+        '/functions/v1/chat-stream',
+        `${window.location.origin}/functions/v1/chat-stream`
+      ];
 
-      if (error) {
-        throw error;
+      let response;
+      let lastError;
+      
+      for (const url of possibleUrls) {
+        try {
+          response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              messages: apiMessages,
+              model: selectedModel
+            }),
+          });
+          
+          if (response.ok) break;
+          lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+        } catch (error) {
+          lastError = error as Error;
+          continue;
+        }
       }
 
-      // Since we're using streaming, we need to handle the response differently
-      // Let's check if data contains the streamed response
-      if (data && data.response) {
+      if (!response || !response.ok) {
+        throw lastError || new Error('All URL attempts failed');
+      }
+
+      const data = await response.json();
+
+      if (data.response) {
         setMessages(prev => 
           prev.map(msg => 
             msg.id === assistantMessageId 
@@ -91,6 +114,8 @@ const ChatInterface = () => {
               : msg
           )
         );
+      } else {
+        throw new Error('No response content received');
       }
     } catch (error) {
       console.error('Error:', error);

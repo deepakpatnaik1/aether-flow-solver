@@ -132,6 +132,7 @@
   .chat-input {
     @apply bg-transparent border-0 text-foreground placeholder:text-muted-foreground;
     @apply focus-visible:ring-0 focus-visible:ring-offset-0;
+    @apply pl-0 pr-0;
   }
 
   .attachment-btn, .send-btn {

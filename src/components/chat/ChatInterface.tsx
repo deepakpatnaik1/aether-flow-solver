@@ -19,20 +19,18 @@ const ChatInterface = () => {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gpt-5-2025-08-07');
-  const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
-
-  // Load persona from localStorage on component mount
-  useEffect(() => {
+  const [selectedPersona, setSelectedPersona] = useState<string | null>(() => {
+    // Load immediately on initialization to prevent conflicts
     try {
       const storedPersona = localStorage.getItem('selectedPersona');
-      console.log('Loading persona from localStorage:', storedPersona);
-      if (storedPersona) {
-        setSelectedPersona(storedPersona);
-      }
+      console.log('Initial load from localStorage:', storedPersona);
+      return storedPersona;
     } catch (error) {
       console.error('Failed to load persona from localStorage:', error);
+      return null;
     }
-  }, []);
+  });
+  const [isInitialized, setIsInitialized] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -155,8 +153,15 @@ const ChatInterface = () => {
     };
   }, []);
 
-  // Save selected persona to localStorage
+  // Mark as initialized after first render
   useEffect(() => {
+    setIsInitialized(true);
+  }, []);
+
+  // Save selected persona to localStorage (only after initialization)
+  useEffect(() => {
+    if (!isInitialized) return; // Don't save/remove during initial load
+    
     try {
       if (selectedPersona) {
         console.log('Saving persona to localStorage:', selectedPersona);
@@ -168,7 +173,7 @@ const ChatInterface = () => {
     } catch (error) {
       console.warn('Failed to save persona to localStorage:', error);
     }
-  }, [selectedPersona]);
+  }, [selectedPersona, isInitialized]);
 
   const handlePersonaSelect = (personaId: string) => {
     const persona = personas.find(p => p.id === personaId);

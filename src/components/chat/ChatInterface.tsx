@@ -102,14 +102,6 @@ Comets are considered remnants from the early solar system, preserving materials
       <div className="input-bar-container">
         <div className="input-bar-content">
           <div className="flex items-center gap-2 flex-1">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="attachment-btn"
-            >
-              <Paperclip className="h-4 w-4" />
-            </Button>
-            
             <Input
               ref={inputRef}
               value={message}
@@ -131,6 +123,14 @@ Comets are considered remnants from the early solar system, preserving materials
           {/* Model Selection Controls */}
           <div className="model-controls">
             <div className="model-selectors">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="attachment-btn"
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
+              
               <Button variant="ghost" size="sm" className="model-selector">
                 <ChevronDown className="h-3 w-3 mr-1" />
                 Claude Sonnet 4

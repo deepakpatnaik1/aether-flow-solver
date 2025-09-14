@@ -132,7 +132,8 @@ const ChatInterface = () => {
       if (selectedPersona !== persona) {
         setSelectedPersona(persona);
       }
-    } else if (selectedPersona && !message.startsWith(selectedPersona)) {
+    } else if (selectedPersona && message.length > 0 && !message.startsWith(selectedPersona)) {
+      // Only clear persona if user is actively typing and not addressing the selected persona
       setSelectedPersona(null);
     }
   }, [message, selectedPersona]);
@@ -232,12 +233,7 @@ const ChatInterface = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="model-selector">
                     <ChevronDown className="h-3 w-3 mr-1" />
-                    {(() => {
-                      console.log('Dropdown render - selectedPersona:', selectedPersona);
-                      const foundPersona = personas.find(p => p.id === selectedPersona);
-                      console.log('Found persona:', foundPersona);
-                      return selectedPersona && foundPersona ? foundPersona.name : 'Persona';
-                    })()}
+                    {selectedPersona && personas.find(p => p.id === selectedPersona)?.name || 'Persona'}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-background border">

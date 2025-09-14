@@ -15,22 +15,117 @@ interface Message {
 
 const ChatInterface = () => {
   const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [messages, setMessages] = useState<Message[]>([]);
 
-  const handleSendMessage = () => {
-    if (!message.trim()) return;
+  const handleSendMessage = async () => {
+    if (!message.trim() || isLoading) return;
 
-    const newMessage: Message = {
+    const userMessage: Message = {
       id: Date.now().toString(),
       content: message,
-      persona: 'User',
+      persona: 'Boss',
       timestamp: new Date(),
       isUser: true
     };
 
-    setMessages([...messages, newMessage]);
+    const currentMessage = message;
     setMessage('');
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
+
+    try {
+      // Create assistant message that will be updated with streaming content
+      const assistantMessageId = (Date.now() + 1).toString();
+      const assistantMessage: Message = {
+        id: assistantMessageId,
+        content: '',
+        persona: 'Samara',
+        timestamp: new Date(),
+        isUser: false
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+
+      // Prepare messages for OpenAI API
+      const apiMessages = messages.concat(userMessage).map(msg => ({
+        role: msg.isUser ? 'user' as const : 'assistant' as const,
+        content: msg.content
+      }));
+
+      // Add the current user message
+      apiMessages.push({
+        role: 'user' as const,
+        content: currentMessage
+      });
+
+      const response = await fetch('/functions/v1/chat-stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: apiMessages
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get response');
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      const decoder = new TextDecoder();
+      let accumulatedContent = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                accumulatedContent += parsed.content;
+                
+                // Update the assistant message with accumulated content
+                setMessages(prev => 
+                  prev.map(msg => 
+                    msg.id === assistantMessageId 
+                      ? { ...msg, content: accumulatedContent }
+                      : msg
+                  )
+                );
+              }
+            } catch (e) {
+              // Skip invalid JSON
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      // Add error message
+      const errorMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        content: 'Sorry, I encountered an error while processing your request.',
+        persona: 'Samara',
+        timestamp: new Date(),
+        isUser: false
+      };
+      setMessages(prev => [...prev.slice(0, -1), errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -77,7 +172,7 @@ const ChatInterface = () => {
             
             <Button 
               onClick={handleSendMessage}
-              disabled={!message.trim()}
+              disabled={!message.trim() || isLoading}
               className="send-btn"
             >
               <Send className="h-4 w-4" />

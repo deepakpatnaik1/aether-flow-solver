@@ -16,43 +16,7 @@ interface Message {
 const ChatInterface = () => {
   const [message, setMessage] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content: 'What is a comet?',
-      persona: 'User',
-      timestamp: new Date(),
-      isUser: true
-    },
-    {
-      id: '2',
-      content: `A comet is a celestial object made up of ice, dust, and rocky material that orbits the Sun. Here are the key characteristics of comets:
-
-## Composition
-• **Nucleus**: A solid core of frozen gases (like water, carbon dioxide, methane), dust, and rock particles
-• Often described as a "dirty snowball" or "icy dirtball"
-
-## Behavior
-• Most comets have highly elliptical orbits that take them far from the Sun and then back again
-• When a comet approaches the Sun, solar radiation causes the ice to vaporize, creating:
-  ◦ **A coma**: A glowing atmosphere around the nucleus
-  ◦ **Tails**: Streams of gas and dust that can extend millions of miles, always pointing away from the Sun due to solar wind
-
-## Origins
-• Most come from two regions:
-  ◦ **Kuiper Belt**: Beyond Neptune's orbit (short-period comets)
-  ◦ **Oort Cloud**: A distant spherical shell around our solar system (long-period comets)
-
-## Famous Examples
-• Halley's Comet (returns every 76 years)
-• Comet Hale-Bopp
-• Comet NEOWISE
-
-Comets are considered remnants from the early solar system, preserving materials from about 4.6 billion years ago, making them valuable for understanding our cosmic origins.`,
-      persona: 'Samara',
-      timestamp: new Date()
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
 
   const handleSendMessage = () => {
     if (!message.trim()) return;

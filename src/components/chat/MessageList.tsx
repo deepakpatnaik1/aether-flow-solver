@@ -18,9 +18,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
     <div className="message-list">
       {messages.map((message) => (
         <div key={message.id} className="message-container">
-          {!message.isUser && (
-            <PersonaBadge persona={message.persona} />
-          )}
+          <PersonaBadge persona={message.isUser ? 'Boss' : message.persona} />
           <div className="message-content">
             {message.content.split('\n').map((line, index) => {
               // Handle headers

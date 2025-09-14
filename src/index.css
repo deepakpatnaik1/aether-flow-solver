@@ -117,7 +117,7 @@
 /* Aether Chat Interface Components */
 @layer components {
   .input-bar-container {
-    @apply p-4;
+    @apply px-6 py-4;
     background: var(--input-bar-background);
     backdrop-filter: var(--glass-blur);
     border-top: 2px solid;
@@ -126,7 +126,7 @@
   }
 
   .input-bar-content {
-    @apply flex flex-col gap-3;
+    @apply flex flex-col gap-3 max-w-4xl mx-auto;
   }
 
   .chat-input {
@@ -140,12 +140,16 @@
   }
 
   .model-controls {
-    @apply flex items-center gap-2 justify-between;
+    @apply flex items-center justify-between;
+  }
+
+  .model-selectors {
+    @apply flex items-center gap-1;
   }
 
   .model-selector {
-    @apply bg-transparent border-white/20 text-muted-foreground hover:bg-white/10;
-    @apply text-xs h-7 px-2;
+    @apply bg-transparent border-0 text-muted-foreground hover:bg-transparent hover:text-foreground;
+    @apply text-xs h-7 px-1;
   }
 
   .status-indicator {

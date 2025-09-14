@@ -113,20 +113,22 @@ Comets are considered remnants from the early solar system, preserving materials
           
           {/* Model Selection Controls */}
           <div className="model-controls">
-            <Button variant="outline" size="sm" className="model-selector">
-              Claude Sonnet 4
-              <ChevronDown className="h-3 w-3 ml-1" />
-            </Button>
-            
-            <Button variant="outline" size="sm" className="model-selector">
-              User
-              <ChevronDown className="h-3 w-3 ml-1" />
-            </Button>
-            
-            <Button variant="outline" size="sm" className="model-selector">
-              Rainy Night
-              <ChevronDown className="h-3 w-3 ml-1" />
-            </Button>
+            <div className="model-selectors">
+              <Button variant="ghost" size="sm" className="model-selector">
+                <ChevronDown className="h-3 w-3 mr-1" />
+                Claude Sonnet 4
+              </Button>
+              
+              <Button variant="ghost" size="sm" className="model-selector">
+                <ChevronDown className="h-3 w-3 mr-1" />
+                User
+              </Button>
+              
+              <Button variant="ghost" size="sm" className="model-selector">
+                <ChevronDown className="h-3 w-3 mr-1" />
+                Rainy Night
+              </Button>
+            </div>
             
             <div className="status-indicator" />
           </div>

@@ -29,7 +29,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, model = 'gpt-5-2025-08-07' } = await req.json();
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -38,7 +38,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-2025-08-07',
+        model: model,
         messages: messages,
         stream: true,
         temperature: 0.7,

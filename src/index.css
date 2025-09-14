@@ -177,8 +177,9 @@
   .persona-badge {
     @apply inline-block py-1 rounded font-medium text-background flex-shrink-0 text-sm self-start;
     width: auto;
-    padding-left: 0;
+    padding-left: 0.5rem;
     padding-right: 0.5rem;
+    margin-left: -0.5rem;
   }
 
   .message-content {

@@ -161,15 +161,15 @@
   }
 
   .message-container {
-    @apply space-y-2;
+    @apply flex gap-4 items-start;
   }
 
   .persona-badge {
-    @apply inline-block px-2 py-1 rounded text-xs font-medium text-background mb-2;
+    @apply inline-block px-2 py-1 rounded text-xs font-medium text-background flex-shrink-0;
   }
 
   .message-content {
-    @apply text-foreground leading-normal space-y-0;
+    @apply text-foreground leading-normal space-y-0 flex-1;
   }
 
   .message-header {

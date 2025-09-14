@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MessageList } from './MessageList';
 import { PersonaBadge } from './PersonaBadge';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   id: string;
@@ -45,84 +46,41 @@ const ChatInterface = () => {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
+    // Use the Supabase client to call the edge function
     try {
-      // Create assistant message that will be updated with streaming content
-      const assistantMessageId = (Date.now() + 1).toString();
-      const assistantMessage: Message = {
-        id: assistantMessageId,
-        content: '',
-        persona: 'Samara',
+      console.log('Calling chat-stream edge function...');
+      
+      // Format messages for OpenAI API
+      const formattedMessages = [...messages, userMessage].map(msg => ({
+        role: msg.isUser ? 'user' as const : 'assistant' as const,
+        content: msg.content
+      }));
+      
+      const { data, error } = await supabase.functions.invoke('chat-stream', {
+        body: {
+          messages: formattedMessages,
+          model: selectedModel
+        }
+      });
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+
+      if (!data?.response) {
+        throw new Error('No response from AI');
+      }
+
+      const aiMessage: Message = {
+        id: crypto.randomUUID(),
+        content: data.response,
+        persona: selectedModel,
         timestamp: new Date(),
         isUser: false
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
-
-      // Prepare messages for OpenAI API
-      const apiMessages = messages.concat(userMessage).map(msg => ({
-        role: msg.isUser ? 'user' as const : 'assistant' as const,
-        content: msg.content
-      }));
-
-      // Add the current user message
-      apiMessages.push({
-        role: 'user' as const,
-        content: currentMessage
-      });
-
-      // Try different possible URL patterns for Supabase edge functions
-      const possibleUrls = [
-        'https://vzedghqnndqxvelmwwpr.supabase.co/functions/v1/chat-stream',
-        '/functions/v1/chat-stream',
-        `${window.location.origin}/functions/v1/chat-stream`
-      ];
-
-      let response;
-      let lastError;
-      
-      console.log('Attempting to call chat API with URLs:', possibleUrls);
-      
-      for (const url of possibleUrls) {
-        try {
-          console.log('Trying URL:', url);
-          response = await fetch(url, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              messages: apiMessages,
-              model: selectedModel
-            }),
-          });
-          
-          console.log('Response received:', response.status, response.statusText);
-          if (response.ok) break;
-          lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
-        } catch (error) {
-          console.log('Fetch error for URL', url, ':', error);
-          lastError = error as Error;
-          continue;
-        }
-      }
-
-      if (!response || !response.ok) {
-        throw lastError || new Error('All URL attempts failed');
-      }
-
-      const data = await response.json();
-
-      if (data.response) {
-        setMessages(prev => 
-          prev.map(msg => 
-            msg.id === assistantMessageId 
-              ? { ...msg, content: data.response }
-              : msg
-          )
-        );
-      } else {
-        throw new Error('No response content received');
-      }
+      setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
       console.error('Error:', error);
       // Add error message

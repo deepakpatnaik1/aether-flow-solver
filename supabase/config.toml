@@ -1,1 +1,4 @@
 project_id = "suncgglbheilkeimwuxt"
+
+[functions.chat-stream]
+verify_jwt = false

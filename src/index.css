@@ -162,7 +162,7 @@
   }
 
   .message-list {
-    @apply p-6 space-y-6 max-w-4xl mx-auto;
+    @apply p-6 space-y-3 max-w-4xl mx-auto;
   }
 
   .message-container {

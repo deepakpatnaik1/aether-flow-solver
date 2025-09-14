@@ -19,7 +19,13 @@ const ChatInterface = () => {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gpt-5-2025-08-07');
-  const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
+  const [selectedPersona, setSelectedPersona] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('selectedPersona');
+    } catch {
+      return null;
+    }
+  });
   const inputRef = useRef<HTMLInputElement>(null);
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -141,6 +147,19 @@ const ChatInterface = () => {
       window.removeEventListener('focus', handleWindowFocus);
     };
   }, []);
+
+  // Save selected persona to localStorage
+  useEffect(() => {
+    try {
+      if (selectedPersona) {
+        localStorage.setItem('selectedPersona', selectedPersona);
+      } else {
+        localStorage.removeItem('selectedPersona');
+      }
+    } catch (error) {
+      console.warn('Failed to save persona to localStorage:', error);
+    }
+  }, [selectedPersona]);
 
   const handlePersonaSelect = (personaId: string) => {
     const persona = personas.find(p => p.id === personaId);

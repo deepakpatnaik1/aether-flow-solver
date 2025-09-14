@@ -19,6 +19,7 @@ const ChatInterface = () => {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gpt-5-2025-08-07');
+  const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -27,6 +28,13 @@ const ChatInterface = () => {
     { id: 'gpt-5-mini-2025-08-07', name: 'GPT-5 Mini' },
     { id: 'gpt-4.1-2025-04-14', name: 'GPT-4.1' },
     { id: 'o3-2025-04-16', name: 'O3 Reasoning' }
+  ];
+
+  const personas = [
+    { id: 'gunnar', name: 'Gunnar' },
+    { id: 'samara', name: 'Samara' },
+    { id: 'kirby', name: 'Kirby' },
+    { id: 'stefan', name: 'Stefan' }
   ];
 
   const handleSendMessage = async () => {
@@ -106,6 +114,19 @@ const ChatInterface = () => {
     }
   };
 
+  // Sync persona dropdown with input text
+  useEffect(() => {
+    const addressingMatch = message.match(/^(Gunnar|Samara|Kirby|Stefan),?\s*/i);
+    if (addressingMatch) {
+      const persona = addressingMatch[1].toLowerCase();
+      if (selectedPersona !== persona) {
+        setSelectedPersona(persona);
+      }
+    } else if (selectedPersona && !message.startsWith(selectedPersona)) {
+      setSelectedPersona(null);
+    }
+  }, [message, selectedPersona]);
+
   useEffect(() => {
     const handleWindowFocus = () => {
       inputRef.current?.focus();
@@ -120,6 +141,15 @@ const ChatInterface = () => {
       window.removeEventListener('focus', handleWindowFocus);
     };
   }, []);
+
+  const handlePersonaSelect = (personaId: string) => {
+    const persona = personas.find(p => p.id === personaId);
+    if (persona) {
+      setSelectedPersona(personaId);
+      setMessage(`${persona.name}, `);
+      inputRef.current?.focus();
+    }
+  };
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -168,7 +198,7 @@ const ChatInterface = () => {
                     {models.find(m => m.id === selectedModel)?.name || 'GPT-5'}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent>
+                <DropdownMenuContent className="bg-background border">
                   {models.map((model) => (
                     <DropdownMenuItem
                       key={model.id}
@@ -180,14 +210,31 @@ const ChatInterface = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
               
-              <Button variant="ghost" size="sm" className="model-selector">
-                <ChevronDown className="h-3 w-3 mr-1" />
-                User
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="model-selector">
+                    <ChevronDown className="h-3 w-3 mr-1" />
+                    {selectedPersona ? personas.find(p => p.id === selectedPersona)?.name : 'Persona'}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-background border">
+                  <DropdownMenuItem onClick={() => setSelectedPersona(null)}>
+                    None
+                  </DropdownMenuItem>
+                  {personas.map((persona) => (
+                    <DropdownMenuItem
+                      key={persona.id}
+                      onClick={() => handlePersonaSelect(persona.id)}
+                    >
+                      {persona.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
               
               <Button variant="ghost" size="sm" className="model-selector">
                 <ChevronDown className="h-3 w-3 mr-1" />
-                Rainy Night
+                User
               </Button>
             </div>
             

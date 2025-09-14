@@ -175,7 +175,7 @@
   }
 
   .persona-badge {
-    @apply inline-block py-1 rounded font-medium text-background flex-shrink-0 text-sm;
+    @apply inline-block py-1 rounded font-medium text-background flex-shrink-0 text-sm self-start;
     width: auto;
     padding-left: 0;
     padding-right: 0.5rem;

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MessageList } from './MessageList';
 import { PersonaBadge } from './PersonaBadge';
+import { supabase } from '@/lib/supabase';
 
 interface Message {
   id: string;
@@ -69,58 +70,27 @@ const ChatInterface = () => {
         content: currentMessage
       });
 
-      const response = await fetch('/functions/v1/chat-stream', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('chat-stream', {
+        body: {
           messages: apiMessages,
           model: selectedModel
-        }),
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to get response');
+      if (error) {
+        throw error;
       }
 
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('No response body');
-      }
-
-      const decoder = new TextDecoder();
-      let accumulatedContent = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.content) {
-                accumulatedContent += parsed.content;
-                
-                // Update the assistant message with accumulated content
-                setMessages(prev => 
-                  prev.map(msg => 
-                    msg.id === assistantMessageId 
-                      ? { ...msg, content: accumulatedContent }
-                      : msg
-                  )
-                );
-              }
-            } catch (e) {
-              // Skip invalid JSON
-            }
-          }
-        }
+      // Since we're using streaming, we need to handle the response differently
+      // Let's check if data contains the streamed response
+      if (data && data.response) {
+        setMessages(prev => 
+          prev.map(msg => 
+            msg.id === assistantMessageId 
+              ? { ...msg, content: data.response }
+              : msg
+          )
+        );
       }
     } catch (error) {
       console.error('Error:', error);

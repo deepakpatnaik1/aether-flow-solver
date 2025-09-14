@@ -182,7 +182,7 @@
   }
 
   .message-text {
-    @apply text-foreground/90 leading-snug;
+    @apply text-foreground/90 leading-snug mb-1;
   }
 
   .message-bullet {

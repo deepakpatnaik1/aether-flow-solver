@@ -169,7 +169,7 @@
   }
 
   .message-content {
-    @apply text-foreground leading-normal space-y-1;
+    @apply text-foreground leading-normal space-y-0;
   }
 
   .message-header {

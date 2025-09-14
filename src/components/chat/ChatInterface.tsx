@@ -23,16 +23,26 @@ const ChatInterface = () => {
 
   // Load model from localStorage on mount
   useEffect(() => {
+    console.log('=== MODEL LOAD EFFECT ===');
     const storedModel = localStorage.getItem('selectedModel');
+    console.log('Stored model:', storedModel);
+    console.log('Available models:', models.map(m => m.id));
+    console.log('Model exists in list:', models.some(m => m.id === storedModel));
     if (storedModel && models.some(m => m.id === storedModel)) {
+      console.log('Setting selectedModel to:', storedModel);
       setSelectedModel(storedModel);
     }
   }, []);
 
   // Load persona from localStorage on mount
   useEffect(() => {
+    console.log('=== PERSONA LOAD EFFECT ===');
     const storedPersona = localStorage.getItem('selectedPersona');
+    console.log('Stored persona:', storedPersona);
+    console.log('Available personas:', personas.map(p => p.id));
+    console.log('Persona exists in list:', personas.some(p => p.id === storedPersona));
     if (storedPersona && personas.some(p => p.id === storedPersona)) {
+      console.log('Setting selectedPersona to:', storedPersona);
       setSelectedPersona(storedPersona);
     }
   }, []);
@@ -158,6 +168,7 @@ const ChatInterface = () => {
   // Save model to localStorage whenever it changes
   useEffect(() => {
     if (selectedModel) {
+      console.log('Saving model to localStorage:', selectedModel);
       localStorage.setItem('selectedModel', selectedModel);
     }
   }, [selectedModel]);
@@ -165,6 +176,7 @@ const ChatInterface = () => {
   // Save persona to localStorage whenever it changes
   useEffect(() => {
     if (selectedPersona) {
+      console.log('Saving persona to localStorage:', selectedPersona);
       localStorage.setItem('selectedPersona', selectedPersona);
     }
   }, [selectedPersona]);

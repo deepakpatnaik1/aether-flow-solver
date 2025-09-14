@@ -132,11 +132,11 @@
   .chat-input {
     @apply bg-transparent border-0 text-foreground placeholder:text-muted-foreground;
     @apply focus-visible:ring-0 focus-visible:ring-offset-0 pl-20;
-    @apply text-foreground leading-snug;
+    @apply text-foreground leading-normal text-base;
   }
 
   .chat-input::placeholder {
-    @apply text-muted-foreground leading-snug;
+    @apply text-muted-foreground leading-normal;
   }
 
   .attachment-btn, .send-btn {
@@ -182,7 +182,7 @@
   }
 
   .message-text {
-    @apply text-foreground/90 leading-snug mb-1;
+    @apply text-foreground/90 leading-normal mb-1 text-base;
   }
 
   .message-bullet {

@@ -33,21 +33,24 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
               }
               // Handle bullet points
               if (line.startsWith('• ')) {
-                const processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                let processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                processedLine = processedLine.replace(/\*([^*]+)\*/g, '<em>$1</em>');
                 return (
                   <div key={index} className="message-bullet" dangerouslySetInnerHTML={{ __html: processedLine }} />
                 );
               }
               // Handle sub-bullets
               if (line.startsWith('  ◦ ')) {
-                const processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                let processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                processedLine = processedLine.replace(/\*([^*]+)\*/g, '<em>$1</em>');
                 return (
                   <div key={index} className="message-sub-bullet" dangerouslySetInnerHTML={{ __html: processedLine }} />
                 );
               }
               // Regular text
               if (line.trim()) {
-                const processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                let processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                processedLine = processedLine.replace(/\*([^*]+)\*/g, '<em>$1</em>');
                 return (
                   <p key={index} className="message-text" dangerouslySetInnerHTML={{ __html: processedLine }} />
                 );

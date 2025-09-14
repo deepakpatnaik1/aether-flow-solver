@@ -33,26 +33,23 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
               }
               // Handle bullet points
               if (line.startsWith('• ')) {
+                const processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                 return (
-                  <div key={index} className="message-bullet">
-                    {line}
-                  </div>
+                  <div key={index} className="message-bullet" dangerouslySetInnerHTML={{ __html: processedLine }} />
                 );
               }
               // Handle sub-bullets
               if (line.startsWith('  ◦ ')) {
+                const processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                 return (
-                  <div key={index} className="message-sub-bullet">
-                    {line}
-                  </div>
+                  <div key={index} className="message-sub-bullet" dangerouslySetInnerHTML={{ __html: processedLine }} />
                 );
               }
               // Regular text
               if (line.trim()) {
+                const processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                 return (
-                  <p key={index} className="message-text">
-                    {line}
-                  </p>
+                  <p key={index} className="message-text" dangerouslySetInnerHTML={{ __html: processedLine }} />
                 );
               }
               // Empty lines

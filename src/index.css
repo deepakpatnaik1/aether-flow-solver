@@ -135,6 +135,10 @@
     @apply text-foreground leading-snug;
   }
 
+  .chat-input::placeholder {
+    @apply text-muted-foreground leading-snug;
+  }
+
   .attachment-btn, .send-btn {
     @apply bg-transparent hover:bg-white/10 text-muted-foreground hover:text-foreground;
     @apply border-0 h-8 w-8 p-0;

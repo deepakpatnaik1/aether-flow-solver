@@ -21,18 +21,19 @@ const ChatInterface = () => {
   const [selectedModel, setSelectedModel] = useState('gpt-5-2025-08-07');
   const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
 
+  // Load model from localStorage on mount
+  useEffect(() => {
+    const storedModel = localStorage.getItem('selectedModel');
+    if (storedModel && models.some(m => m.id === storedModel)) {
+      setSelectedModel(storedModel);
+    }
+  }, []);
+
   // Load persona from localStorage on mount
   useEffect(() => {
-    console.log('=== LOAD EFFECT RUNNING ===');
     const storedPersona = localStorage.getItem('selectedPersona');
-    console.log('Loading stored persona:', storedPersona);
-    console.log('Current selectedPersona state:', selectedPersona);
     if (storedPersona && personas.some(p => p.id === storedPersona)) {
-      console.log('Setting selectedPersona to:', storedPersona);
       setSelectedPersona(storedPersona);
-      console.log('Set persona from storage:', storedPersona);
-    } else {
-      console.log('Not setting persona - storedPersona:', storedPersona, 'personas match:', personas.some(p => p.id === storedPersona));
     }
   }, []);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -53,7 +54,6 @@ const ChatInterface = () => {
   ];
 
   const handleSendMessage = async () => {
-    console.log('handleSendMessage called with message:', message);
     if (!message.trim() || isLoading) return;
 
     const userMessage: Message = {
@@ -71,7 +71,6 @@ const ChatInterface = () => {
 
     // Use the Supabase client to call the edge function
     try {
-      console.log('Calling chat-stream edge function...');
       
       // Format messages for OpenAI API
       const formattedMessages = [...messages, userMessage].map(msg => ({
@@ -121,9 +120,7 @@ const ChatInterface = () => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    console.log('Key pressed:', e.key);
     if (e.key === 'Enter' && !e.shiftKey) {
-      console.log('Enter pressed, calling handleSendMessage');
       e.preventDefault();
       handleSendMessage();
     }
@@ -131,24 +128,16 @@ const ChatInterface = () => {
 
   // Sync persona dropdown with input text
   useEffect(() => {
-    console.log('=== SYNC EFFECT RUNNING ===');
-    console.log('Current message:', message);
-    console.log('Current selectedPersona:', selectedPersona);
-    
     const addressingMatch = message.match(/^(Gunnar|Samara|Kirby|Stefan),?\s*/i);
     if (addressingMatch) {
       const persona = addressingMatch[1].toLowerCase();
-      console.log('Found addressing match, persona:', persona);
       if (selectedPersona !== persona) {
-        console.log('Setting selectedPersona to:', persona);
         setSelectedPersona(persona);
       }
     } else if (selectedPersona && message.length > 0 && !message.startsWith(selectedPersona)) {
       // Only clear persona if user is actively typing and not addressing the selected persona
-      console.log('CLEARING selectedPersona because message does not start with persona');
       setSelectedPersona(null);
     }
-    console.log('=== SYNC EFFECT END ===');
   }, [message, selectedPersona]);
 
   useEffect(() => {
@@ -166,21 +155,23 @@ const ChatInterface = () => {
     };
   }, []);
 
+  // Save model to localStorage whenever it changes
+  useEffect(() => {
+    if (selectedModel) {
+      localStorage.setItem('selectedModel', selectedModel);
+    }
+  }, [selectedModel]);
+
   // Save persona to localStorage whenever it changes
   useEffect(() => {
     if (selectedPersona) {
       localStorage.setItem('selectedPersona', selectedPersona);
-      console.log('Saved persona to localStorage:', selectedPersona);
     }
   }, [selectedPersona]);
 
   const handlePersonaSelect = (personaId: string) => {
-    console.log('=== HANDLE PERSONA SELECT ===');
-    console.log('Selected personaId:', personaId);
     const persona = personas.find(p => p.id === personaId);
-    console.log('Found persona object:', persona);
     if (persona) {
-      console.log('Setting selectedPersona to:', personaId);
       setSelectedPersona(personaId);
       setMessage(`${persona.name}, `);
       inputRef.current?.focus();

@@ -23,11 +23,16 @@ const ChatInterface = () => {
 
   // Load persona from localStorage on mount
   useEffect(() => {
+    console.log('=== LOAD EFFECT RUNNING ===');
     const storedPersona = localStorage.getItem('selectedPersona');
     console.log('Loading stored persona:', storedPersona);
+    console.log('Current selectedPersona state:', selectedPersona);
     if (storedPersona && personas.some(p => p.id === storedPersona)) {
+      console.log('Setting selectedPersona to:', storedPersona);
       setSelectedPersona(storedPersona);
       console.log('Set persona from storage:', storedPersona);
+    } else {
+      console.log('Not setting persona - storedPersona:', storedPersona, 'personas match:', personas.some(p => p.id === storedPersona));
     }
   }, []);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -126,16 +131,24 @@ const ChatInterface = () => {
 
   // Sync persona dropdown with input text
   useEffect(() => {
+    console.log('=== SYNC EFFECT RUNNING ===');
+    console.log('Current message:', message);
+    console.log('Current selectedPersona:', selectedPersona);
+    
     const addressingMatch = message.match(/^(Gunnar|Samara|Kirby|Stefan),?\s*/i);
     if (addressingMatch) {
       const persona = addressingMatch[1].toLowerCase();
+      console.log('Found addressing match, persona:', persona);
       if (selectedPersona !== persona) {
+        console.log('Setting selectedPersona to:', persona);
         setSelectedPersona(persona);
       }
     } else if (selectedPersona && message.length > 0 && !message.startsWith(selectedPersona)) {
       // Only clear persona if user is actively typing and not addressing the selected persona
+      console.log('CLEARING selectedPersona because message does not start with persona');
       setSelectedPersona(null);
     }
+    console.log('=== SYNC EFFECT END ===');
   }, [message, selectedPersona]);
 
   useEffect(() => {
@@ -162,8 +175,12 @@ const ChatInterface = () => {
   }, [selectedPersona]);
 
   const handlePersonaSelect = (personaId: string) => {
+    console.log('=== HANDLE PERSONA SELECT ===');
+    console.log('Selected personaId:', personaId);
     const persona = personas.find(p => p.id === personaId);
+    console.log('Found persona object:', persona);
     if (persona) {
+      console.log('Setting selectedPersona to:', personaId);
       setSelectedPersona(personaId);
       setMessage(`${persona.name}, `);
       inputRef.current?.focus();

@@ -182,8 +182,12 @@ const ChatInterface = () => {
   }, [selectedPersona]);
 
   const handlePersonaSelect = (personaId: string) => {
+    console.log('=== HANDLE PERSONA SELECT ===');
+    console.log('Selected personaId:', personaId);
     const persona = personas.find(p => p.id === personaId);
+    console.log('Found persona object:', persona);
     if (persona) {
+      console.log('Setting selectedPersona to:', personaId);
       setSelectedPersona(personaId);
       setMessage(`${persona.name}, `);
       inputRef.current?.focus();
@@ -241,7 +245,10 @@ const ChatInterface = () => {
                   {models.map((model) => (
                     <DropdownMenuItem
                       key={model.id}
-                      onClick={() => setSelectedModel(model.id)}
+                      onClick={() => {
+                        console.log('Model clicked:', model.id, model.name);
+                        setSelectedModel(model.id);
+                      }}
                     >
                       {model.name}
                     </DropdownMenuItem>
@@ -260,7 +267,10 @@ const ChatInterface = () => {
                   {personas.map((persona) => (
                     <DropdownMenuItem
                       key={persona.id}
-                      onClick={() => handlePersonaSelect(persona.id)}
+                      onClick={() => {
+                        console.log('Persona clicked:', persona.id, persona.name);
+                        handlePersonaSelect(persona.id);
+                      }}
                     >
                       {persona.name}
                     </DropdownMenuItem>

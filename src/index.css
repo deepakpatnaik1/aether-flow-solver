@@ -131,7 +131,7 @@
 
   .chat-input {
     @apply bg-transparent border-0 text-foreground placeholder:text-muted-foreground;
-    @apply focus-visible:ring-0 focus-visible:ring-offset-0;
+    @apply focus-visible:ring-0 focus-visible:ring-offset-0 pl-20;
   }
 
   .attachment-btn, .send-btn {
@@ -165,7 +165,7 @@
   }
 
   .persona-badge {
-    @apply inline-block px-2 py-1 rounded text-xs font-medium text-background flex-shrink-0;
+    @apply inline-block px-2 py-1 rounded text-xs font-medium text-background flex-shrink-0 w-16;
   }
 
   .message-content {

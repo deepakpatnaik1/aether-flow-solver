@@ -170,7 +170,7 @@
   }
 
   .persona-badge {
-    @apply inline-block px-2 py-1 rounded font-medium text-background flex-shrink-0 w-16;
+    @apply inline-block px-2 py-1 rounded font-medium text-background flex-shrink-0 w-16 text-sm;
   }
 
   .message-content {

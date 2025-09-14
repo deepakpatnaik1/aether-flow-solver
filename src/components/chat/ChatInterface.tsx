@@ -19,18 +19,17 @@ const ChatInterface = () => {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gpt-5-2025-08-07');
-  const [selectedPersona, setSelectedPersona] = useState<string | null>(() => {
-    // Load immediately on initialization to prevent conflicts
-    try {
-      const storedPersona = localStorage.getItem('selectedPersona');
-      console.log('Initial load from localStorage:', storedPersona);
-      return storedPersona;
-    } catch (error) {
-      console.error('Failed to load persona from localStorage:', error);
-      return null;
+  const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
+
+  // Load persona from localStorage on mount
+  useEffect(() => {
+    const storedPersona = localStorage.getItem('selectedPersona');
+    console.log('Loading stored persona:', storedPersona);
+    if (storedPersona && personas.some(p => p.id === storedPersona)) {
+      setSelectedPersona(storedPersona);
+      console.log('Set persona from storage:', storedPersona);
     }
-  });
-  const [isInitialized, setIsInitialized] = useState(false);
+  }, []);
   const inputRef = useRef<HTMLInputElement>(null);
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -153,40 +152,19 @@ const ChatInterface = () => {
     };
   }, []);
 
-  // Mark as initialized after first render
+  // Save persona to localStorage whenever it changes
   useEffect(() => {
-    setIsInitialized(true);
-  }, []);
-
-  // Save selected persona to localStorage (only after initialization)
-  useEffect(() => {
-    if (!isInitialized) return; // Don't save/remove during initial load
-    
-    try {
-      if (selectedPersona) {
-        console.log('Saving persona to localStorage:', selectedPersona);
-        localStorage.setItem('selectedPersona', selectedPersona);
-      } else {
-        console.log('Removing persona from localStorage');
-        localStorage.removeItem('selectedPersona');
-      }
-    } catch (error) {
-      console.warn('Failed to save persona to localStorage:', error);
+    if (selectedPersona) {
+      localStorage.setItem('selectedPersona', selectedPersona);
+      console.log('Saved persona to localStorage:', selectedPersona);
     }
-  }, [selectedPersona, isInitialized]);
+  }, [selectedPersona]);
 
   const handlePersonaSelect = (personaId: string) => {
     const persona = personas.find(p => p.id === personaId);
     if (persona) {
       setSelectedPersona(personaId);
       setMessage(`${persona.name}, `);
-      // Save to localStorage immediately
-      try {
-        localStorage.setItem('selectedPersona', personaId);
-        console.log('Saved persona to localStorage:', personaId);
-      } catch (error) {
-        console.error('Failed to save persona to localStorage:', error);
-      }
       inputRef.current?.focus();
     }
   };

@@ -166,7 +166,7 @@
   }
 
   .message-container {
-    @apply flex gap-4 items-start;
+    @apply flex flex-col gap-2;
   }
 
   .persona-badge {

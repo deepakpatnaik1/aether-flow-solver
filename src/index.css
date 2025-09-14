@@ -132,7 +132,6 @@
   .chat-input {
     @apply bg-transparent border-0 text-foreground placeholder:text-muted-foreground;
     @apply focus-visible:ring-0 focus-visible:ring-offset-0;
-    @apply pl-0 pr-0;
   }
 
   .attachment-btn, .send-btn {
@@ -163,8 +162,6 @@
 
   .message-container {
     @apply space-y-2;
-    /* Offset to align with input text (button width + gap) */
-    margin-left: calc(2rem + 0.5rem); /* 32px button + 8px gap */
   }
 
   .persona-badge {

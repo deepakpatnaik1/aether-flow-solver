@@ -140,7 +140,9 @@ const ChatInterface = () => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    console.log('Key pressed:', e.key);
     if (e.key === 'Enter' && !e.shiftKey) {
+      console.log('Enter pressed, calling handleSendMessage');
       e.preventDefault();
       handleSendMessage();
     }

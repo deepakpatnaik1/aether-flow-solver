@@ -19,16 +19,20 @@ const ChatInterface = () => {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gpt-5-2025-08-07');
-  const [selectedPersona, setSelectedPersona] = useState<string | null>(() => {
+  const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
+
+  // Load persona from localStorage on component mount
+  useEffect(() => {
     try {
-      const stored = localStorage.getItem('selectedPersona');
-      console.log('Loading persona from localStorage:', stored);
-      return stored;
+      const storedPersona = localStorage.getItem('selectedPersona');
+      console.log('Loading persona from localStorage:', storedPersona);
+      if (storedPersona) {
+        setSelectedPersona(storedPersona);
+      }
     } catch (error) {
       console.error('Failed to load persona from localStorage:', error);
-      return null;
     }
-  });
+  }, []);
   const inputRef = useRef<HTMLInputElement>(null);
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -171,6 +175,13 @@ const ChatInterface = () => {
     if (persona) {
       setSelectedPersona(personaId);
       setMessage(`${persona.name}, `);
+      // Save to localStorage immediately
+      try {
+        localStorage.setItem('selectedPersona', personaId);
+        console.log('Saved persona to localStorage:', personaId);
+      } catch (error) {
+        console.error('Failed to save persona to localStorage:', error);
+      }
       inputRef.current?.focus();
     }
   };

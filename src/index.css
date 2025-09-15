@@ -182,11 +182,12 @@
   }
 
   .persona-badge {
-    @apply inline-block py-1 rounded font-medium text-background flex-shrink-0 text-sm self-start;
+    @apply inline-block py-1 rounded font-medium text-background flex-shrink-0 self-start;
     width: auto;
     padding-left: 0.5rem;
     padding-right: 0.5rem;
     margin-left: -0.5rem;
+    font-size: 11px !important;
   }
 
   .message-content {

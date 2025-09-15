@@ -23,26 +23,16 @@ const ChatInterface = () => {
 
   // Load model from localStorage on mount
   useEffect(() => {
-    console.log('=== MODEL LOAD EFFECT ===');
     const storedModel = localStorage.getItem('selectedModel');
-    console.log('Stored model:', storedModel);
-    console.log('Available models:', models.map(m => m.id));
-    console.log('Model exists in list:', models.some(m => m.id === storedModel));
     if (storedModel && models.some(m => m.id === storedModel)) {
-      console.log('Setting selectedModel to:', storedModel);
       setSelectedModel(storedModel);
     }
   }, []);
 
   // Load persona from localStorage on mount
   useEffect(() => {
-    console.log('=== PERSONA LOAD EFFECT ===');
     const storedPersona = localStorage.getItem('selectedPersona');
-    console.log('Stored persona:', storedPersona);
-    console.log('Available personas:', personas.map(p => p.id));
-    console.log('Persona exists in list:', personas.some(p => p.id === storedPersona));
     if (storedPersona && personas.some(p => p.id === storedPersona)) {
-      console.log('Setting selectedPersona to:', storedPersona);
       setSelectedPersona(storedPersona);
     }
   }, []);
@@ -168,7 +158,6 @@ const ChatInterface = () => {
   // Save model to localStorage whenever it changes
   useEffect(() => {
     if (selectedModel) {
-      console.log('Saving model to localStorage:', selectedModel);
       localStorage.setItem('selectedModel', selectedModel);
     }
   }, [selectedModel]);
@@ -176,18 +165,13 @@ const ChatInterface = () => {
   // Save persona to localStorage whenever it changes
   useEffect(() => {
     if (selectedPersona) {
-      console.log('Saving persona to localStorage:', selectedPersona);
       localStorage.setItem('selectedPersona', selectedPersona);
     }
   }, [selectedPersona]);
 
   const handlePersonaSelect = (personaId: string) => {
-    console.log('=== HANDLE PERSONA SELECT ===');
-    console.log('Selected personaId:', personaId);
     const persona = personas.find(p => p.id === personaId);
-    console.log('Found persona object:', persona);
     if (persona) {
-      console.log('Setting selectedPersona to:', personaId);
       setSelectedPersona(personaId);
       setMessage(`${persona.name}, `);
       inputRef.current?.focus();
@@ -245,10 +229,7 @@ const ChatInterface = () => {
                   {models.map((model) => (
                     <DropdownMenuItem
                       key={model.id}
-                      onClick={() => {
-                        console.log('Model clicked:', model.id, model.name);
-                        setSelectedModel(model.id);
-                      }}
+                      onClick={() => setSelectedModel(model.id)}
                     >
                       {model.name}
                     </DropdownMenuItem>
@@ -267,10 +248,7 @@ const ChatInterface = () => {
                   {personas.map((persona) => (
                     <DropdownMenuItem
                       key={persona.id}
-                      onClick={() => {
-                        console.log('Persona clicked:', persona.id, persona.name);
-                        handlePersonaSelect(persona.id);
-                      }}
+                      onClick={() => handlePersonaSelect(persona.id)}
                     >
                       {persona.name}
                     </DropdownMenuItem>

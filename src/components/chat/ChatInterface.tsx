@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Paperclip, ChevronDown } from 'lucide-react';
+import { Send, Paperclip, ChevronDown, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MessageList } from './MessageList';
 import { PersonaBadge } from './PersonaBadge';
 import { supabase } from '@/integrations/supabase/client';
+import { useChat } from '@/hooks/useChat';
 
 interface Message {
   id: string;
@@ -29,6 +30,20 @@ const ChatInterface = () => {
   const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  const {
+    currentConversationId,
+    messages,
+    conversations,
+    journal,
+    setMessages,
+    setJournal,
+    createNewConversation,
+    saveMessage,
+    saveJournalEntries,
+    setCurrentConversationId,
+  } = useChat();
 
   // Load model from localStorage on mount
   useEffect(() => {
@@ -45,9 +60,6 @@ const ChatInterface = () => {
       setSelectedPersona(storedPersona);
     }
   }, []);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [journal, setJournal] = useState<Array<{persona: string, content: string}>>([]);
 
   const models = [
     { id: 'gpt-5-2025-08-07', name: 'GPT-5' },
@@ -102,12 +114,15 @@ const ChatInterface = () => {
     const currentMessage = message;
     setMessage('');
     setUploadedFiles([]);
+    
+    // Add message to local state immediately for better UX
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Use the Supabase client to call the edge function
     try {
-      
+      // Save user message to database
+      await saveMessage(userMessage, uploadedFiles);
+
       // Format messages for OpenAI API
       const formattedMessages = [...messages, userMessage].map(msg => ({
         role: msg.isUser ? 'user' as const : 'assistant' as const,
@@ -142,14 +157,22 @@ const ChatInterface = () => {
       };
 
       setMessages(prev => [...prev, aiMessage]);
+      
+      // Save AI message to database
+      await saveMessage(aiMessage);
 
       // Store essence extract in journal for context
       if (data.essence) {
         const essenceLines = data.essence.split('\n').filter((line: string) => line.trim());
-        setJournal(prev => [...prev, ...essenceLines.map((line: string) => ({
+        const newJournalEntries = essenceLines.map((line: string) => ({
           persona: line.split(':')[0]?.trim() || 'Unknown',
           content: line.split(':').slice(1).join(':').trim() || line
-        }))]);
+        }));
+        
+        setJournal(prev => [...prev, ...newJournalEntries]);
+        
+        // Save journal entries to database
+        await saveJournalEntries(newJournalEntries);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -162,6 +185,7 @@ const ChatInterface = () => {
         isUser: false
       };
       setMessages(prev => [...prev.slice(0, -1), errorMessage]);
+      await saveMessage(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -228,6 +252,37 @@ const ChatInterface = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background">
+      {/* Header with conversations */}
+      <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <ChevronDown className="h-4 w-4 mr-1" />
+                {conversations.find(c => c.id === currentConversationId)?.title || 'Select Chat'}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-background border">
+              {conversations.map((conversation) => (
+                <DropdownMenuItem
+                  key={conversation.id}
+                  onClick={() => setCurrentConversationId(conversation.id)}
+                >
+                  {conversation.title}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => createNewConversation()}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">
         <MessageList messages={messages} />

@@ -254,17 +254,59 @@ const ChatInterface = () => {
                 console.log('Streaming content updated, length:', streamingContent.length);
                 
                 // Try to extract content from JSON structure during streaming
-                let displayContent = streamingContent;
+                let displayContent = '';
                 try {
-                  // Look for fullContent field in the streaming JSON
-                  const fullContentMatch = streamingContent.match(/"fullContent":\s*"([^"\\]*(\\.[^"\\]*)*)/);
-                  if (fullContentMatch) {
-                    // Unescape the JSON string and use it as display content
-                    displayContent = fullContentMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+                  // Try to parse the JSON if it looks complete enough
+                  if (streamingContent.includes('"fullContent":') && streamingContent.includes('"artisanCut":')) {
+                    // Try to parse the complete JSON
+                    const jsonMatch = streamingContent.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                      const parsedJson = JSON.parse(jsonMatch[0]);
+                      displayContent = parsedJson.fullContent || '';
+                    }
+                  } else if (streamingContent.includes('"fullContent":')) {
+                    // Extract content between quotes, handling escaped characters properly
+                    const fullContentStart = streamingContent.indexOf('"fullContent":');
+                    if (fullContentStart !== -1) {
+                      const quoteStart = streamingContent.indexOf('"', fullContentStart + 14) + 1;
+                      if (quoteStart > 0) {
+                        let quoteEnd = quoteStart;
+                        let escapeNext = false;
+                        
+                        for (let i = quoteStart; i < streamingContent.length; i++) {
+                          const char = streamingContent[i];
+                          if (escapeNext) {
+                            escapeNext = false;
+                            continue;
+                          }
+                          if (char === '\\') {
+                            escapeNext = true;
+                            continue;
+                          }
+                          if (char === '"') {
+                            quoteEnd = i;
+                            break;
+                          }
+                        }
+                        
+                        if (quoteEnd > quoteStart) {
+                          const extractedContent = streamingContent.substring(quoteStart, quoteEnd);
+                          displayContent = extractedContent
+                            .replace(/\\n/g, '\n')
+                            .replace(/\\"/g, '"')
+                            .replace(/\\t/g, '\t')
+                            .replace(/\\\\/g, '\\');
+                        }
+                      }
+                    }
                   }
                 } catch (e) {
-                  // If parsing fails, keep showing raw content
-                  console.log('Could not extract content from streaming JSON, showing raw');
+                  console.log('Could not extract content from streaming JSON:', e);
+                }
+                
+                // Fall back to showing raw content if extraction fails
+                if (!displayContent) {
+                  displayContent = streamingContent;
                 }
                 
                 // Update the AI message with processed streaming content

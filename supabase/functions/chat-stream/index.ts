@@ -24,6 +24,7 @@ interface JournalEntry {
   timestamp: string;
   bossInput: string;
   personaResponse: string;
+  persona: string; // Add persona field
 }
 
 const corsHeaders = {
@@ -144,7 +145,7 @@ async function saveJournalEntry(entry: JournalEntry) {
         user_message_persona: 'Boss', // Always Boss for user messages
         user_message_attachments: [], // No attachments in artisan cuts
         ai_response_content: entry.personaResponse,
-        ai_response_persona: entry.personaResponse.split(':')[0]?.trim() || 'unknown',
+        ai_response_persona: entry.persona, // Use the actual persona name
         ai_response_model: 'gpt-5-2025-08-07' // Model used for artisan cut generation
       });
 
@@ -415,7 +416,8 @@ serve(async (req) => {
             id: turnId, // Same ID as superjournal for linking
             timestamp: new Date().toISOString(),
             bossInput: bossInput || userMsg.substring(0, 50), // Fallback to truncated user message
-            personaResponse: personaResponse || artisanCut.trim()
+            personaResponse: personaResponse || artisanCut.trim(),
+            persona: persona // Pass the actual persona name
           };
 
           console.log('💾 CALL 2: Saving journal entry:', journalEntry.id);

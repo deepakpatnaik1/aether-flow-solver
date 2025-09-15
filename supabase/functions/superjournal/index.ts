@@ -130,54 +130,72 @@ async function signR2Request(
 
 async function appendToSuperjournal(entry: JournalEntry) {
   try {
-    // Simple in-memory storage as fallback until R2 is fixed
-    console.log('💾 Saving entry to superjournal:', entry.id);
+    console.log('💾 Saving entry to superjournal R2:', entry.id);
     
-    // Add to memory storage
-    memoryEntries.push(entry);
+    // Load existing entries from R2
+    const existingEntries = await loadSuperjournal();
     
-    console.log('✅ Journal entry saved (in-memory), total entries:', memoryEntries.length);
+    // Add new entry
+    const updatedEntries = [...existingEntries, entry];
+    
+    // Save back to R2
+    const content = JSON.stringify({ entries: updatedEntries }, null, 2);
+    const url = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/superjournal.json`;
+    
+    const headers = await signR2Request('PUT', url, {
+      'content-type': 'application/json',
+    }, content);
+
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers,
+      body: content,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to save to R2: ${response.status} ${response.statusText}`);
+    }
+    
+    console.log('✅ Journal entry saved to R2, total entries:', updatedEntries.length);
     return { success: true };
   } catch (error) {
-    console.error('❌ Error saving to superjournal:', error);
+    console.error('❌ Error saving to superjournal R2:', error);
     throw error;
   }
 }
 
-// In-memory storage for now (until R2 is fixed)
-let memoryEntries: JournalEntry[] = [
-  {
-    "id": "fca57d8b-8230-4dab-b301-1fd1df6a72aa",
-    "timestamp": "2025-09-15T08:34:56.170Z",
-    "userMessage": {
-      "content": "Kirby, what is the capital of India?",
-      "persona": "Boss"
-    },
-    "aiResponse": {
-      "content": "New Delhi.",
-      "persona": "kirby",
-      "model": "gpt-5-2025-08-07"
-    }
-  },
-  {
-    "id": "b4e9f7d4-ef16-4267-8f59-d5cf8889a52a",
-    "timestamp": "2025-09-15T09:24:33.043Z",
-    "userMessage": {
-      "content": "Stefan, what is the capital of Nepal?",
-      "persona": "Boss"
-    },
-    "aiResponse": {
-      "content": "Kathmandu.",
-      "persona": "stefan",
-      "model": "gpt-5-mini-2025-08-07"
-    }
-  }
-];
-
 async function loadSuperjournal(): Promise<JournalEntry[]> {
-  console.log('📖 Loading superjournal from memory...');
-  console.log(`📋 Found ${memoryEntries.length} superjournal entries`);
-  return memoryEntries;
+  try {
+    console.log('📖 Loading superjournal from R2...');
+    
+    const url = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/superjournal.json`;
+    
+    const headers = await signR2Request('GET', url);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+    
+    if (response.status === 404) {
+      console.log('📋 No existing superjournal found, starting fresh');
+      return [];
+    }
+    
+    if (!response.ok) {
+      throw new Error(`Failed to load from R2: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    const entries = data.entries || [];
+    
+    console.log(`📋 Found ${entries.length} superjournal entries in R2`);
+    return entries;
+    
+  } catch (error) {
+    console.error('❌ Error loading from R2, starting fresh:', error);
+    return [];
+  }
 }
 
 serve(async (req) => {

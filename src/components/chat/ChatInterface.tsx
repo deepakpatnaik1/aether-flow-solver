@@ -247,9 +247,13 @@ const ChatInterface = () => {
     if (persona) {
       setSelectedPersona(personaId);
       setMessage(`${persona.name}, `);
-      // Use longer timeout to overcome Radix UI's focus management
+      // Debug focus issue
       setTimeout(() => {
+        console.log('Attempting to focus input:', inputRef.current);
+        console.log('Input element exists:', !!inputRef.current);
+        console.log('Input element type:', inputRef.current?.tagName);
         inputRef.current?.focus();
+        console.log('Active element after focus:', document.activeElement);
       }, 100);
     }
   };

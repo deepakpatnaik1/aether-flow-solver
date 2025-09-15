@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Paperclip, ChevronDown, Plus } from 'lucide-react';
+import { Send, Paperclip, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -34,16 +34,12 @@ const ChatInterface = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const {
-    currentConversationId,
     messages,
-    conversations,
     journal,
     setMessages,
     setJournal,
-    createNewConversation,
     saveMessage,
     saveJournalEntries,
-    setCurrentConversationId,
   } = useChat();
 
   const models = [
@@ -242,37 +238,6 @@ const ChatInterface = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      {/* Header with conversations */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <ChevronDown className="h-4 w-4 mr-1" />
-                {conversations.find(c => c.id === currentConversationId)?.title || 'Select Chat'}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-background border">
-              {conversations.map((conversation) => (
-                <DropdownMenuItem
-                  key={conversation.id}
-                  onClick={() => setCurrentConversationId(conversation.id)}
-                >
-                  {conversation.title}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => createNewConversation()}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">
         <MessageList messages={messages} />

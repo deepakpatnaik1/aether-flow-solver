@@ -16,51 +16,53 @@ interface Message {
   }[];
 }
 
-interface Conversation {
-  id: string;
-  title: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export const useChat = () => {
-  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [journal, setJournal] = useState<Array<{persona: string, content: string}>>([]);
 
-  // Load conversations on mount
+  // Initialize conversation on mount
   useEffect(() => {
-    loadConversations();
+    initializeConversation();
   }, []);
 
-  // Load messages when conversation changes
-  useEffect(() => {
-    if (currentConversationId) {
-      loadMessages(currentConversationId);
-      loadJournalEntries(currentConversationId);
-    }
-  }, [currentConversationId]);
-
-  const loadConversations = async () => {
+  const initializeConversation = async () => {
+    // Try to get or create a single conversation
     const { data, error } = await supabase
       .from('conversations')
       .select('*')
-      .order('updated_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(1);
 
     if (error) {
-      console.error('Error loading conversations:', error);
+      console.error('Error loading conversation:', error);
       return;
     }
 
-    setConversations(data || []);
+    let currentConversation;
     
-    // Auto-select the most recent conversation or create a new one
     if (data && data.length > 0) {
-      setCurrentConversationId(data[0].id);
+      // Use existing conversation
+      currentConversation = data[0];
     } else {
-      createNewConversation();
+      // Create new conversation
+      const { data: newConversation, error: createError } = await supabase
+        .from('conversations')
+        .insert([{ title: 'Chat' }])
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('Error creating conversation:', createError);
+        return;
+      }
+      
+      currentConversation = newConversation;
     }
+
+    setConversationId(currentConversation.id);
+    await loadMessages(currentConversation.id);
+    await loadJournalEntries(currentConversation.id);
   };
 
   const loadMessages = async (conversationId: string) => {
@@ -116,31 +118,13 @@ export const useChat = () => {
     setJournal(formattedJournal);
   };
 
-  const createNewConversation = async (title?: string) => {
-    const { data, error } = await supabase
-      .from('conversations')
-      .insert([{ title: title || 'New Chat' }])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating conversation:', error);
-      return;
-    }
-
-    setCurrentConversationId(data.id);
-    setMessages([]);
-    setJournal([]);
-    loadConversations(); // Refresh the conversations list
-  };
-
   const saveMessage = async (message: Message, attachments?: any[]) => {
-    if (!currentConversationId) return;
+    if (!conversationId) return;
 
     const { data: messageData, error: messageError } = await supabase
       .from('chat_messages')
       .insert([{
-        conversation_id: currentConversationId,
+        conversation_id: conversationId,
         content: message.content,
         persona: message.persona,
         is_user: message.isUser || false,
@@ -177,16 +161,16 @@ export const useChat = () => {
     await supabase
       .from('conversations')
       .update({ updated_at: new Date().toISOString() })
-      .eq('id', currentConversationId);
+      .eq('id', conversationId);
 
     return messageData.id;
   };
 
   const saveJournalEntries = async (entries: Array<{persona: string, content: string}>) => {
-    if (!currentConversationId || entries.length === 0) return;
+    if (!conversationId || entries.length === 0) return;
 
     const journalInserts = entries.map(entry => ({
-      conversation_id: currentConversationId,
+      conversation_id: conversationId,
       persona: entry.persona,
       content: entry.content,
     }));
@@ -201,16 +185,11 @@ export const useChat = () => {
   };
 
   return {
-    currentConversationId,
     messages,
-    conversations,
     journal,
     setMessages,
     setJournal,
-    createNewConversation,
     saveMessage,
     saveJournalEntries,
-    loadConversations,
-    setCurrentConversationId,
   };
 };

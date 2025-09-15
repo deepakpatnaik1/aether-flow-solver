@@ -8,13 +8,34 @@ export const PersonaBadge: React.FC<PersonaBadgeProps> = ({ persona }) => {
   const getPersonaColor = (persona: string) => {
     switch (persona.toLowerCase()) {
       case 'boss':
-        return 'hsl(var(--accent))';
+        return 'hsl(var(--persona-boss))';
+      case 'gunnar':
+        return 'hsl(var(--persona-gunnar))';
       case 'samara':
-        return 'hsl(var(--primary))';
-      case 'claude':
-        return 'hsl(var(--accent))';
+        return 'hsl(var(--persona-samara))';
+      case 'kirby':
+        return 'hsl(var(--persona-kirby))';
+      case 'stefan':
+        return 'hsl(var(--persona-stefan))';
       default:
         return 'hsl(var(--muted))';
+    }
+  };
+
+  const getPersonaName = (persona: string) => {
+    switch (persona.toLowerCase()) {
+      case 'boss':
+        return 'Boss';
+      case 'gunnar':
+        return 'Gunnar';
+      case 'samara':
+        return 'Samara';
+      case 'kirby':
+        return 'Kirby';
+      case 'stefan':
+        return 'Stefan';
+      default:
+        return persona;
     }
   };
 
@@ -23,7 +44,7 @@ export const PersonaBadge: React.FC<PersonaBadgeProps> = ({ persona }) => {
       className="persona-badge"
       style={{ backgroundColor: getPersonaColor(persona) }}
     >
-      {persona}
+      {getPersonaName(persona)}
     </div>
   );
 };

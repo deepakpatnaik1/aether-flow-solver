@@ -47,6 +47,13 @@
     --shadow-depth: 0 4px 12px rgba(0, 0, 0, 0.4);
     --shadow-inner: inset 0 -2px 8px rgba(255, 255, 255, 0.08);
 
+    /* Persona colors - Dark themed for badge backgrounds */
+    --persona-boss: 31 87% 51%;     /* Dark orange - Boss */
+    --persona-gunnar: 220 70% 45%;  /* Dark blue - Gunnar */
+    --persona-samara: 31 87% 51%;   /* Dark orange - Samara */
+    --persona-kirby: 280 60% 45%;   /* Dark purple - Kirby */
+    --persona-stefan: 140 60% 40%;  /* Dark green - Stefan */
+
     --sidebar-background: 0 0% 98%;
 
     --sidebar-foreground: 240 5.3% 26.1%;

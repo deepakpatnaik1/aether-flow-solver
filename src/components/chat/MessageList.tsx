@@ -25,18 +25,27 @@ interface MessageListProps {
 export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastMessageCountRef = useRef(0);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = (forceSmooth: boolean = false) => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'nearest'
+        behavior: forceSmooth ? 'smooth' : 'auto',
+        block: 'end'
       });
     }
   };
 
   useEffect(() => {
-    scrollToBottom();
+    // Only scroll on new messages, not content updates
+    if (messages.length > lastMessageCountRef.current) {
+      // New message added - use smooth scroll
+      setTimeout(() => scrollToBottom(true), 50);
+      lastMessageCountRef.current = messages.length;
+    } else if (messages.length === lastMessageCountRef.current && messages.length > 0) {
+      // Content update to existing message - use instant scroll without animation
+      scrollToBottom(false);
+    }
   }, [messages]);
 
   return (

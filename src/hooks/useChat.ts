@@ -83,8 +83,16 @@ export const useChat = () => {
         
         console.log(`🎯 Created ${superjournalMessages.length} messages from ${entries.length} entries`);
         
-        // Set messages from superjournal
-        setMessages(superjournalMessages);
+        // Set messages from superjournal only if no messages exist yet
+        setMessages(prev => {
+          if (prev.length === 0) {
+            console.log('📥 Loading', superjournalMessages.length, 'messages from superjournal');
+            return superjournalMessages;
+          } else {
+            console.log('⚠️ Skipping superjournal load - messages already exist:', prev.length);
+            return prev;
+          }
+        });
         
       } else {
         const errorText = await response.text();

@@ -166,7 +166,10 @@ const ChatInterface = () => {
 
     setMessage('');
     setUploadedFiles([]);
-    setMessages(prev => [...prev, userMessage]);
+    setMessages(prev => {
+      console.log('📝 Adding user message to existing messages:', prev.length);
+      return [...prev, userMessage];
+    });
     setIsLoading(true);
     console.log('📝 User message added to UI, starting AI response...');
 
@@ -180,7 +183,10 @@ const ChatInterface = () => {
       isUser: false
     };
 
-    setMessages(prev => [...prev, aiMessage]);
+    setMessages(prev => {
+      console.log('🤖 Adding AI placeholder to messages:', prev.length);
+      return [...prev, aiMessage];
+    });
 
     try {
       // Format messages for OpenAI API

@@ -196,7 +196,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
       }
 
       // Handle tables
-      if (line.includes('|') && line.trim().startsWith('|') && line.trim().endsWith('|')) {
+      if (line.includes('|')) {
         // Look ahead to see if this is a table
         const tableLines = [line];
         let j = i + 1;
@@ -207,17 +207,35 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
           j++;
           
           // Collect table rows
-          while (j < lines.length && lines[j].includes('|') && lines[j].trim().startsWith('|')) {
+          while (j < lines.length && lines[j].includes('|') && lines[j].trim()) {
             tableLines.push(lines[j]);
             j++;
           }
           
           if (tableLines.length >= 3) {
             // Render table
-            const headers = tableLines[0].split('|').map(h => h.trim()).filter(h => h);
-            const rows = tableLines.slice(2).map(row => 
-              row.split('|').map(cell => cell.trim()).filter(cell => cell)
-            );
+            const headers = tableLines[0].split('|')
+              .map(h => h.trim())
+              .filter((h, idx, arr) => {
+                // Filter out empty strings at start/end (from leading/trailing |)
+                if (idx === 0 || idx === arr.length - 1) return h !== '';
+                return true;
+              });
+            
+            const rows = tableLines.slice(2).map(row => {
+              const cells = row.split('|')
+                .map(cell => cell.trim())
+                .filter((cell, idx, arr) => {
+                  // Filter out empty strings at start/end (from leading/trailing |)
+                  if (idx === 0 || idx === arr.length - 1) return cell !== '';
+                  return true;
+                });
+              // Ensure row has same number of cells as headers
+              while (cells.length < headers.length) {
+                cells.push('');
+              }
+              return cells.slice(0, headers.length);
+            }).filter(row => row.some(cell => cell !== ''));
             
             elements.push(
               <div key={i} className="my-4 overflow-x-auto">

@@ -24,13 +24,19 @@ interface MessageListProps {
 
 export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollPendingRef = useRef(false);
 
   useEffect(() => {
-    // Always scroll to bottom instantly with direct DOM manipulation
-    const scrollContainer = messagesEndRef.current?.parentElement?.parentElement;
-    if (scrollContainer) {
-      // Direct scrollTop assignment for instant scroll without animation
-      scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    // Debounce scroll using requestAnimationFrame to prevent flicker during streaming
+    if (!scrollPendingRef.current) {
+      scrollPendingRef.current = true;
+      requestAnimationFrame(() => {
+        const scrollContainer = messagesEndRef.current?.parentElement?.parentElement;
+        if (scrollContainer) {
+          scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        }
+        scrollPendingRef.current = false;
+      });
     }
   }, [messages]);
 

@@ -1,7 +1,26 @@
 import React, { useEffect, useRef } from 'react';
-import mermaid from 'mermaid';
-import katex from 'katex';
-import 'katex/dist/katex.min.css';
+
+// Dynamically import heavy libraries to avoid build issues
+const loadMermaid = async () => {
+  try {
+    const mermaid = await import('mermaid');
+    return mermaid.default;
+  } catch (error) {
+    console.warn('Mermaid not available:', error);
+    return null;
+  }
+};
+
+const loadKatex = async () => {
+  try {
+    const katex = await import('katex');
+    await import('katex/dist/katex.min.css');
+    return katex.default;
+  } catch (error) {
+    console.warn('KaTeX not available:', error);
+    return null;
+  }
+};
 
 interface MarkdownRendererProps {
   content: string;
@@ -11,23 +30,40 @@ interface MarkdownRendererProps {
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, persona, className = "" }) => {
   const mermaidRef = useRef<number>(0);
+  const mermaidInstance = useRef<any>(null);
+  const katexInstance = useRef<any>(null);
 
   useEffect(() => {
-    // Initialize mermaid
-    mermaid.initialize({ 
-      startOnLoad: false,
-      theme: 'dark',
-      themeVariables: {
-        darkMode: true,
-        background: '#2d2d2d',
-        primaryColor: '#bb86fc',
-        primaryTextColor: '#ffffff',
-        primaryBorderColor: '#bb86fc',
-        lineColor: '#ffffff',
-        secondaryColor: '#03dac6',
-        tertiaryColor: '#cf6679'
+    // Initialize libraries asynchronously
+    const initLibraries = async () => {
+      // Initialize mermaid
+      const mermaidLib = await loadMermaid();
+      if (mermaidLib) {
+        mermaidInstance.current = mermaidLib;
+        mermaidLib.initialize({ 
+          startOnLoad: false,
+          theme: 'dark',
+          themeVariables: {
+            darkMode: true,
+            background: '#2d2d2d',
+            primaryColor: '#bb86fc',
+            primaryTextColor: '#ffffff',
+            primaryBorderColor: '#bb86fc',
+            lineColor: '#ffffff',
+            secondaryColor: '#03dac6',
+            tertiaryColor: '#cf6679'
+          }
+        });
       }
-    });
+      
+      // Initialize KaTeX
+      const katexLib = await loadKatex();
+      if (katexLib) {
+        katexInstance.current = katexLib;
+      }
+    };
+    
+    initLibraries();
   }, []);
   
   // Get persona color based on persona name
@@ -143,8 +179,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
               // Render mermaid after component mounts
               setTimeout(() => {
                 const element = document.getElementById(mermaidId);
-                if (element && codeBlockContent.trim()) {
-                  mermaid.render(mermaidId + '-svg', codeBlockContent).then(({ svg }) => {
+                if (element && codeBlockContent.trim() && mermaidInstance.current) {
+                  mermaidInstance.current.render(mermaidId + '-svg', codeBlockContent).then(({ svg }: any) => {
                     element.innerHTML = svg;
                   }).catch(console.error);
                 }
@@ -257,9 +293,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
         // Block math ($$...$$)
         if (line.includes('$$')) {
           const mathMatch = line.match(/\$\$(.*?)\$\$/);
-          if (mathMatch) {
+          if (mathMatch && katexInstance.current) {
             try {
-              const html = katex.renderToString(mathMatch[1], { displayMode: true });
+              const html = katexInstance.current.renderToString(mathMatch[1], { displayMode: true });
               elements.push(
                 <div key={i} className="my-3 text-center">
                   <div dangerouslySetInnerHTML={{ __html: html }} />
@@ -444,21 +480,23 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
 
     // Handle inline math ($...$)
     result = result.replace(/\$([^$]+)\$/g, (match, mathText) => {
-      try {
-        const html = katex.renderToString(mathText, { displayMode: false });
-        const placeholder = `__MATH_${key}__`;
-        elements.push(
-          <span 
-            key={`${keyBase}-math-${key}`}
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
-        );
-        key++;
-        return placeholder;
-      } catch (error) {
-        console.error('KaTeX inline error:', error);
-        return match; // Return original if error
+      if (katexInstance.current) {
+        try {
+          const html = katexInstance.current.renderToString(mathText, { displayMode: false });
+          const placeholder = `__MATH_${key}__`;
+          elements.push(
+            <span 
+              key={`${keyBase}-math-${key}`}
+              dangerouslySetInnerHTML={{ __html: html }}
+            />
+          );
+          key++;
+          return placeholder;
+        } catch (error) {
+          console.error('KaTeX inline error:', error);
+        }
       }
+      return match; // Return original if katex not available or error
     });
 
     // Handle strikethrough ~~text~~

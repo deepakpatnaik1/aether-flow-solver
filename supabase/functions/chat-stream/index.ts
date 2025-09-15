@@ -133,16 +133,16 @@ async function loadPersonaProfile(personaName: string): Promise<string> {
 // Load relevant knowledge from knowledge_entries table
 async function loadRelevantKnowledge(userMessage: string, personaName: string): Promise<string> {
   try {
-    // Get recent conversations and key strategic context
+    // Get recent conversations and key strategic context - simplified query
     const { data: knowledge, error } = await supabase
       .from('knowledge_entries')
       .select('title, content, entry_type, tags')
-      .or(`entry_type.eq.conversation,entry_type.eq.strategy,entry_type.eq.decision,tags.cs.{${personaName.toLowerCase()}}`)
+      .in('entry_type', ['conversation', 'strategy', 'decision'])
       .order('created_at', { ascending: false })
       .limit(5);
 
     if (error) {
-      console.log('ℹ️ No knowledge entries found');
+      console.log('ℹ️ Error loading knowledge:', error);
       return '';
     }
 
@@ -368,7 +368,7 @@ serve(async (req) => {
     ] = await Promise.all([
       loadTurnProtocol(),
       loadBossProfile(),
-      loadPersonaProfile(persona.charAt(0).toUpperCase() + persona.slice(1).toLowerCase()), // Normalize case
+      loadPersonaProfile(persona.charAt(0).toUpperCase() + persona.slice(1)), // Normalize case
       loadRelevantKnowledge(actualQuestion, persona),
       loadFullJournal(),
       loadLatestEphemeralAttachment(),

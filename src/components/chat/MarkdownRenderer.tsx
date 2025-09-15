@@ -111,7 +111,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
       if (line.match(/^[\-\*\+]\s/)) {
         const listContent = line.replace(/^[\-\*\+]\s/, '');
         elements.push(
-          <div key={i} className="flex items-start gap-2 my-1">
+          <div key={i} className="flex items-baseline gap-2 my-1">
             <span className="leading-none flex-shrink-0" style={{ color: personaColor, lineHeight: '1.4', fontSize: '13px' }}>•</span>
             <div className="flex-1 message-text">
               {processInlineMarkdown(listContent)}
@@ -127,7 +127,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
         if (match) {
           const [, number, listContent] = match;
           elements.push(
-            <div key={i} className="flex items-start gap-2 my-1">
+            <div key={i} className="flex items-baseline gap-2 my-1">
               <span className="leading-none font-medium flex-shrink-0" style={{ color: personaColor, lineHeight: '1.4', fontSize: '13px' }}>{number}.</span>
               <div className="flex-1 message-text">
                 {processInlineMarkdown(listContent)}
@@ -147,7 +147,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
           : trimmed.replace(/^[\-\*\+]\s/, '');
         
         elements.push(
-          <div key={i} className="flex items-start gap-2 my-1 ml-6">
+          <div key={i} className="flex items-baseline gap-2 my-1 ml-6">
             <span className="leading-none text-sm opacity-70 flex-shrink-0" style={{ color: personaColor, lineHeight: '1.4', fontSize: '11px' }}>
               {isNumbered ? '◦' : '◦'}
             </span>

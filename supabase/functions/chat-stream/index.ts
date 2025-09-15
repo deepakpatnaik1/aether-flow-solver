@@ -2,6 +2,11 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 
+// EdgeRuntime for background tasks
+declare const EdgeRuntime: {
+  waitUntil(promise: Promise<any>): void;
+};
+
 // Supabase Configuration
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -273,10 +278,12 @@ serve(async (req) => {
                 console.log('📋 User message:', userMessage.substring(0, 100));
                 console.log('📋 Persona:', persona);
                 console.log('📋 Turn ID:', conversationTurnId);
-                // Use background task processing
-                processArtisanCut(conversationTurnId, userMessage, fullAIResponse, persona).catch(error => {
-                  console.error('❌ Background artisan cut failed:', error);
-                });
+                // Use EdgeRuntime.waitUntil for proper background task processing
+                EdgeRuntime.waitUntil(
+                  processArtisanCut(conversationTurnId, userMessage, fullAIResponse, persona).catch(error => {
+                    console.error('❌ Background artisan cut failed:', error);
+                  })
+                );
               } else {
                 console.log('⚠️ No AI response to process for artisan cut');
               }

@@ -17,6 +17,7 @@ const categories = [
   { value: 'documents', label: 'General Documents', bucket: 'documents' },
   { value: 'boss', label: 'Boss Files', bucket: 'boss' },
   { value: 'persona', label: 'Persona Files', bucket: 'persona' },
+  { value: 'journal', label: 'Journal & Memory Files', bucket: 'documents' },
   { value: 'processes', label: 'Process Files', bucket: 'processes' },
 ];
 

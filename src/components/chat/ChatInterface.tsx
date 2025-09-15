@@ -146,11 +146,12 @@ const ChatInterface = () => {
       setUploadedFiles(prev => [...prev, ...uploadResults]);
       setPendingFiles(null);
       
-      // If persona or boss files were uploaded, process them into database entries
-      if (category === 'persona' || category === 'boss') {
+      // If persona, boss, or journal files were uploaded, process them into database entries
+      if (category === 'persona' || category === 'boss' || category === 'journal') {
         console.log(`Processing ${category} files for database conversion...`);
         try {
-          const processResponse = await supabase.functions.invoke('process-persona-upload', {
+          const functionName = category === 'journal' ? 'process-journal-upload' : 'process-persona-upload';
+          const processResponse = await supabase.functions.invoke(functionName, {
             body: { uploadResults, category }
           });
           
@@ -160,7 +161,7 @@ const ChatInterface = () => {
             console.log(`✅ ${category} files processed successfully:`, processResponse.data);
           }
         } catch (error) {
-          console.error(`Error invoking process-persona-upload for ${category}:`, error);
+          console.error(`Error invoking processing function for ${category}:`, error);
         }
       }
     } catch (error) {

@@ -154,6 +154,7 @@
   .attachment-btn, .send-btn {
     @apply bg-transparent hover:bg-white/10 text-muted-foreground hover:text-foreground;
     @apply border-0 h-8 w-8 p-0;
+    @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   }
 
   .model-controls {

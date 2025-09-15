@@ -76,11 +76,18 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
           </div>
 
           <div className="p-3 bg-muted rounded text-sm">
-            <p className="font-medium">Files will be stored in:</p>
-            <code className="text-xs">
-              {selectedCategoryData?.bucket}/
-              {files ? Array.from(files)[0]?.name : 'filename.ext'}
-            </code>
+            <p className="font-medium">
+              {selectedCategory === 'persona' 
+                ? 'Persona files will be processed into database entries'
+                : 'Files will be stored in:'
+              }
+            </p>
+            {selectedCategory !== 'persona' && (
+              <code className="text-xs">
+                {selectedCategoryData?.bucket}/
+                {files ? Array.from(files)[0]?.name : 'filename.ext'}
+              </code>
+            )}
           </div>
 
           <div className="flex justify-end gap-2">

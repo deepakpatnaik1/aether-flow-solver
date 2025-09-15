@@ -219,16 +219,25 @@ const ChatInterface = () => {
       let streamingContent = '';
       let finalResponse = '';
       let essence = '';
+      let buffer = ''; // Buffer for incomplete JSON chunks
 
       try {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
+          // Decode chunk and add to buffer
           const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n').filter(line => line.trim());
+          buffer += chunk;
+
+          // Split by newlines and process complete lines
+          const lines = buffer.split('\n');
+          // Keep the last (potentially incomplete) line in buffer
+          buffer = lines.pop() || '';
 
           for (const line of lines) {
+            if (!line.trim()) continue;
+            
             try {
               const parsed = JSON.parse(line);
               
@@ -254,8 +263,26 @@ const ChatInterface = () => {
                 throw new Error(parsed.error);
               }
             } catch (parseError) {
-              console.error('Error parsing streaming response:', parseError);
+              console.warn('Error parsing line:', line, parseError);
             }
+          }
+        }
+        
+        // Process any remaining data in buffer
+        if (buffer.trim()) {
+          try {
+            const parsed = JSON.parse(buffer);
+            if (parsed.type === 'complete') {
+              finalResponse = parsed.response;
+              essence = parsed.essence;
+              setMessages(prev => prev.map(msg => 
+                msg.id === aiMessageId 
+                  ? { ...msg, content: finalResponse }
+                  : msg
+              ));
+            }
+          } catch (parseError) {
+            console.warn('Error parsing final buffer:', buffer, parseError);
           }
         }
       } finally {

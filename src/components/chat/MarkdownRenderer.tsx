@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import mermaid from 'mermaid';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import { MermaidDiagram } from './MermaidDiagram';
 
 interface MarkdownRendererProps {
   content: string;
@@ -127,44 +128,15 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
           inCodeBlock = false;
           
           if (codeBlockLanguage === 'mermaid') {
-            // Render mermaid diagram
+            // Render mermaid diagram using dedicated component
             const mermaidId = `mermaid-${mermaidRef.current++}`;
-            try {
-              elements.push(
-                <div key={i} className="my-4 p-4 bg-muted/20 rounded-lg border overflow-hidden">
-                  <div className="mermaid-container" style={{ textAlign: 'center' }}>
-                    <div id={mermaidId} className="mermaid">
-                      {codeBlockContent}
-                    </div>
-                  </div>
-                </div>
-              );
-              
-              // Render mermaid after component mounts
-              setTimeout(() => {
-                const element = document.getElementById(mermaidId);
-                if (element && codeBlockContent.trim()) {
-                  mermaid.render(mermaidId + '-svg', codeBlockContent).then(({ svg }) => {
-                    element.innerHTML = svg;
-                  }).catch(console.error);
-                }
-              }, 100);
-            } catch (error) {
-              console.error('Mermaid render error:', error);
-              // Fallback to regular code block
-              elements.push(
-                <div key={i} className="my-3 rounded-lg bg-muted/50 border overflow-hidden">
-                  <div className="px-3 py-1 bg-muted/70 text-xs text-muted-foreground border-b">
-                    mermaid (error)
-                  </div>
-                  <pre className="p-3 overflow-x-auto">
-                    <code className="text-sm font-mono text-foreground">
-                      {codeBlockContent}
-                    </code>
-                  </pre>
-                </div>
-              );
-            }
+            elements.push(
+              <MermaidDiagram 
+                key={i}
+                content={codeBlockContent}
+                id={mermaidId}
+              />
+            );
           } else {
             // Regular code block
             elements.push(

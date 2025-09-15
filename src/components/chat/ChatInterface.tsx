@@ -111,7 +111,8 @@ const ChatInterface = () => {
       if (selectedPersona !== persona) {
         setSelectedPersona(persona);
       }
-    } else if (selectedPersona && message.length > 0 && !message.startsWith(selectedPersona)) {
+    } else if (selectedPersona && message.length === 0) {
+      // Only clear persona if input is completely empty
       setSelectedPersona(null);
     }
   }, [message, selectedPersona]);

@@ -36,23 +36,26 @@ async function signR2Request(
 ) {
   const encoder = new TextEncoder();
   
-  // Normalize headers to lowercase for consistent signing
-  const normalizedHeaders: Record<string, string> = {};
+  // AWS requires lowercase header names for signing but actual case for HTTP
+  const lowerHeaders: Record<string, string> = {};
+  const actualHeaders: Record<string, string> = {};
+  
   for (const [key, value] of Object.entries(headers)) {
-    normalizedHeaders[key.toLowerCase()] = value;
+    lowerHeaders[key.toLowerCase()] = value;
+    actualHeaders[key] = value; // Keep original case for HTTP
   }
   
-  // Create canonical request
+  // Create canonical request with lowercase headers
   const urlObj = new URL(url);
   const canonicalUri = urlObj.pathname;
   const canonicalQuerystring = urlObj.search.slice(1);
   
-  const canonicalHeaders = Object.entries(normalizedHeaders)
+  const canonicalHeaders = Object.entries(lowerHeaders)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([key, value]) => `${key}:${value}`)
     .join('\n');
     
-  const signedHeaders = Object.keys(normalizedHeaders)
+  const signedHeaders = Object.keys(lowerHeaders)
     .sort()
     .join(';');
 
@@ -60,7 +63,7 @@ async function signR2Request(
     ? Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode(body))))
         .map(b => b.toString(16).padStart(2, '0'))
         .join('')
-    : 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'; // Empty string hash
+    : 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
 
   const canonicalRequest = [
     method,
@@ -86,75 +89,43 @@ async function signR2Request(
       .join('')
   ].join('\n');
 
-  // Calculate signature
-  const getSignatureKey = async (key: string, dateStamp: string, regionName: string, serviceName: string) => {
-    const kDate = await crypto.subtle.importKey(
-      'raw',
-      encoder.encode('AWS4' + key),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    );
-    const kDateResult = await crypto.subtle.sign('HMAC', kDate, encoder.encode(dateStamp));
-    
-    const kRegion = await crypto.subtle.importKey(
-      'raw',
-      new Uint8Array(kDateResult),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    );
-    const kRegionResult = await crypto.subtle.sign('HMAC', kRegion, encoder.encode(regionName));
-    
-    const kService = await crypto.subtle.importKey(
-      'raw',
-      new Uint8Array(kRegionResult),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    );
-    const kServiceResult = await crypto.subtle.sign('HMAC', kService, encoder.encode(serviceName));
-    
-    const kSigning = await crypto.subtle.importKey(
-      'raw',
-      new Uint8Array(kServiceResult),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    );
-    const kSigningResult = await crypto.subtle.sign('HMAC', kSigning, encoder.encode('aws4_request'));
-    
-    return new Uint8Array(kSigningResult);
-  };
-
-  const signingKey = await getSignatureKey(R2_SECRET_ACCESS_KEY!, date, 'auto', 's3');
-  const signingKeyObj = await crypto.subtle.importKey(
-    'raw',
-    signingKey,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
+  // Calculate signature using HMAC chain
+  const kDate = await crypto.subtle.sign(
+    'HMAC',
+    await crypto.subtle.importKey('raw', encoder.encode('AWS4' + R2_SECRET_ACCESS_KEY), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']),
+    encoder.encode(date)
   );
-  const signatureResult = await crypto.subtle.sign('HMAC', signingKeyObj, encoder.encode(stringToSign));
-  const signature = Array.from(new Uint8Array(signatureResult))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-
-  // Create authorization header
-  const authorization = `${algorithm} Credential=${R2_ACCESS_KEY_ID}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
   
-  // Return headers with proper casing for HTTP requests
-  const finalHeaders: Record<string, string> = {
-    'Authorization': authorization,
+  const kRegion = await crypto.subtle.sign(
+    'HMAC',
+    await crypto.subtle.importKey('raw', new Uint8Array(kDate), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']),
+    encoder.encode('auto')
+  );
+  
+  const kService = await crypto.subtle.sign(
+    'HMAC',
+    await crypto.subtle.importKey('raw', new Uint8Array(kRegion), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']),
+    encoder.encode('s3')
+  );
+  
+  const kSigning = await crypto.subtle.sign(
+    'HMAC',
+    await crypto.subtle.importKey('raw', new Uint8Array(kService), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']),
+    encoder.encode('aws4_request')
+  );
+  
+  const signature = Array.from(new Uint8Array(await crypto.subtle.sign(
+    'HMAC',
+    await crypto.subtle.importKey('raw', new Uint8Array(kSigning), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']),
+    encoder.encode(stringToSign)
+  ))).map(b => b.toString(16).padStart(2, '0')).join('');
+
+  // Return headers with authorization
+  return {
+    ...actualHeaders, // Use original case for HTTP headers
+    'Authorization': `${algorithm} Credential=${R2_ACCESS_KEY_ID}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`,
     'X-Amz-Date': timestamp,
   };
-  
-  // Add original headers with proper casing
-  for (const [key, value] of Object.entries(headers)) {
-    finalHeaders[key] = value;
-  }
-  
-  return finalHeaders;
 }
 
 async function appendToSuperjournal(entry: JournalEntry) {
@@ -195,13 +166,15 @@ async function appendToSuperjournal(entry: JournalEntry) {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
-    // Upload updated journal
+    // Upload updated journal - use exact same headers that will be signed
     const putHeaders = await signR2Request('PUT', r2Endpoint, {
       'host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
       'content-type': 'application/jsonl',
       'content-length': updatedContent.length.toString(),
       'x-amz-content-sha256': contentHash
     }, updatedContent);
+    
+    console.log('🔐 PUT headers for R2:', putHeaders);
     
     const putResponse = await fetch(r2Endpoint, {
       method: 'PUT',
@@ -210,7 +183,9 @@ async function appendToSuperjournal(entry: JournalEntry) {
     });
     
     if (!putResponse.ok) {
-      throw new Error(`Failed to upload journal: ${putResponse.status} ${await putResponse.text()}`);
+      const errorText = await putResponse.text();
+      console.error('❌ R2 PUT failed:', putResponse.status, errorText);
+      throw new Error(`Failed to upload journal: ${putResponse.status} ${errorText}`);
     }
     
     console.log('✅ Journal entry saved to R2');

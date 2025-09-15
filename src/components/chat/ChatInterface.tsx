@@ -294,6 +294,45 @@ const ChatInterface = () => {
       };
       await saveMessage(finalAiMessage);
 
+      // Save conversation turn to superjournal in R2
+      try {
+        const journalEntry = {
+          id: crypto.randomUUID(),
+          timestamp: new Date().toISOString(),
+          userMessage: {
+            content: userMessage.content,
+            persona: userMessage.persona,
+            attachments: userMessage.attachments
+          },
+          aiResponse: {
+            content: streamingContent,
+            persona: finalAiMessage.persona,
+            model: selectedModel
+          }
+        };
+
+        console.log('💾 Saving conversation turn to superjournal...');
+        
+        // Use background task to avoid blocking the UI
+        const superjournalResponse = await fetch(`https://suncgglbheilkeimwuxt.supabase.co/functions/v1/superjournal?action=append`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA`,
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA',
+          },
+          body: JSON.stringify(journalEntry),
+        });
+
+        if (superjournalResponse.ok) {
+          console.log('✅ Conversation turn saved to superjournal');
+        } else {
+          console.warn('⚠️ Failed to save to superjournal:', await superjournalResponse.text());
+        }
+      } catch (superjournalError) {
+        console.warn('⚠️ Superjournal save failed (non-blocking):', superjournalError);
+      }
+
     } catch (error) {
       console.error('Error:', error);
       const errorMessage: Message = {

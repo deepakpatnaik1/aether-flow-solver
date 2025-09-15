@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.upload-file]
 verify_jwt = false
+
+[functions.superjournal]
+verify_jwt = false

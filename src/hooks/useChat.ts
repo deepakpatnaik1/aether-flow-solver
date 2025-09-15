@@ -20,13 +20,80 @@ export const useChat = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [journal, setJournal] = useState<Array<{persona: string, content: string}>>([]);
+  const [superjournalLoaded, setSuperjournalLoaded] = useState(false);
 
   // Initialize conversation on mount
   useEffect(() => {
     initializeConversation();
   }, []);
 
+  // Load superjournal from R2 on startup
+  useEffect(() => {
+    loadSuperjournalFromR2();
+  }, []);
+
+  const loadSuperjournalFromR2 = async () => {
+    try {
+      console.log('📖 Loading superjournal from R2...');
+      
+      const response = await fetch(`https://suncgglbheilkeimwuxt.supabase.co/functions/v1/superjournal?action=load`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA`,
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA',
+        },
+      });
+
+      if (response.ok) {
+        const { entries } = await response.json();
+        console.log(`✅ Loaded ${entries.length} entries from superjournal`);
+        
+        // Convert superjournal entries to messages format
+        const superjournalMessages: Message[] = [];
+        
+        entries.forEach((entry: any) => {
+          // Add user message
+          superjournalMessages.push({
+            id: entry.id + '-user',
+            content: entry.userMessage.content,
+            persona: entry.userMessage.persona,
+            timestamp: new Date(entry.timestamp),
+            isUser: true,
+            attachments: entry.userMessage.attachments
+          });
+          
+          // Add AI response
+          superjournalMessages.push({
+            id: entry.id + '-ai',
+            content: entry.aiResponse.content,
+            persona: entry.aiResponse.persona,
+            timestamp: new Date(new Date(entry.timestamp).getTime() + 1000), // Add 1 second
+            isUser: false
+          });
+        });
+        
+        // Set messages from superjournal (this will be the scrollback)
+        setMessages(superjournalMessages);
+        setSuperjournalLoaded(true);
+        
+      } else {
+        console.warn('⚠️ Failed to load superjournal, falling back to database');
+        setSuperjournalLoaded(true);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error loading superjournal:', error);
+      setSuperjournalLoaded(true);
+    }
+  };
+
   const initializeConversation = async () => {
+    // Only initialize from database if superjournal hasn't loaded yet
+    if (superjournalLoaded) {
+      console.log('🏃‍♂️ Skipping database load - superjournal already loaded');
+      return;
+    }
+    
     // Try to get or create a single conversation
     const { data, error } = await supabase
       .from('conversations')
@@ -61,7 +128,11 @@ export const useChat = () => {
     }
 
     setConversationId(currentConversation.id);
-    await loadMessages(currentConversation.id);
+    
+    // Only load messages from DB if superjournal didn't load
+    if (!superjournalLoaded) {
+      await loadMessages(currentConversation.id);
+    }
     await loadJournalEntries(currentConversation.id);
   };
 

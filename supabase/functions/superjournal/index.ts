@@ -198,60 +198,110 @@ async function appendToSuperjournal(entry: JournalEntry) {
 }
 
 async function loadSuperjournal(): Promise<JournalEntry[]> {
-  const journalKey = 'superjournal/superjournal.jsonl';
-  const r2Endpoint = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${journalKey}`;
+  // Try new filename first, then fall back to old filename
+  const journalKeys = ['superjournal/superjournal.jsonl', 'superjournal/journal.jsonl'];
   
-  try {
-    const emptyBodyHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
-    const getHeaders = await signR2Request('GET', r2Endpoint, {
-      'host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-      'x-amz-content-sha256': emptyBodyHash
-    });
-
-    console.log('🔍 Attempting to load from R2:', r2Endpoint);
+  for (const journalKey of journalKeys) {
+    const r2Endpoint = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${journalKey}`;
     
-    const response = await fetch(r2Endpoint, {
-      method: 'GET',
-      headers: getHeaders
-    });
+    try {
+      const emptyBodyHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+      const getHeaders = await signR2Request('GET', r2Endpoint, {
+        'host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+        'x-amz-content-sha256': emptyBodyHash
+      });
 
-    console.log('📡 R2 GET response status:', response.status);
+      console.log('🔍 Attempting to load from R2:', r2Endpoint);
+      
+      const response = await fetch(r2Endpoint, {
+        method: 'GET',
+        headers: getHeaders
+      });
 
-    if (!response.ok) {
-      if (response.status === 404) {
-        console.log('📝 No superjournal found, returning empty array');
-        return [];
-      }
-      throw new Error(`Failed to load journal: ${response.status}`);
-    }
+      console.log('📡 R2 GET response status:', response.status);
 
-    const content = await response.text();
-    console.log('📖 Raw journal content length:', content.length);
-    console.log('📄 First 200 chars:', content.substring(0, 200));
-    
-    const entries: JournalEntry[] = [];
-    const lines = content.trim().split('\n');
-    
-    console.log('📊 Processing', lines.length, 'lines from journal');
-    
-    for (const line of lines) {
-      if (line.trim()) {
-        try {
-          const entry = JSON.parse(line);
-          entries.push(entry);
-        } catch (parseError) {
-          console.warn('⚠️ Failed to parse journal line:', line, parseError);
+      if (response.ok) {
+        // Found entries in this file, process them
+
+        const content = await response.text();
+        console.log('📖 Raw journal content length:', content.length);
+        console.log('📄 First 200 chars:', content.substring(0, 200));
+        
+        const entries: JournalEntry[] = [];
+        const lines = content.trim().split('\n');
+        
+        console.log('📊 Processing', lines.length, 'lines from journal');
+        
+        for (const line of lines) {
+          if (line.trim()) {
+            try {
+              const entry = JSON.parse(line);
+              entries.push(entry);
+            } catch (parseError) {
+              console.warn('⚠️ Failed to parse journal line:', line, parseError);
+            }
+          }
         }
+        
+        console.log('✅ Successfully loaded', entries.length, 'journal entries from', journalKey);
+        
+        // If we found entries in the old filename, migrate them to the new filename
+        if (journalKey.includes('journal.jsonl') && entries.length > 0) {
+          console.log('🔄 Migrating entries from old filename to new filename...');
+          try {
+            // Save all entries to the new filename
+            const newJournalKey = 'superjournal/superjournal.jsonl';
+            const newR2Endpoint = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${newJournalKey}`;
+            const migratedContent = entries.map(entry => JSON.stringify(entry)).join('\n') + '\n';
+            
+            // Calculate content hash
+            const encoder = new TextEncoder();
+            const contentBytes = encoder.encode(migratedContent);
+            const contentHashArray = await crypto.subtle.digest('SHA-256', contentBytes);
+            const contentHash = Array.from(new Uint8Array(contentHashArray))
+              .map(b => b.toString(16).padStart(2, '0'))
+              .join('');
+            
+            const putHeaders = await signR2Request('PUT', newR2Endpoint, {
+              'host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+              'content-type': 'application/jsonl',
+              'content-length': migratedContent.length.toString(),
+              'x-amz-content-sha256': contentHash
+            }, migratedContent);
+            
+            const putResponse = await fetch(newR2Endpoint, {
+              method: 'PUT',
+              headers: putHeaders,
+              body: migratedContent
+            });
+            
+            if (putResponse.ok) {
+              console.log('✅ Successfully migrated entries to new filename');
+            } else {
+              console.warn('⚠️ Failed to migrate entries:', putResponse.status);
+            }
+          } catch (migrateError) {
+            console.error('❌ Error migrating entries:', migrateError);
+          }
+        }
+        
+        return entries;
+      } else if (response.status === 404) {
+        console.log('📝 No file found at', journalKey);
+        continue; // Try next filename
+      } else {
+        throw new Error(`Failed to load journal from ${journalKey}: ${response.status}`);
       }
+      
+    } catch (error) {
+      console.error('❌ Error loading from', journalKey, ':', error);
+      continue; // Try next filename
     }
-    
-    console.log('✅ Successfully loaded', entries.length, 'journal entries');
-    return entries;
-    
-  } catch (error) {
-    console.error('❌ Error loading superjournal:', error);
-    return [];
   }
+  
+  // If we get here, no files were found
+  console.log('📝 No superjournal files found, returning empty array');
+  return [];
 }
 
 serve(async (req) => {

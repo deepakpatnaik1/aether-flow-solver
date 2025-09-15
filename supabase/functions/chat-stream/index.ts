@@ -113,23 +113,36 @@ serve(async (req) => {
             throw new Error('No response body available');
           }
 
+          console.log('🌊 Starting to read streaming response...');
+          let totalChunks = 0;
+
           while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) {
+              console.log(`✅ Streaming complete! Processed ${totalChunks} chunks`);
+              break;
+            }
 
             const chunk = new TextDecoder().decode(value);
             const lines = chunk.split('\n').filter(line => line.trim());
+            totalChunks++;
+
+            console.log(`📦 Chunk ${totalChunks}: ${lines.length} lines`);
 
             for (const line of lines) {
               if (line.startsWith('data: ')) {
                 const data = line.slice(6);
-                if (data === '[DONE]') continue;
+                if (data === '[DONE]') {
+                  console.log('🏁 OpenAI stream finished');
+                  continue;
+                }
 
                 try {
                   const parsed = JSON.parse(data);
                   const delta = parsed.choices?.[0]?.delta?.content;
                   
                   if (delta) {
+                    console.log(`📝 Sending delta: "${delta}"`);
                     // Stream the delta to frontend
                     const streamData = JSON.stringify({ 
                       type: 'content_delta', 
@@ -138,7 +151,7 @@ serve(async (req) => {
                     controller.enqueue(encoder.encode(streamData));
                   }
                 } catch (parseError) {
-                  console.error('Error parsing streaming chunk:', parseError);
+                  console.error('❌ Error parsing streaming chunk:', parseError);
                 }
               }
             }

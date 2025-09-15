@@ -224,14 +224,14 @@ const ChatInterface = () => {
         while (true) {
           const { done, value } = await reader.read();
           if (done) {
-            console.log('Stream complete');
+            console.log('✅ Stream complete');
             break;
           }
 
           // Decode chunk and add to buffer
           const chunk = decoder.decode(value, { stream: true });
           buffer += chunk;
-          console.log('Received chunk:', chunk);
+          console.log('📥 Received chunk:', chunk.length, 'bytes');
 
           // Split by newlines and process complete lines
           const lines = buffer.split('\n');
@@ -241,29 +241,32 @@ const ChatInterface = () => {
           for (const line of lines) {
             if (!line.trim()) continue;
             
-            console.log('Processing line:', line);
+            console.log('🔍 Processing line:', line);
             try {
               const parsed = JSON.parse(line);
-              console.log('Parsed data:', parsed);
+              console.log('📊 Parsed data:', parsed);
               
-              if (parsed.type === 'content_delta') {
+              if (parsed.type === 'content_delta' && parsed.delta) {
                 streamingContent += parsed.delta;
-                console.log('Streaming content updated, length:', streamingContent.length);
+                console.log('🌊 STREAMING UPDATE:', `"${parsed.delta}"`, '| Total length:', streamingContent.length);
                 
-                // Update the AI message with streaming content directly
+                // Update the AI message with streaming content
                 setMessages(prev => prev.map(msg => 
                   msg.id === aiMessageId 
                     ? { ...msg, content: streamingContent }
                     : msg
                 ));
+
+                // Add a small delay to make streaming visible (remove this in production)
+                await new Promise(resolve => setTimeout(resolve, 50));
+                
               } else if (parsed.type === 'complete') {
-                console.log('Streaming complete');
-                // No additional processing needed for completion
+                console.log('🏁 Streaming complete, final content length:', streamingContent.length);
               } else if (parsed.type === 'error') {
                 throw new Error(parsed.error);
               }
             } catch (parseError) {
-              console.warn('Error parsing line:', line, parseError);
+              console.warn('⚠️ Error parsing line:', line, parseError);
             }
           }
         }

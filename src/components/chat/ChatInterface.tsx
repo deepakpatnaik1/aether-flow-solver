@@ -338,7 +338,9 @@ const ChatInterface = () => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    console.log('🔵 handleKeyDown triggered, key:', e.key, 'shiftKey:', e.shiftKey);
     if (e.key === 'Enter' && !e.shiftKey) {
+      console.log('✅ Enter key detected - calling handleSendMessage');
       e.preventDefault();
       handleSendMessage();
     }
@@ -394,8 +396,11 @@ const ChatInterface = () => {
                 className="chat-input flex-1"
               />
               
-              <Button 
-                onClick={handleSendMessage}
+               <Button 
+                onClick={() => {
+                  console.log('🔴 Send button clicked!');
+                  handleSendMessage();
+                }}
                 disabled={!message.trim() || isLoading}
                 className="send-btn"
               >

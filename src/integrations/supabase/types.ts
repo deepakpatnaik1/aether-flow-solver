@@ -153,30 +153,6 @@ export type Database = {
         }
         Relationships: []
       }
-      journal_entries_backup: {
-        Row: {
-          content: string | null
-          conversation_id: string | null
-          created_at: string | null
-          id: string | null
-          persona: string | null
-        }
-        Insert: {
-          content?: string | null
-          conversation_id?: string | null
-          created_at?: string | null
-          id?: string | null
-          persona?: string | null
-        }
-        Update: {
-          content?: string | null
-          conversation_id?: string | null
-          created_at?: string | null
-          id?: string | null
-          persona?: string | null
-        }
-        Relationships: []
-      }
       personas: {
         Row: {
           created_at: string

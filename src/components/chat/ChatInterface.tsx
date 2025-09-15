@@ -247,13 +247,9 @@ const ChatInterface = () => {
     if (persona) {
       setSelectedPersona(personaId);
       setMessage(`${persona.name}, `);
-      // Debug focus issue
+      // Focus input after persona selection
       setTimeout(() => {
-        console.log('Attempting to focus input:', inputRef.current);
-        console.log('Input element exists:', !!inputRef.current);
-        console.log('Input element type:', inputRef.current?.tagName);
         inputRef.current?.focus();
-        console.log('Active element after focus:', document.activeElement);
       }, 100);
     }
   };
@@ -348,7 +344,7 @@ const ChatInterface = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
               
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="model-selector">
                     <ChevronDown className="h-3 w-3 mr-1" />

@@ -331,11 +331,17 @@ const ChatInterface = () => {
                     {models.find(m => m.id === selectedModel)?.name || 'GPT-5'}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-background border">
+                <DropdownMenuContent className="bg-background border" onCloseAutoFocus={(e) => e.preventDefault()}>
                   {models.map((model) => (
                     <DropdownMenuItem
                       key={model.id}
-                      onClick={() => setSelectedModel(model.id)}
+                      onClick={() => {
+                        setSelectedModel(model.id);
+                        // Focus input after model selection
+                        setTimeout(() => {
+                          inputRef.current?.focus();
+                        }, 0);
+                      }}
                     >
                       {model.name}
                     </DropdownMenuItem>

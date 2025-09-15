@@ -111,10 +111,11 @@ const ChatInterface = () => {
       if (selectedPersona !== persona) {
         setSelectedPersona(persona);
       }
-    } else if (selectedPersona && message.length === 0) {
+    } else if (message.length === 0) {
       // Only clear persona if input is completely empty
       setSelectedPersona(null);
     }
+    // Keep current persona while typing partial matches
   }, [message, selectedPersona]);
 
   const handleFileSelect = (files: FileList | null) => {
@@ -349,7 +350,7 @@ const ChatInterface = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="model-selector">
                     <ChevronDown className="h-3 w-3 mr-1" />
-                    {selectedPersona && personas.find(p => p.id === selectedPersona)?.name || 'Persona'}
+                    {selectedPersona ? personas.find(p => p.id === selectedPersona)?.name : 'Persona'}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-background border" onCloseAutoFocus={(e) => e.preventDefault()}>

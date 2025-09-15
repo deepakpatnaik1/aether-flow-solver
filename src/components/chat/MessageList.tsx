@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { PersonaBadge } from './PersonaBadge';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface Message {
   id: string;
@@ -67,42 +68,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
                 ))}
               </div>
             )}
-            {message.content.split('\n').map((line, index) => {
-              // Handle headers
-              if (line.startsWith('## ')) {
-                return (
-                  <h3 key={index} className="message-header">
-                    {line.replace('## ', '')}
-                  </h3>
-                );
-              }
-              // Handle bullet points
-              if (line.startsWith('• ')) {
-                let processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                processedLine = processedLine.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-                return (
-                  <div key={index} className="message-bullet" dangerouslySetInnerHTML={{ __html: processedLine }} />
-                );
-              }
-              // Handle sub-bullets
-              if (line.startsWith('  ◦ ')) {
-                let processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                processedLine = processedLine.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-                return (
-                  <div key={index} className="message-sub-bullet" dangerouslySetInnerHTML={{ __html: processedLine }} />
-                );
-              }
-              // Regular text
-              if (line.trim()) {
-                let processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                processedLine = processedLine.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-                return (
-                  <p key={index} className="message-text" dangerouslySetInnerHTML={{ __html: processedLine }} />
-                );
-              }
-              // Empty lines
-              return <br key={index} />;
-            })}
+            <MarkdownRenderer content={message.content} />
           </div>
         </div>
       ))}

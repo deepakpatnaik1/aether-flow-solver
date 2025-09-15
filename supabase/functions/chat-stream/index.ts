@@ -68,13 +68,14 @@ function getDefaultPersonas(): Record<string, string> {
   };
 }
 
-// Load journal content for system memory from Supabase
+// Load journal content for system memory from Supabase (OPTIMIZED - recent entries only)
 async function loadJournalContent(): Promise<string> {
   try {
     const { data: entries, error } = await supabase
       .from('journal_entries')
-      .select('boss_input, persona_response, timestamp')
-      .order('timestamp', { ascending: true });
+      .select('user_message_content, ai_response_content, timestamp')
+      .order('timestamp', { ascending: false })
+      .limit(10); // Only last 10 artisan cuts for memory
 
     if (error) {
       console.error('❌ Error loading journal:', error);
@@ -86,17 +87,17 @@ async function loadJournalContent(): Promise<string> {
       return '';
     }
 
-    // Convert to JSONL format for system memory
-    const journalLines = entries.map(entry => 
+    // Convert to JSONL format for system memory (reversed for chronological order)
+    const journalLines = entries.reverse().map(entry => 
       JSON.stringify({
         timestamp: entry.timestamp,
-        bossInput: entry.boss_input,
-        personaResponse: entry.persona_response
+        bossInput: entry.user_message_content,
+        personaResponse: entry.ai_response_content
       })
     );
 
     const content = journalLines.join('\n');
-    console.log('📚 Loaded journal content for system memory:', content.length, 'chars,', entries.length, 'entries');
+    console.log('📚 Loaded journal content for system memory:', content.length, 'chars,', entries.length, 'recent entries');
     return content;
     
   } catch (error) {
@@ -217,7 +218,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, model = 'gpt-5-2025-08-07', persona = 'gunnar', turnId } = await req.json();
+    const { messages, model = 'gpt-4o-mini', persona = 'gunnar', turnId } = await req.json();
     console.log('Received request:', { 
       messagesCount: messages?.length, 
       model, 

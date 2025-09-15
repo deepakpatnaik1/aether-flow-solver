@@ -22,13 +22,17 @@ export const useChat = () => {
   const [journal, setJournal] = useState<Array<{persona: string, content: string}>>([]);
   const [superjournalLoaded, setSuperjournalLoaded] = useState(false);
 
-  // Initialize conversation on mount
+  // Clear any stale browser storage on startup
   useEffect(() => {
-    initializeConversation();
-  }, []);
-
-  // Load superjournal from R2 on startup
-  useEffect(() => {
+    // Clear any localStorage/sessionStorage entries that might interfere
+    localStorage.removeItem('chat-messages');
+    localStorage.removeItem('chat-conversation');
+    localStorage.removeItem('superjournal-cache');
+    sessionStorage.removeItem('chat-messages');
+    sessionStorage.removeItem('chat-conversation');
+    sessionStorage.removeItem('superjournal-cache');
+    
+    // Load superjournal first, then initialize conversation
     loadSuperjournalFromR2();
   }, []);
 
@@ -76,19 +80,24 @@ export const useChat = () => {
         setMessages(superjournalMessages);
         setSuperjournalLoaded(true);
         
+        // Initialize conversation after superjournal loads
+        await initializeConversation();
+        
       } else {
         console.warn('⚠️ Failed to load superjournal, falling back to database');
         setSuperjournalLoaded(true);
+        await initializeConversation();
       }
       
     } catch (error) {
       console.error('❌ Error loading superjournal:', error);
       setSuperjournalLoaded(true);
+      await initializeConversation();
     }
   };
 
   const initializeConversation = async () => {
-    // Only initialize from database if superjournal hasn't loaded yet
+    // Skip database load if superjournal has been loaded
     if (superjournalLoaded) {
       console.log('🏃‍♂️ Skipping database load - superjournal already loaded');
       return;

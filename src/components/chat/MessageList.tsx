@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { format } from 'date-fns';
 import { PersonaBadge } from './PersonaBadge';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
@@ -42,7 +43,12 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
     <div ref={containerRef} className="message-list">
       {messages.map((message) => (
         <div key={message.id} className="message-container">
-          <PersonaBadge persona={message.isUser ? 'Boss' : message.persona} />
+          <div className="flex items-center justify-between mb-2">
+            <PersonaBadge persona={message.isUser ? 'Boss' : message.persona} />
+            <span className="text-xs text-muted-foreground">
+              {format(message.timestamp, 'HH:mm')}
+            </span>
+          </div>
           <div className="message-content">
             {message.attachments && message.attachments.length > 0 && (
               <div className="mb-3 space-y-2">

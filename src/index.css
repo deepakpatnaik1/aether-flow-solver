@@ -175,10 +175,17 @@
 
   .message-list {
     @apply p-6 space-y-3 max-w-4xl mx-auto;
+    /* Disable any animations that could cause flicker */
+    animation: none !important;
+    transition: none !important;
   }
 
   .message-container {
     @apply flex flex-col gap-2;
+    /* Disable any animations that could cause flicker */
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
   }
 
   .persona-badge {
@@ -192,6 +199,10 @@
 
   .message-content {
     @apply text-foreground leading-normal space-y-0 flex-1;
+    /* Disable any animations that could cause flicker */
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
   }
 
   .message-header {

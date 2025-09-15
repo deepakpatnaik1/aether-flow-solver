@@ -1,11 +1,13 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 
+// Supabase Configuration
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-const R2_ACCESS_KEY_ID = Deno.env.get('R2_ACCESS_KEY_ID');
-const R2_SECRET_ACCESS_KEY = Deno.env.get('R2_SECRET_ACCESS_KEY');
-const R2_ACCOUNT_ID = Deno.env.get('R2_ACCOUNT_ID');
-const R2_BUCKET_NAME = Deno.env.get('R2_BUCKET_NAME');
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -24,178 +26,126 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Simple persona contexts
-const PERSONAS = {
-  boss: "You are Boss - direct, strategic, focused on results and business outcomes.",
-  gunnar: "You are Gunnar - a startup advisor with a no-nonsense approach. You combine technical knowledge with business acumen, giving direct and actionable advice.",
-  samara: "You are Samara - analytical and strategic, focused on growth and optimization.",
-  kirby: "You are Kirby - creative and innovative, with a focus on user experience and design thinking.",
-  stefan: "You are Stefan - technical and methodical, focused on implementation and execution."
-};
+// Load personas from Supabase database
+async function loadPersonas(): Promise<Record<string, string>> {
+  try {
+    const { data: personas, error } = await supabase
+      .from('personas')
+      .select('name, description');
 
-// Helper function to sign R2 requests (simplified version)
-async function signR2Request(method: string, url: string, headers: Record<string, string> = {}, body?: string) {
-  const encoder = new TextEncoder();
-  const lowerHeaders: Record<string, string> = {};
-  const actualHeaders: Record<string, string> = {};
-  
-  for (const [key, value] of Object.entries(headers)) {
-    lowerHeaders[key.toLowerCase()] = value;
-    actualHeaders[key] = value;
+    if (error) {
+      console.error('❌ Error loading personas:', error);
+      return getDefaultPersonas();
+    }
+
+    const personaMap: Record<string, string> = {};
+    personas?.forEach(persona => {
+      personaMap[persona.name] = persona.description;
+    });
+
+    console.log('📋 Loaded personas from database:', Object.keys(personaMap));
+    return personaMap;
+  } catch (error) {
+    console.error('❌ Error loading personas:', error);
+    return getDefaultPersonas();
   }
-  
-  const urlObj = new URL(url);
-  const canonicalUri = urlObj.pathname;
-  const canonicalQuerystring = urlObj.search.slice(1);
-  
-  const canonicalHeaders = Object.entries(lowerHeaders)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}:${value}`)
-    .join('\n');
-    
-  const signedHeaders = Object.keys(lowerHeaders).sort().join(';');
+}
 
-  const payloadHash = body 
-    ? Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode(body))))
-        .map(b => b.toString(16).padStart(2, '0')).join('')
-    : 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
-
-  const canonicalRequest = [method, canonicalUri, canonicalQuerystring, canonicalHeaders + '\n', signedHeaders, payloadHash].join('\n');
-
-  const algorithm = 'AWS4-HMAC-SHA256';
-  const timestamp = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
-  const date = timestamp.slice(0, 8);
-  const credentialScope = `${date}/auto/s3/aws4_request`;
-  
-  const stringToSign = [
-    algorithm, timestamp, credentialScope,
-    Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode(canonicalRequest))))
-      .map(b => b.toString(16).padStart(2, '0')).join('')
-  ].join('\n');
-
-  // HMAC signature chain
-  const kDate = await crypto.subtle.sign('HMAC', await crypto.subtle.importKey('raw', encoder.encode('AWS4' + R2_SECRET_ACCESS_KEY), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']), encoder.encode(date));
-  const kRegion = await crypto.subtle.sign('HMAC', await crypto.subtle.importKey('raw', new Uint8Array(kDate), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']), encoder.encode('auto'));
-  const kService = await crypto.subtle.sign('HMAC', await crypto.subtle.importKey('raw', new Uint8Array(kRegion), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']), encoder.encode('s3'));
-  const kSigning = await crypto.subtle.sign('HMAC', await crypto.subtle.importKey('raw', new Uint8Array(kService), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']), encoder.encode('aws4_request'));
-  const signature = Array.from(new Uint8Array(await crypto.subtle.sign('HMAC', await crypto.subtle.importKey('raw', new Uint8Array(kSigning), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']), encoder.encode(stringToSign)))).map(b => b.toString(16).padStart(2, '0')).join('');
-
+// Fallback personas in case database is unavailable
+function getDefaultPersonas(): Record<string, string> {
   return {
-    ...actualHeaders,
-    'Authorization': `${algorithm} Credential=${R2_ACCESS_KEY_ID}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`,
-    'X-Amz-Date': timestamp,
+    boss: "You are Boss - direct, strategic, focused on results and business outcomes.",
+    gunnar: "You are Gunnar - a startup advisor with a no-nonsense approach. You combine technical knowledge with business acumen, giving direct and actionable advice.",
+    samara: "You are Samara - analytical and strategic, focused on growth and optimization.",
+    kirby: "You are Kirby - creative and innovative, with a focus on user experience and design thinking.",
+    stefan: "You are Stefan - technical and methodical, focused on implementation and execution."
   };
 }
 
-// Load journal content for system memory
+// Load journal content for system memory from Supabase
 async function loadJournalContent(): Promise<string> {
-  if (!R2_ACCESS_KEY_ID) return '';
-  
   try {
-    const journalKey = 'journal/journal.jsonl';
-    const r2Endpoint = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${journalKey}`;
-    
-    const emptyBodyHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
-    const getHeaders = await signR2Request('GET', r2Endpoint, {
-      'host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-      'x-amz-content-sha256': emptyBodyHash
-    });
+    const { data: entries, error } = await supabase
+      .from('journal_entries')
+      .select('boss_input, persona_response, timestamp')
+      .order('timestamp', { ascending: true });
 
-    const response = await fetch(r2Endpoint, { method: 'GET', headers: getHeaders });
-    
-    if (response.ok) {
-      const content = await response.text();
-      console.log('📚 Loaded journal content for system memory:', content.length, 'chars');
-      return content;
+    if (error) {
+      console.error('❌ Error loading journal:', error);
+      return '';
     }
+
+    if (!entries || entries.length === 0) {
+      console.log('📋 No journal entries found');
+      return '';
+    }
+
+    // Convert to JSONL format for system memory
+    const journalLines = entries.map(entry => 
+      JSON.stringify({
+        timestamp: entry.timestamp,
+        bossInput: entry.boss_input,
+        personaResponse: entry.persona_response
+      })
+    );
+
+    const content = journalLines.join('\n');
+    console.log('📚 Loaded journal content for system memory:', content.length, 'chars,', entries.length, 'entries');
+    return content;
+    
   } catch (error) {
-    console.log('📝 No journal found or error loading:', error);
+    console.error('❌ Error loading journal:', error);
+    return '';
   }
-  
-  return '';
 }
 
-// Load artisan cut instructions
+// Load artisan cut instructions from Supabase
 async function loadArtisanCutInstructions(): Promise<string> {
-  if (!R2_ACCESS_KEY_ID) return '';
-  
   try {
-    const instructionsKey = 'processes/artisan-cut-extraction.md';
-    const r2Endpoint = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${instructionsKey}`;
-    
-    const emptyBodyHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
-    const getHeaders = await signR2Request('GET', r2Endpoint, {
-      'host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-      'x-amz-content-sha256': emptyBodyHash
-    });
+    const { data: process, error } = await supabase
+      .from('processes')
+      .select('content')
+      .eq('name', 'artisan-cut-extraction')
+      .single();
 
-    const response = await fetch(r2Endpoint, { method: 'GET', headers: getHeaders });
-    
-    if (response.ok) {
-      const content = await response.text();
-      console.log('📋 Loaded artisan cut instructions:', content.length, 'chars');
-      return content;
+    if (error) {
+      console.error('❌ Error loading artisan cut instructions:', error);
+      return '';
     }
+
+    if (!process) {
+      console.log('📋 No artisan cut instructions found');
+      return '';
+    }
+
+    console.log('📋 Loaded artisan cut instructions:', process.content.length, 'chars');
+    return process.content;
+    
   } catch (error) {
-    console.log('📋 No artisan cut instructions found:', error);
+    console.error('❌ Error loading artisan cut instructions:', error);
+    return '';
   }
-  
-  return '';
 }
 
-// Save journal entry via background task
+// Save journal entry to Supabase database
 async function saveJournalEntry(entry: JournalEntry) {
   try {
-    const journalKey = 'journal/journal.jsonl';
-    const r2Endpoint = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${journalKey}`;
-    
-    // Get existing content
-    let existingContent = '';
-    try {
-      const emptyBodyHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
-      const getHeaders = await signR2Request('GET', r2Endpoint, {
-        'host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-        'x-amz-content-sha256': emptyBodyHash
+    const { error } = await supabase
+      .from('journal_entries')
+      .insert({
+        entry_id: entry.id,
+        timestamp: entry.timestamp,
+        boss_input: entry.bossInput,
+        persona_response: entry.personaResponse
       });
-      
-      const getResponse = await fetch(r2Endpoint, { method: 'GET', headers: getHeaders });
-      if (getResponse.ok) {
-        existingContent = await getResponse.text();
-      }
-    } catch (error) {
-      console.log('Creating new journal file');
-    }
-    
-    // Append new entry
-    const newLine = JSON.stringify(entry) + '\n';
-    const updatedContent = existingContent + newLine;
-    
-    // Calculate content hash
-    const encoder = new TextEncoder();
-    const contentBytes = encoder.encode(updatedContent);
-    const contentHashArray = await crypto.subtle.digest('SHA-256', contentBytes);
-    const contentHash = Array.from(new Uint8Array(contentHashArray))
-      .map(b => b.toString(16).padStart(2, '0')).join('');
 
-    // Upload updated journal
-    const putHeaders = await signR2Request('PUT', r2Endpoint, {
-      'host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-      'content-type': 'application/jsonl',
-      'content-length': updatedContent.length.toString(),
-      'x-amz-content-sha256': contentHash
-    }, updatedContent);
-    
-    const putResponse = await fetch(r2Endpoint, {
-      method: 'PUT',
-      headers: putHeaders,
-      body: updatedContent
-    });
-    
-    if (putResponse.ok) {
-      console.log('✅ Journal entry saved:', entry.id);
-    } else {
-      console.error('❌ Failed to save journal entry:', putResponse.status);
+    if (error) {
+      console.error('❌ Failed to save journal entry:', error);
+      return;
     }
+
+    console.log('✅ Journal entry saved to database:', entry.id);
+    
   } catch (error) {
     console.error('❌ Error saving journal entry:', error);
   }
@@ -272,11 +222,14 @@ serve(async (req) => {
     // Generate turnId if not provided (for linking superjournal and journal)
     const conversationTurnId = turnId || crypto.randomUUID();
     
+    // Load personas from database
+    const personas = await loadPersonas();
+    
     // Load cumulative journal content for system memory
     const journalContent = await loadJournalContent();
     
     // Build enhanced system context with journal memory
-    const personaContext = PERSONAS[persona as keyof typeof PERSONAS] || PERSONAS.gunnar;
+    const personaContext = personas[persona] || personas.gunnar;
     const journalMemory = journalContent ? `\n\nCUMULATIVE STRATEGIC MEMORY:\n${journalContent}` : '';
     
     const chatMessages: ChatMessage[] = [
@@ -387,7 +340,7 @@ serve(async (req) => {
       try {
         console.log('🔥 CALL 2: Processing artisan cut for turn:', turnId);
         
-        // Load artisan cut instructions
+        // Load artisan cut instructions from database
         const artisanInstructions = await loadArtisanCutInstructions();
         
         if (!artisanInstructions) {
@@ -429,7 +382,7 @@ serve(async (req) => {
             }
           }
 
-          // Save to journal.jsonl
+          // Save to journal_entries in Supabase
           const journalEntry: JournalEntry = {
             id: turnId, // Same ID as superjournal for linking
             timestamp: new Date().toISOString(),

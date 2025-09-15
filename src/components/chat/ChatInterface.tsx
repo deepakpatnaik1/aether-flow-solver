@@ -146,21 +146,21 @@ const ChatInterface = () => {
       setUploadedFiles(prev => [...prev, ...uploadResults]);
       setPendingFiles(null);
       
-      // If persona files were uploaded, process them into database entries
-      if (category === 'persona') {
-        console.log('Processing persona files for database conversion...');
+      // If persona or boss files were uploaded, process them into database entries
+      if (category === 'persona' || category === 'boss') {
+        console.log(`Processing ${category} files for database conversion...`);
         try {
           const processResponse = await supabase.functions.invoke('process-persona-upload', {
-            body: { uploadResults }
+            body: { uploadResults, category }
           });
           
           if (processResponse.error) {
-            console.error('Error processing persona files:', processResponse.error);
+            console.error(`Error processing ${category} files:`, processResponse.error);
           } else {
-            console.log('✅ Persona files processed successfully:', processResponse.data);
+            console.log(`✅ ${category} files processed successfully:`, processResponse.data);
           }
         } catch (error) {
-          console.error('Error invoking process-persona-upload:', error);
+          console.error(`Error invoking process-persona-upload for ${category}:`, error);
         }
       }
     } catch (error) {

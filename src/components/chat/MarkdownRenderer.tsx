@@ -112,7 +112,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
         const listContent = line.replace(/^[\-\*\+]\s/, '');
         elements.push(
           <div key={i} className="flex items-start gap-2 my-1">
-            <span className="mt-2 leading-none" style={{ color: personaColor }}>•</span>
+            <span className="mt-0.5 leading-none" style={{ color: personaColor }}>•</span>
             <div className="flex-1 message-text">
               {processInlineMarkdown(listContent)}
             </div>
@@ -128,7 +128,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
           const [, number, listContent] = match;
           elements.push(
             <div key={i} className="flex items-start gap-2 my-1">
-              <span className="mt-2 leading-none font-medium" style={{ color: personaColor }}>{number}.</span>
+              <span className="mt-0.5 leading-none font-medium" style={{ color: personaColor }}>{number}.</span>
               <div className="flex-1 message-text">
                 {processInlineMarkdown(listContent)}
               </div>
@@ -148,7 +148,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
         
         elements.push(
           <div key={i} className="flex items-start gap-2 my-1 ml-6">
-            <span className="mt-2 leading-none text-sm opacity-70" style={{ color: personaColor }}>
+            <span className="mt-0.5 leading-none text-sm opacity-70" style={{ color: personaColor }}>
               {isNumbered ? '◦' : '◦'}
             </span>
             <div className="flex-1 text-foreground/90 text-sm">

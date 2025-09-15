@@ -269,10 +269,16 @@ serve(async (req) => {
               // 🎯 CALL 2: Trigger artisan cut extraction as background task
               if (fullAIResponse.trim()) {
                 console.log('🔄 CALL 2: Starting artisan cut extraction...');
+                console.log('📋 Full AI Response length:', fullAIResponse.length);
+                console.log('📋 User message:', userMessage.substring(0, 100));
+                console.log('📋 Persona:', persona);
+                console.log('📋 Turn ID:', conversationTurnId);
                 // Use background task processing
                 processArtisanCut(conversationTurnId, userMessage, fullAIResponse, persona).catch(error => {
                   console.error('❌ Background artisan cut failed:', error);
                 });
+              } else {
+                console.log('⚠️ No AI response to process for artisan cut');
               }
               
               break;
@@ -339,9 +345,14 @@ serve(async (req) => {
     async function processArtisanCut(turnId: string, userMsg: string, aiResponse: string, persona: string) {
       try {
         console.log('🔥 CALL 2: Processing artisan cut for turn:', turnId);
+        console.log('🔥 CALL 2: User message length:', userMsg.length);
+        console.log('🔥 CALL 2: AI response length:', aiResponse.length);
+        console.log('🔥 CALL 2: Persona:', persona);
         
         // Load artisan cut instructions from database
+        console.log('📋 Loading artisan cut instructions...');
         const artisanInstructions = await loadArtisanCutInstructions();
+        console.log('📋 Artisan instructions loaded, length:', artisanInstructions.length);
         
         if (!artisanInstructions) {
           console.warn('⚠️ No artisan cut instructions found, skipping Call 2');
@@ -361,10 +372,13 @@ serve(async (req) => {
         ];
 
         console.log('🤖 CALL 2: Sending to OpenAI for artisan cut extraction...');
+        console.log('🤖 CALL 2: Messages prepared, calling OpenAI...');
         
         // Call 2: Non-streaming call for artisan cut
         const artisanResponse = await callOpenAI('gpt-5-2025-08-07', call2Messages, false);
+        console.log('🤖 CALL 2: OpenAI response received');
         const artisanCut = artisanResponse.choices[0]?.message?.content || '';
+        console.log('🤖 CALL 2: Artisan cut content:', artisanCut.substring(0, 200));
         
         if (artisanCut.trim()) {
           console.log('✨ CALL 2: Generated artisan cut:', artisanCut.substring(0, 100) + '...');
@@ -382,6 +396,9 @@ serve(async (req) => {
             }
           }
 
+          console.log('📝 CALL 2: Parsed - Boss input:', bossInput);
+          console.log('📝 CALL 2: Parsed - Persona response:', personaResponse);
+
           // Save to journal_entries in Supabase
           const journalEntry: JournalEntry = {
             id: turnId, // Same ID as superjournal for linking
@@ -390,6 +407,7 @@ serve(async (req) => {
             personaResponse: personaResponse || artisanCut.trim()
           };
 
+          console.log('💾 CALL 2: Saving journal entry:', journalEntry.id);
           await saveJournalEntry(journalEntry);
           console.log('💾 CALL 2: Saved journal entry:', turnId);
           
@@ -399,6 +417,7 @@ serve(async (req) => {
         
       } catch (error) {
         console.error('❌ CALL 2: Error in artisan cut processing:', error);
+        console.error('❌ CALL 2: Error stack:', error.stack);
       }
     }
 

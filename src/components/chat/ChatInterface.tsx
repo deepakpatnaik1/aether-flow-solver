@@ -247,12 +247,10 @@ const ChatInterface = () => {
     if (persona) {
       setSelectedPersona(personaId);
       setMessage(`${persona.name}, `);
-      // Use requestAnimationFrame to ensure focus happens after all React updates and Radix focus management
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          inputRef.current?.focus();
-        });
-      });
+      // Use longer timeout to overcome Radix UI's focus management
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
     }
   };
 

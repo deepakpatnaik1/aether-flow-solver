@@ -247,10 +247,10 @@ const ChatInterface = () => {
     if (persona) {
       setSelectedPersona(personaId);
       setMessage(`${persona.name}, `);
-      // Focus input after persona selection
+      // Focus input after dropdown closes
       setTimeout(() => {
         inputRef.current?.focus();
-      }, 100);
+      }, 0);
     }
   };
 
@@ -344,14 +344,14 @@ const ChatInterface = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
               
-              <DropdownMenu modal={false}>
+              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="model-selector">
                     <ChevronDown className="h-3 w-3 mr-1" />
                     {selectedPersona && personas.find(p => p.id === selectedPersona)?.name || 'Persona'}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-background border">
+                <DropdownMenuContent className="bg-background border" onCloseAutoFocus={(e) => e.preventDefault()}>
                   {personas.map((persona) => (
                     <DropdownMenuItem
                       key={persona.id}

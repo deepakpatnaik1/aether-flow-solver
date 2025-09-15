@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MessageList } from './MessageList';
 import { PersonaBadge } from './PersonaBadge';
+import { FileUploadModal } from './FileUploadModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useChat } from '@/hooks/useChat';
 
@@ -29,6 +30,8 @@ const ChatInterface = () => {
   const [selectedModel, setSelectedModel] = useState('gpt-5-2025-08-07');
   const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -113,10 +116,21 @@ const ChatInterface = () => {
     }
   }, [message, selectedPersona]);
 
-  const handleFileUpload = async (files: FileList) => {
+  const handleFileSelect = (files: FileList | null) => {
+    if (files && files.length > 0) {
+      setPendingFiles(files);
+      setShowUploadModal(true);
+    }
+  };
+
+  const handleFileUpload = async (files: FileList, category: string, customPath?: string) => {
     const uploadPromises = Array.from(files).map(async (file) => {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('category', category);
+      if (customPath) {
+        formData.append('customPath', customPath);
+      }
 
       const response = await supabase.functions.invoke('upload-file', {
         body: formData,
@@ -132,6 +146,7 @@ const ChatInterface = () => {
     try {
       const uploadResults = await Promise.all(uploadPromises);
       setUploadedFiles(prev => [...prev, ...uploadResults]);
+      setPendingFiles(null);
     } catch (error) {
       console.error('Upload failed:', error);
     }
@@ -302,7 +317,7 @@ const ChatInterface = () => {
                 className="hidden"
                 onChange={(e) => {
                   if (e.target.files) {
-                    handleFileUpload(e.target.files);
+                    handleFileSelect(e.target.files);
                   }
                 }}
               />
@@ -355,6 +370,13 @@ const ChatInterface = () => {
           </div>
         </div>
       </div>
+
+      <FileUploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onUpload={handleFileUpload}
+        files={pendingFiles}
+      />
     </div>
   );
 };

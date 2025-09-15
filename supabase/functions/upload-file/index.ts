@@ -24,16 +24,46 @@ serve(async (req) => {
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File;
+    const category = formData.get('category') as string || 'documents';
+    const customPath = formData.get('customPath') as string || '';
     
     if (!file) {
       throw new Error('No file provided');
     }
 
-    // Generate unique filename
+    // Determine the storage path based on category
+    let prefix = '';
+    switch (category) {
+      case 'boss':
+        prefix = 'boss/';
+        break;
+      case 'persona':
+        prefix = 'persona/';
+        break;
+      case 'journal':
+        prefix = 'journal/';
+        break;
+      case 'superjournal':
+        prefix = 'superjournal/';
+        break;
+      case 'processes':
+        prefix = 'processes/';
+        break;
+      case 'custom':
+        prefix = customPath.endsWith('/') ? customPath : customPath + '/';
+        break;
+      default:
+        prefix = 'documents/';
+    }
+
+    // Generate filename (preserve original name or use timestamp for duplicates)
     const timestamp = Date.now();
-    const randomId = crypto.randomUUID();
-    const fileExtension = file.name.split('.').pop() || '';
-    const fileName = `${timestamp}-${randomId}.${fileExtension}`;
+    const originalName = file.name;
+    const sanitizedName = originalName.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const fileName = `${prefix}${sanitizedName}`;
+    
+    // If we want to avoid overwrites, we can add timestamp
+    // const fileName = `${prefix}${timestamp}-${sanitizedName}`;
 
     // Convert file to buffer
     const buffer = await file.arrayBuffer();
@@ -44,6 +74,11 @@ serve(async (req) => {
       Key: fileName,
       Body: new Uint8Array(buffer),
       ContentType: file.type,
+      Metadata: {
+        'original-name': originalName,
+        'upload-category': category,
+        'uploaded-at': new Date().toISOString(),
+      },
     });
 
     await r2Client.send(command);
@@ -57,7 +92,9 @@ serve(async (req) => {
       publicUrl,
       originalName: file.name,
       size: file.size,
-      type: file.type
+      type: file.type,
+      category,
+      storagePath: fileName
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

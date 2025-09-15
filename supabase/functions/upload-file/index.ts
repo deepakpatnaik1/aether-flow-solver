@@ -1,79 +1,17 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
+
+// Supabase Configuration
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-// Simple AWS signature v4 implementation for R2
-async function createSignedRequest(
-  method: string,
-  url: string,
-  body: ArrayBuffer,
-  contentType: string,
-  accessKeyId: string,
-  secretAccessKey: string,
-  region: string = 'auto'
-) {
-  const encoder = new TextEncoder();
-  
-  // Create canonical request
-  const host = new URL(url).host;
-  const path = new URL(url).pathname;
-  const timestamp = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
-  const dateStamp = timestamp.slice(0, 8);
-  
-  const canonicalHeaders = `host:${host}\nx-amz-content-sha256:UNSIGNED-PAYLOAD\nx-amz-date:${timestamp}\n`;
-  const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
-  
-  const canonicalRequest = `${method}\n${path}\n\n${canonicalHeaders}\n${signedHeaders}\nUNSIGNED-PAYLOAD`;
-  
-  // Create string to sign
-  const algorithm = 'AWS4-HMAC-SHA256';
-  const credentialScope = `${dateStamp}/${region}/s3/aws4_request`;
-  const stringToSign = `${algorithm}\n${timestamp}\n${credentialScope}\n${await sha256(canonicalRequest)}`;
-  
-  // Calculate signature
-  const kDate = await hmacSha256(encoder.encode(`AWS4${secretAccessKey}`), dateStamp);
-  const kRegion = await hmacSha256(kDate, region);
-  const kService = await hmacSha256(kRegion, 's3');
-  const kSigning = await hmacSha256(kService, 'aws4_request');
-  const signature = await hmacSha256(kSigning, stringToSign);
-  
-  // Create authorization header
-  const authorization = `${algorithm} Credential=${accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, '0')).join('')}`;
-  
-  return {
-    'Authorization': authorization,
-    'X-Amz-Date': timestamp,
-    'X-Amz-Content-Sha256': 'UNSIGNED-PAYLOAD',
-    'Content-Type': contentType,
-  };
-}
-
-async function sha256(message: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(message);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function hmacSha256(key: Uint8Array | ArrayBuffer, message: string): Promise<ArrayBuffer> {
-  const encoder = new TextEncoder();
-  const keyData = key instanceof ArrayBuffer ? key : key.buffer;
-  const messageData = encoder.encode(message);
-  
-  const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    keyData,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-  
-  return await crypto.subtle.sign('HMAC', cryptoKey, messageData);
-}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -94,97 +32,94 @@ serve(async (req) => {
       throw new Error('No file provided');
     }
 
-    // Get environment variables
-    const accessKeyId = Deno.env.get('R2_ACCESS_KEY_ID');
-    const secretAccessKey = Deno.env.get('R2_SECRET_ACCESS_KEY');
-    const accountId = Deno.env.get('R2_ACCOUNT_ID');
-    const bucketName = Deno.env.get('R2_BUCKET_NAME');
-    const publicUrl = Deno.env.get('R2_PUBLIC_URL');
-
-    if (!accessKeyId || !secretAccessKey || !accountId || !bucketName) {
-      throw new Error('Missing R2 configuration');
-    }
-
-    // Determine the storage path based on category
-    let prefix = '';
+    // Determine the bucket and path based on category
+    let bucketName = 'documents'; // default bucket
+    let filePath = '';
+    
     switch (category) {
       case 'boss':
-        prefix = 'boss/';
+        bucketName = 'boss';
+        filePath = file.name;
         break;
       case 'persona':
-        prefix = 'persona/';
-        break;
-      case 'journal':
-        prefix = 'journal/';
-        break;
-      case 'superjournal':
-        prefix = 'superjournal/';
+        bucketName = 'persona';
+        filePath = file.name;
         break;
       case 'processes':
-        prefix = 'processes/';
+        bucketName = 'processes';
+        filePath = file.name;
+        break;
+      case 'attachments':
+        bucketName = 'attachments';
+        filePath = file.name;
         break;
       case 'custom':
-        prefix = customPath.endsWith('/') ? customPath : customPath + '/';
+        bucketName = 'documents';
+        filePath = customPath.endsWith('/') ? customPath + file.name : customPath + '/' + file.name;
         break;
       default:
-        prefix = 'documents/';
+        bucketName = 'documents';
+        filePath = file.name;
     }
 
-    // Generate filename (preserve original name)
-    const originalName = file.name;
-    const sanitizedName = originalName.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const fileName = `${prefix}${sanitizedName}`;
+    // Sanitize filename
+    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const finalPath = filePath.replace(file.name, sanitizedName);
     
-    console.log('Uploading to path:', fileName);
+    console.log('Uploading to bucket:', bucketName, 'path:', finalPath);
 
     // Convert file to buffer
     const buffer = await file.arrayBuffer();
     
-    // Create R2 endpoint URL
-    const endpoint = `https://${accountId}.r2.cloudflarestorage.com`;
-    const uploadUrl = `${endpoint}/${bucketName}/${fileName}`;
-    
-    console.log('Upload URL:', uploadUrl);
-    
-    // Create signed headers
-    const headers = await createSignedRequest(
-      'PUT',
-      uploadUrl,
-      buffer,
-      file.type || 'application/octet-stream',
-      accessKeyId,
-      secretAccessKey
-    );
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .upload(finalPath, buffer, {
+        contentType: file.type || 'application/octet-stream',
+        upsert: true
+      });
 
-    // Upload to R2
-    const response = await fetch(uploadUrl, {
-      method: 'PUT',
-      headers,
-      body: buffer,
-    });
-
-    console.log('R2 Response status:', response.status);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('R2 Error:', errorText);
-      throw new Error(`Upload failed: ${response.status} - ${errorText}`);
+    if (error) {
+      console.error('Supabase Storage error:', error);
+      throw new Error(`Upload failed: ${error.message}`);
     }
 
-    // Construct public URL
-    const filePublicUrl = `${publicUrl}/${fileName}`;
+    console.log('Upload successful:', data);
 
-    console.log('Upload successful, public URL:', filePublicUrl);
+    // Get public URL
+    const { data: publicUrlData } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(finalPath);
+
+    const publicUrl = publicUrlData.publicUrl;
+    console.log('Public URL:', publicUrl);
+
+    // Save metadata to file_attachments table
+    const { error: dbError } = await supabase
+      .from('file_attachments')
+      .insert({
+        file_name: sanitizedName,
+        original_name: file.name,
+        public_url: publicUrl,
+        file_size: file.size,
+        file_type: file.type || 'application/octet-stream'
+      });
+
+    if (dbError) {
+      console.error('Database error:', dbError);
+      // Don't fail the upload if database insert fails
+    }
 
     return new Response(JSON.stringify({ 
       success: true, 
-      fileName,
-      publicUrl: filePublicUrl,
+      fileName: sanitizedName,
+      publicUrl: publicUrl,
       originalName: file.name,
       size: file.size,
-      type: file.type,
+      type: file.type || 'application/octet-stream',
       category,
-      storagePath: fileName
+      bucketName,
+      storagePath: finalPath
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

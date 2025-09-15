@@ -214,4 +214,77 @@
   .message-sub-bullet {
     @apply text-foreground/80 ml-8 text-sm leading-snug;
   }
+
+  /* Enhanced Content Styles */
+  .mermaid-container {
+    @apply bg-background/50 rounded-lg p-4;
+  }
+
+  .mermaid-container .mermaid {
+    @apply text-center;
+  }
+
+  /* Table Styles */
+  .markdown-content table {
+    @apply shadow-sm;
+  }
+
+  .markdown-content table th {
+    @apply bg-muted/70 font-semibold;
+  }
+
+  .markdown-content table td {
+    @apply text-sm;
+  }
+
+  .markdown-content table tr:nth-child(even) {
+    @apply bg-muted/20;
+  }
+
+  /* Code Block Enhancements */
+  .markdown-content pre {
+    @apply relative;
+  }
+
+  .markdown-content pre code {
+    @apply text-xs leading-relaxed;
+  }
+
+  /* Math Formula Styles */
+  .katex {
+    @apply text-foreground;
+  }
+
+  .katex .base {
+    @apply text-foreground;
+  }
+
+  /* ASCII Art Styles */
+  .markdown-content .ascii-art {
+    @apply font-mono text-xs leading-tight tracking-wider;
+  }
+
+  /* Checkbox Styles */
+  .markdown-content input[type="checkbox"] {
+    @apply w-4 h-4 rounded border-2 border-border;
+  }
+
+  .markdown-content input[type="checkbox"]:checked {
+    @apply bg-primary border-primary;
+  }
+
+  /* Keyboard Shortcut Styles */
+  .markdown-content kbd {
+    @apply shadow-sm font-mono;
+  }
+
+  /* Highlight Styles */
+  .markdown-content mark {
+    @apply bg-yellow-400/20 text-foreground;
+  }
+
+  /* Strikethrough Enhancement */
+  .markdown-content .line-through {
+    @apply decoration-2 decoration-muted-foreground/50;
+  }
 }

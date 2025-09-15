@@ -1,4 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import mermaid from 'mermaid';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
 
 interface MarkdownRendererProps {
   content: string;
@@ -7,6 +10,25 @@ interface MarkdownRendererProps {
 }
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, persona, className = "" }) => {
+  const mermaidRef = useRef<number>(0);
+
+  useEffect(() => {
+    // Initialize mermaid
+    mermaid.initialize({ 
+      startOnLoad: false,
+      theme: 'dark',
+      themeVariables: {
+        darkMode: true,
+        background: '#2d2d2d',
+        primaryColor: '#bb86fc',
+        primaryTextColor: '#ffffff',
+        primaryBorderColor: '#bb86fc',
+        lineColor: '#ffffff',
+        secondaryColor: '#03dac6',
+        tertiaryColor: '#cf6679'
+      }
+    });
+  }, []);
   
   // Get persona color based on persona name
   const getPersonaColor = (personaName?: string): string => {
@@ -32,6 +54,67 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       
+      // Handle ASCII art and preformatted text
+      if (line.match(/^[\s]*[│┌┐└┘├┤┬┴┼─━┃┏┓┗┛┣┫┳┻╋═║╔╗╚╝╠╣╦╩╬]+/) || 
+          (line.match(/^[\s]*[+\-|\\\/=<>^v#*@&%$]+[\s]*$/) && line.length > 10)) {
+        // ASCII art detected - collect consecutive lines
+        const asciiLines = [line];
+        let j = i + 1;
+        while (j < lines.length && 
+               (lines[j].match(/^[\s]*[│┌┐└┘├┤┬┴┼─━┃┏┓┗┛┣┫┳┻╋═║╔╗╚╝╠╣╦╩╬]+/) || 
+                lines[j].match(/^[\s]*[+\-|\\\/=<>^v#*@&%$\s]+$/))) {
+          asciiLines.push(lines[j]);
+          j++;
+        }
+        
+        if (asciiLines.length >= 2) {
+          elements.push(
+            <div key={i} className="my-3 p-3 bg-muted/30 rounded border">
+              <pre className="text-sm font-mono text-foreground whitespace-pre overflow-x-auto">
+                {asciiLines.join('\n')}
+              </pre>
+            </div>
+          );
+          i = j - 1;
+          continue;
+        }
+      }
+
+      // Handle checkbox lists
+      if (line.match(/^[\s]*[-*+]\s*\[([ x])\]/)) {
+        const match = line.match(/^(\s*)[-*+]\s*\[([x ])\]\s*(.*)$/);
+        if (match) {
+          const [, indent, checked, text] = match;
+          const isChecked = checked.toLowerCase() === 'x';
+          
+          elements.push(
+            <div key={i} className="flex items-center gap-3 my-1" style={{ marginLeft: `${indent.length * 0.5}rem` }}>
+              <input 
+                type="checkbox" 
+                checked={isChecked} 
+                readOnly
+                className="rounded border-border"
+                style={{ accentColor: personaColor }}
+              />
+              <span className={`message-text flex-1 ${isChecked ? 'line-through opacity-75' : ''}`}>
+                {processInlineMarkdown(text)}
+              </span>
+            </div>
+          );
+          continue;
+        }
+      }
+
+      // Handle mermaid diagrams
+      if (line.startsWith('```mermaid')) {
+        if (!inCodeBlock) {
+          inCodeBlock = true;
+          codeBlockLanguage = 'mermaid';
+          codeBlockContent = '';
+        }
+        continue;
+      }
+      
       // Handle code blocks
       if (line.startsWith('```')) {
         if (!inCodeBlock) {
@@ -42,20 +125,64 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
         } else {
           // Ending code block
           inCodeBlock = false;
-          elements.push(
-            <div key={i} className="my-3 rounded-lg bg-muted/50 border overflow-hidden">
-              {codeBlockLanguage && (
-                <div className="px-3 py-1 bg-muted/70 text-xs text-muted-foreground border-b">
-                  {codeBlockLanguage}
+          
+          if (codeBlockLanguage === 'mermaid') {
+            // Render mermaid diagram
+            const mermaidId = `mermaid-${mermaidRef.current++}`;
+            try {
+              elements.push(
+                <div key={i} className="my-4 p-4 bg-muted/20 rounded-lg border overflow-hidden">
+                  <div className="mermaid-container" style={{ textAlign: 'center' }}>
+                    <div id={mermaidId} className="mermaid">
+                      {codeBlockContent}
+                    </div>
+                  </div>
                 </div>
-              )}
-              <pre className="p-3 overflow-x-auto">
-                <code className="text-sm font-mono text-foreground">
-                  {codeBlockContent}
-                </code>
-              </pre>
-            </div>
-          );
+              );
+              
+              // Render mermaid after component mounts
+              setTimeout(() => {
+                const element = document.getElementById(mermaidId);
+                if (element && codeBlockContent.trim()) {
+                  mermaid.render(mermaidId + '-svg', codeBlockContent).then(({ svg }) => {
+                    element.innerHTML = svg;
+                  }).catch(console.error);
+                }
+              }, 100);
+            } catch (error) {
+              console.error('Mermaid render error:', error);
+              // Fallback to regular code block
+              elements.push(
+                <div key={i} className="my-3 rounded-lg bg-muted/50 border overflow-hidden">
+                  <div className="px-3 py-1 bg-muted/70 text-xs text-muted-foreground border-b">
+                    mermaid (error)
+                  </div>
+                  <pre className="p-3 overflow-x-auto">
+                    <code className="text-sm font-mono text-foreground">
+                      {codeBlockContent}
+                    </code>
+                  </pre>
+                </div>
+              );
+            }
+          } else {
+            // Regular code block
+            elements.push(
+              <div key={i} className="my-3 rounded-lg bg-muted/50 border overflow-hidden">
+                {codeBlockLanguage && (
+                  <div className="px-3 py-1 bg-muted/70 text-xs text-muted-foreground border-b">
+                    {codeBlockLanguage}
+                  </div>
+                )}
+                <pre className="p-3 overflow-x-auto">
+                  <code className="text-sm font-mono text-foreground">
+                    {codeBlockContent}
+                  </code>
+                </pre>
+              </div>
+            );
+          }
+          
           codeBlockContent = '';
           codeBlockLanguage = '';
         }
@@ -66,6 +193,86 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
       if (inCodeBlock) {
         codeBlockContent += (codeBlockContent ? '\n' : '') + line;
         continue;
+      }
+
+      // Handle tables
+      if (line.includes('|') && line.trim().startsWith('|') && line.trim().endsWith('|')) {
+        // Look ahead to see if this is a table
+        const tableLines = [line];
+        let j = i + 1;
+        
+        // Check for separator line (|---|---|)
+        if (j < lines.length && lines[j].includes('|') && lines[j].includes('-')) {
+          tableLines.push(lines[j]);
+          j++;
+          
+          // Collect table rows
+          while (j < lines.length && lines[j].includes('|') && lines[j].trim().startsWith('|')) {
+            tableLines.push(lines[j]);
+            j++;
+          }
+          
+          if (tableLines.length >= 3) {
+            // Render table
+            const headers = tableLines[0].split('|').map(h => h.trim()).filter(h => h);
+            const rows = tableLines.slice(2).map(row => 
+              row.split('|').map(cell => cell.trim()).filter(cell => cell)
+            );
+            
+            elements.push(
+              <div key={i} className="my-4 overflow-x-auto">
+                <table className="min-w-full border-collapse border border-border rounded-lg overflow-hidden">
+                  <thead>
+                    <tr className="bg-muted/50">
+                      {headers.map((header, idx) => (
+                        <th key={idx} className="border border-border px-3 py-2 text-left font-medium text-foreground">
+                          {processInlineMarkdown(header)}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row, rowIdx) => (
+                      <tr key={rowIdx} className="hover:bg-muted/20">
+                        {row.map((cell, cellIdx) => (
+                          <td key={cellIdx} className="border border-border px-3 py-2 text-foreground">
+                            {processInlineMarkdown(cell)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+            
+            i = j - 1; // Skip processed lines
+            continue;
+          }
+        }
+      }
+
+      // Handle mathematical expressions (LaTeX)
+      if (line.includes('$$') || line.includes('$')) {
+        // Block math ($$...$$)
+        if (line.includes('$$')) {
+          const mathMatch = line.match(/\$\$(.*?)\$\$/);
+          if (mathMatch) {
+            try {
+              const html = katex.renderToString(mathMatch[1], { displayMode: true });
+              elements.push(
+                <div key={i} className="my-3 text-center">
+                  <div dangerouslySetInnerHTML={{ __html: html }} />
+                </div>
+              );
+              continue;
+            } catch (error) {
+              console.error('KaTeX error:', error);
+            }
+          }
+        }
+        
+        // Inline math will be handled in processInlineMarkdown
       }
 
       // Handle headers
@@ -235,6 +442,61 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
     const elements: JSX.Element[] = [];
     let key = 0;
 
+    // Handle inline math ($...$)
+    result = result.replace(/\$([^$]+)\$/g, (match, mathText) => {
+      try {
+        const html = katex.renderToString(mathText, { displayMode: false });
+        const placeholder = `__MATH_${key}__`;
+        elements.push(
+          <span 
+            key={`${keyBase}-math-${key}`}
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        );
+        key++;
+        return placeholder;
+      } catch (error) {
+        console.error('KaTeX inline error:', error);
+        return match; // Return original if error
+      }
+    });
+
+    // Handle strikethrough ~~text~~
+    result = result.replace(/~~([^~]+)~~/g, (match, strikeText) => {
+      const placeholder = `__STRIKE_${key}__`;
+      elements.push(
+        <span key={`${keyBase}-strike-${key}`} className="line-through opacity-75 text-foreground">
+          {strikeText}
+        </span>
+      );
+      key++;
+      return placeholder;
+    });
+
+    // Handle keyboard shortcuts <kbd>Ctrl+C</kbd>
+    result = result.replace(/<kbd>([^<]+)<\/kbd>/g, (match, kbdText) => {
+      const placeholder = `__KBD_${key}__`;
+      elements.push(
+        <kbd key={`${keyBase}-kbd-${key}`} className="px-1.5 py-0.5 bg-muted/70 border border-border rounded text-xs font-mono">
+          {kbdText}
+        </kbd>
+      );
+      key++;
+      return placeholder;
+    });
+
+    // Handle highlight ==text==
+    result = result.replace(/==([^=]+)==/g, (match, highlightText) => {
+      const placeholder = `__HIGHLIGHT_${key}__`;
+      elements.push(
+        <mark key={`${keyBase}-highlight-${key}`} className="bg-yellow-200/30 px-1 rounded text-foreground">
+          {highlightText}
+        </mark>
+      );
+      key++;
+      return placeholder;
+    });
+
     // Handle links [text](url)
     result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, url) => {
       const placeholder = `__LINK_${key}__`;
@@ -284,20 +546,32 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
     }
 
     // Replace placeholders with elements
-    const parts = result.split(/(__(?:LINK|BOLD|ITALIC)_\d+__)/);
+    const parts = result.split(/(__(?:MATH|LINK|BOLD|ITALIC|STRIKE|KBD|HIGHLIGHT)_\d+__)/);
     const finalElements: (JSX.Element | string)[] = [];
 
     parts.forEach((part, index) => {
+      const mathMatch = part.match(/__MATH_(\d+)__/);
       const linkMatch = part.match(/__LINK_(\d+)__/);
       const boldMatch = part.match(/__BOLD_(\d+)__/);
       const italicMatch = part.match(/__ITALIC_(\d+)__/);
+      const strikeMatch = part.match(/__STRIKE_(\d+)__/);
+      const kbdMatch = part.match(/__KBD_(\d+)__/);
+      const highlightMatch = part.match(/__HIGHLIGHT_(\d+)__/);
 
-      if (linkMatch) {
+      if (mathMatch) {
+        finalElements.push(elements.find(el => el.key === `${keyBase}-math-${mathMatch[1]}`) || part);
+      } else if (linkMatch) {
         finalElements.push(elements.find(el => el.key === `${keyBase}-link-${linkMatch[1]}`) || part);
       } else if (boldMatch) {
         finalElements.push(elements.find(el => el.key === `${keyBase}-bold-${boldMatch[1]}`) || part);
       } else if (italicMatch) {
         finalElements.push(elements.find(el => el.key === `${keyBase}-italic-${italicMatch[1]}`) || part);
+      } else if (strikeMatch) {
+        finalElements.push(elements.find(el => el.key === `${keyBase}-strike-${strikeMatch[1]}`) || part);
+      } else if (kbdMatch) {
+        finalElements.push(elements.find(el => el.key === `${keyBase}-kbd-${kbdMatch[1]}`) || part);
+      } else if (highlightMatch) {
+        finalElements.push(elements.find(el => el.key === `${keyBase}-highlight-${highlightMatch[1]}`) || part);
       } else {
         finalElements.push(part);
       }

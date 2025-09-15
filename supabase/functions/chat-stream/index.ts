@@ -68,40 +68,132 @@ function getDefaultPersonas(): Record<string, string> {
   };
 }
 
-// Load journal content for system memory from Supabase (OPTIMIZED - recent entries only)
-async function loadJournalContent(): Promise<string> {
+// Load turn-protocol instructions
+async function loadTurnProtocol(): Promise<string> {
+  try {
+    const { data: process, error } = await supabase
+      .from('processes')
+      .select('content')
+      .eq('name', 'turn-protocol')
+      .single();
+
+    if (error) {
+      console.error('❌ Error loading turn-protocol:', error);
+      return '';
+    }
+
+    return process?.content || '';
+  } catch (error) {
+    console.error('❌ Error loading turn-protocol:', error);
+    return '';
+  }
+}
+
+// Load Boss profile
+async function loadBossProfile(): Promise<string> {
+  try {
+    const { data: attachments, error } = await supabase
+      .from('persistent_attachments')
+      .select('public_url, file_name')
+      .eq('category', 'persona')
+      .ilike('file_name', '%boss%')
+      .single();
+
+    if (error) {
+      console.error('❌ Error loading boss profile:', error);
+      return '';
+    }
+
+    // Fetch the content from the URL
+    const response = await fetch(attachments.public_url);
+    return await response.text();
+  } catch (error) {
+    console.error('❌ Error loading boss profile:', error);
+    return '';
+  }
+}
+
+// Load active persona profile
+async function loadPersonaProfile(personaName: string): Promise<string> {
+  try {
+    const { data: attachments, error } = await supabase
+      .from('persistent_attachments')
+      .select('public_url, file_name')
+      .eq('category', 'persona')
+      .ilike('file_name', `%${personaName}%`)
+      .single();
+
+    if (error) {
+      console.error('❌ Error loading persona profile:', error);
+      return '';
+    }
+
+    // Fetch the content from the URL
+    const response = await fetch(attachments.public_url);
+    return await response.text();
+  } catch (error) {
+    console.error('❌ Error loading persona profile:', error);
+    return '';
+  }
+}
+
+// Load full journal table
+async function loadFullJournal(): Promise<string> {
   try {
     const { data: entries, error } = await supabase
       .from('journal_entries')
-      .select('user_message_content, ai_response_content, timestamp')
-      .order('timestamp', { ascending: false })
-      .limit(10); // Only last 10 artisan cuts for memory
+      .select('*')
+      .order('timestamp', { ascending: true });
 
     if (error) {
-      console.error('❌ Error loading journal:', error);
+      console.error('❌ Error loading full journal:', error);
       return '';
     }
 
-    if (!entries || entries.length === 0) {
-      console.log('📋 No journal entries found');
-      return '';
-    }
-
-    // Convert to JSONL format for system memory (reversed for chronological order)
-    const journalLines = entries.reverse().map(entry => 
-      JSON.stringify({
-        timestamp: entry.timestamp,
-        bossInput: entry.user_message_content,
-        personaResponse: entry.ai_response_content
-      })
-    );
-
-    const content = journalLines.join('\n');
-    console.log('📚 Loaded journal content for system memory:', content.length, 'chars,', entries.length, 'recent entries');
-    return content;
-    
+    return JSON.stringify(entries || [], null, 2);
   } catch (error) {
-    console.error('❌ Error loading journal:', error);
+    console.error('❌ Error loading full journal:', error);
+    return '';
+  }
+}
+
+// Load latest ephemeral attachment
+async function loadLatestEphemeralAttachment(): Promise<string> {
+  try {
+    const { data: attachments, error } = await supabase
+      .from('ephemeral_attachments')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (error) {
+      console.error('❌ Error loading latest ephemeral attachment:', error);
+      return '';
+    }
+
+    return JSON.stringify(attachments?.[0] || {}, null, 2);
+  } catch (error) {
+    console.error('❌ Error loading latest ephemeral attachment:', error);
+    return '';
+  }
+}
+
+// Load all persistent attachments
+async function loadPersistentAttachments(): Promise<string> {
+  try {
+    const { data: attachments, error } = await supabase
+      .from('persistent_attachments')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ Error loading persistent attachments:', error);
+      return '';
+    }
+
+    return JSON.stringify(attachments || [], null, 2);
+  } catch (error) {
+    console.error('❌ Error loading persistent attachments:', error);
     return '';
   }
 }
@@ -233,20 +325,71 @@ serve(async (req) => {
     // Generate turnId if not provided (for linking superjournal and journal)
     const conversationTurnId = turnId || crypto.randomUUID();
     
-    // Load personas from database
-    const personas = await loadPersonas();
+    console.log('🔄 Loading all Call 1 components...');
     
-    // Load cumulative journal content for system memory
-    const journalContent = await loadJournalContent();
+    // Load all 9 required components for Call 1
+    const [
+      turnProtocol,
+      bossProfile, 
+      personaProfile,
+      fullJournal,
+      latestEphemeralAttachment,
+      persistentAttachments
+    ] = await Promise.all([
+      loadTurnProtocol(),
+      loadBossProfile(),
+      loadPersonaProfile(persona),
+      loadFullJournal(),
+      loadLatestEphemeralAttachment(),
+      loadPersistentAttachments()
+    ]);
     
-    // Build enhanced system context with journal memory
-    const personaContext = personas[persona] || personas.gunnar;
-    const journalMemory = journalContent ? `\n\nCUMULATIVE STRATEGIC MEMORY:\n${journalContent}` : '';
+    console.log('✅ All Call 1 components loaded');
+    
+    // Build Call 1 payload with all 9 components
+    const streamingConfig = {
+      stream: true,
+      model: model,
+      max_completion_tokens: model.startsWith('gpt-5') || model.startsWith('gpt-4.1') || model.startsWith('o3') || model.startsWith('o4') ? 4000 : undefined,
+      max_tokens: !model.startsWith('gpt-5') && !model.startsWith('gpt-4.1') && !model.startsWith('o3') && !model.startsWith('o4') ? 4000 : undefined,
+      temperature: !model.startsWith('gpt-5') && !model.startsWith('gpt-4.1') && !model.startsWith('o3') && !model.startsWith('o4') ? 0.7 : undefined
+    };
+
+    // Capture user question
+    const actualQuestion = messages[messages.length - 1]?.content || '';
+    
+    // Assemble the 9 components according to specification
+    const call1SystemContent = `[1] TURN-PROTOCOL INSTRUCTIONS:
+${turnProtocol}
+
+[2] BOSS PROFILE:
+${bossProfile}
+
+[3] ACTIVE PERSONA PROFILE:
+${personaProfile}
+
+[4] MODEL NAME:
+${model}
+
+[5] FULL JOURNAL TABLE:
+${fullJournal}
+
+[6] LATEST EPHEMERAL ATTACHMENT:
+${latestEphemeralAttachment}
+
+[7] FULL PERSISTENT ATTACHMENTS:
+${persistentAttachments}
+
+[8] STREAMING CONFIG:
+${JSON.stringify(streamingConfig, null, 2)}
+
+[9] ACTUAL QUESTION FROM BOSS:
+${actualQuestion}`;
     
     const chatMessages: ChatMessage[] = [
       {
         role: 'system',
-        content: personaContext + journalMemory
+        content: call1SystemContent
       },
       ...messages
     ];

@@ -89,14 +89,12 @@ async function loadTurnProtocol(): Promise<string> {
   }
 }
 
-// Load Boss profile
+// Load Boss profile from boss table
 async function loadBossProfile(): Promise<string> {
   try {
-    const { data: attachments, error } = await supabase
-      .from('persistent_attachments')
-      .select('public_url, file_name')
-      .eq('category', 'persona')
-      .ilike('file_name', '%boss%')
+    const { data: boss, error } = await supabase
+      .from('boss')
+      .select('name, description')
       .single();
 
     if (error) {
@@ -104,23 +102,20 @@ async function loadBossProfile(): Promise<string> {
       return '';
     }
 
-    // Fetch the content from the URL
-    const response = await fetch(attachments.public_url);
-    return await response.text();
+    return boss ? `# ${boss.name}\n\n${boss.description}` : '';
   } catch (error) {
     console.error('❌ Error loading boss profile:', error);
     return '';
   }
 }
 
-// Load active persona profile
+// Load active persona profile from personas table
 async function loadPersonaProfile(personaName: string): Promise<string> {
   try {
-    const { data: attachments, error } = await supabase
-      .from('persistent_attachments')
-      .select('public_url, file_name')
-      .eq('category', 'persona')
-      .ilike('file_name', `%${personaName}%`)
+    const { data: persona, error } = await supabase
+      .from('personas')
+      .select('name, description')
+      .eq('name', personaName)
       .single();
 
     if (error) {
@@ -128,9 +123,7 @@ async function loadPersonaProfile(personaName: string): Promise<string> {
       return '';
     }
 
-    // Fetch the content from the URL
-    const response = await fetch(attachments.public_url);
-    return await response.text();
+    return persona ? `# ${persona.name}\n\n${persona.description}` : '';
   } catch (error) {
     console.error('❌ Error loading persona profile:', error);
     return '';

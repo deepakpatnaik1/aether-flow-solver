@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { PersonaBadge } from './PersonaBadge';
 
 interface Message {
@@ -21,8 +21,24 @@ interface MessageListProps {
 }
 
 export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'nearest'
+      });
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   return (
-    <div className="message-list">
+    <div ref={containerRef} className="message-list">
       {messages.map((message) => (
         <div key={message.id} className="message-container">
           <PersonaBadge persona={message.isUser ? 'Boss' : message.persona} />
@@ -90,6 +106,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
           </div>
         </div>
       ))}
+      <div ref={messagesEndRef} />
     </div>
   );
 };

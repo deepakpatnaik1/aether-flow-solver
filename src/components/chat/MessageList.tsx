@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { format } from 'date-fns';
 import { PersonaBadge } from './PersonaBadge';
 import { MarkdownRenderer } from './MarkdownRenderer';
@@ -26,30 +26,67 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastMessageCountRef = useRef(0);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
+  const isNearBottomRef = useRef(true);
 
-  const scrollToBottom = (forceSmooth: boolean = false) => {
-    if (messagesEndRef.current) {
+  const checkIfNearBottom = useCallback(() => {
+    if (!containerRef.current) return true;
+    
+    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+    const threshold = 100; // pixels from bottom
+    return scrollHeight - scrollTop - clientHeight < threshold;
+  }, []);
+
+  const scrollToBottom = useCallback(() => {
+    if (messagesEndRef.current && isNearBottomRef.current) {
       messagesEndRef.current.scrollIntoView({ 
-        behavior: forceSmooth ? 'smooth' : 'auto',
+        behavior: 'auto',
         block: 'end'
       });
     }
-  };
+  }, []);
 
-  useEffect(() => {
-    // Only scroll on new messages, not content updates
-    if (messages.length > lastMessageCountRef.current) {
-      // New message added - use smooth scroll
-      setTimeout(() => scrollToBottom(true), 50);
-      lastMessageCountRef.current = messages.length;
-    } else if (messages.length === lastMessageCountRef.current && messages.length > 0) {
-      // Content update to existing message - use instant scroll without animation
-      scrollToBottom(false);
+  const debouncedScrollToBottom = useCallback(() => {
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
     }
-  }, [messages]);
+    scrollTimeoutRef.current = setTimeout(scrollToBottom, 10);
+  }, [scrollToBottom]);
+
+  // Check scroll position on scroll events
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      isNearBottomRef.current = checkIfNearBottom();
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [checkIfNearBottom]);
+
+  // Handle new messages
+  useLayoutEffect(() => {
+    // Check if this is a new message vs content update
+    if (messages.length > lastMessageCountRef.current) {
+      // New message - always scroll and use smooth behavior
+      lastMessageCountRef.current = messages.length;
+      isNearBottomRef.current = true; // Force scroll for new messages
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'end'
+        });
+      }
+    } else if (messages.length === lastMessageCountRef.current && messages.length > 0) {
+      // Content update to existing message - only scroll if user is near bottom
+      debouncedScrollToBottom();
+    }
+  }, [messages, debouncedScrollToBottom]);
 
   return (
-    <div ref={containerRef} className="message-list">
+    <div ref={containerRef} className="message-list overflow-y-auto">
       {messages.map((message) => (
         <div key={message.id} className="message-container">
           <div className="flex items-center justify-between mb-2">

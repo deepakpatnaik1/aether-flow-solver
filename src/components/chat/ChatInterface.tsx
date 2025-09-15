@@ -29,8 +29,9 @@ const ChatInterface = () => {
   const [selectedModel, setSelectedModel] = useState('gpt-5-2025-08-07');
   const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const {
     currentConversationId,
@@ -44,6 +45,20 @@ const ChatInterface = () => {
     saveJournalEntries,
     setCurrentConversationId,
   } = useChat();
+
+  const models = [
+    { id: 'gpt-5-2025-08-07', name: 'GPT-5' },
+    { id: 'gpt-5-mini-2025-08-07', name: 'GPT-5 Mini' },
+    { id: 'gpt-4.1-2025-04-14', name: 'GPT-4.1' },
+    { id: 'o3-2025-04-16', name: 'O3 Reasoning' }
+  ];
+
+  const personas = [
+    { id: 'gunnar', name: 'Gunnar' },
+    { id: 'samara', name: 'Samara' },
+    { id: 'kirby', name: 'Kirby' },
+    { id: 'stefan', name: 'Stefan' }
+  ];
 
   // Load model from localStorage on mount
   useEffect(() => {
@@ -61,19 +76,46 @@ const ChatInterface = () => {
     }
   }, []);
 
-  const models = [
-    { id: 'gpt-5-2025-08-07', name: 'GPT-5' },
-    { id: 'gpt-5-mini-2025-08-07', name: 'GPT-5 Mini' },
-    { id: 'gpt-4.1-2025-04-14', name: 'GPT-4.1' },
-    { id: 'o3-2025-04-16', name: 'O3 Reasoning' }
-  ];
+  // Save model to localStorage whenever it changes
+  useEffect(() => {
+    if (selectedModel) {
+      localStorage.setItem('selectedModel', selectedModel);
+    }
+  }, [selectedModel]);
 
-  const personas = [
-    { id: 'gunnar', name: 'Gunnar' },
-    { id: 'samara', name: 'Samara' },
-    { id: 'kirby', name: 'Kirby' },
-    { id: 'stefan', name: 'Stefan' }
-  ];
+  // Save persona to localStorage whenever it changes
+  useEffect(() => {
+    if (selectedPersona) {
+      localStorage.setItem('selectedPersona', selectedPersona);
+    }
+  }, [selectedPersona]);
+
+  // Focus management
+  useEffect(() => {
+    const handleWindowFocus = () => {
+      inputRef.current?.focus();
+    };
+
+    window.addEventListener('focus', handleWindowFocus);
+    inputRef.current?.focus();
+
+    return () => {
+      window.removeEventListener('focus', handleWindowFocus);
+    };
+  }, []);
+
+  // Sync persona dropdown with input text
+  useEffect(() => {
+    const addressingMatch = message.match(/^(Gunnar|Samara|Kirby|Stefan),?\s*/i);
+    if (addressingMatch) {
+      const persona = addressingMatch[1].toLowerCase();
+      if (selectedPersona !== persona) {
+        setSelectedPersona(persona);
+      }
+    } else if (selectedPersona && message.length > 0 && !message.startsWith(selectedPersona)) {
+      setSelectedPersona(null);
+    }
+  }, [message, selectedPersona]);
 
   const handleFileUpload = async (files: FileList) => {
     const uploadPromises = Array.from(files).map(async (file) => {
@@ -111,11 +153,8 @@ const ChatInterface = () => {
       attachments: uploadedFiles.length > 0 ? uploadedFiles : undefined,
     };
 
-    const currentMessage = message;
     setMessage('');
     setUploadedFiles([]);
-    
-    // Add message to local state immediately for better UX
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
@@ -147,7 +186,6 @@ const ChatInterface = () => {
         throw new Error('No response from AI');
       }
 
-      // Create AI message with persona response  
       const aiMessage: Message = {
         id: crypto.randomUUID(),
         content: data.response,
@@ -157,11 +195,9 @@ const ChatInterface = () => {
       };
 
       setMessages(prev => [...prev, aiMessage]);
-      
-      // Save AI message to database
       await saveMessage(aiMessage);
 
-      // Store essence extract in journal for context
+      // Save journal entries
       if (data.essence) {
         const essenceLines = data.essence.split('\n').filter((line: string) => line.trim());
         const newJournalEntries = essenceLines.map((line: string) => ({
@@ -170,13 +206,10 @@ const ChatInterface = () => {
         }));
         
         setJournal(prev => [...prev, ...newJournalEntries]);
-        
-        // Save journal entries to database
         await saveJournalEntries(newJournalEntries);
       }
     } catch (error) {
       console.error('Error:', error);
-      // Add error message
       const errorMessage: Message = {
         id: (Date.now() + 2).toString(),
         content: 'Sorry, I encountered an error while processing your request.',
@@ -197,49 +230,6 @@ const ChatInterface = () => {
       handleSendMessage();
     }
   };
-
-  // Sync persona dropdown with input text
-  useEffect(() => {
-    const addressingMatch = message.match(/^(Gunnar|Samara|Kirby|Stefan),?\s*/i);
-    if (addressingMatch) {
-      const persona = addressingMatch[1].toLowerCase();
-      if (selectedPersona !== persona) {
-        setSelectedPersona(persona);
-      }
-    } else if (selectedPersona && message.length > 0 && !message.startsWith(selectedPersona)) {
-      // Only clear persona if user is actively typing and not addressing the selected persona
-      setSelectedPersona(null);
-    }
-  }, [message, selectedPersona]);
-
-  useEffect(() => {
-    const handleWindowFocus = () => {
-      inputRef.current?.focus();
-    };
-
-    window.addEventListener('focus', handleWindowFocus);
-    
-    // Focus on initial load
-    inputRef.current?.focus();
-
-    return () => {
-      window.removeEventListener('focus', handleWindowFocus);
-    };
-  }, []);
-
-  // Save model to localStorage whenever it changes
-  useEffect(() => {
-    if (selectedModel) {
-      localStorage.setItem('selectedModel', selectedModel);
-    }
-  }, [selectedModel]);
-
-  // Save persona to localStorage whenever it changes
-  useEffect(() => {
-    if (selectedPersona) {
-      localStorage.setItem('selectedPersona', selectedPersona);
-    }
-  }, [selectedPersona]);
 
   const handlePersonaSelect = (personaId: string) => {
     const persona = personas.find(p => p.id === personaId);

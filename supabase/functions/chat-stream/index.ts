@@ -90,12 +90,13 @@ Handles **LinkedIn channel.** Messy anecdotes → sharp posts making Boss look l
 Blocks vanity posting, motivational sludge, hustlebro energy. Founder-in-field voice, not analyst/hype. Receipt-backed claims only. No filler—posts must teach, sting, or show pattern.`
 };
 
-// Call OpenAI with proper model parameters
-async function callOpenAI(model: string, messages: ChatMessage[]) {
+// Call OpenAI with proper model parameters and streaming support
+async function callOpenAI(model: string, messages: ChatMessage[], stream: boolean = false) {
   const requestBody: any = {
     model: model,
     messages: messages,
     max_completion_tokens: 2000,
+    stream: stream,
   };
 
   // Only add temperature for legacy models
@@ -118,6 +119,10 @@ async function callOpenAI(model: string, messages: ChatMessage[]) {
     const errorText = await response.text();
     console.error('OpenAI API error:', response.status, errorText);
     throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+  }
+
+  if (stream) {
+    return response; // Return the streaming response
   }
 
   const data = await response.json();
@@ -207,49 +212,116 @@ You must respond as the active persona while ALSO generating a compressed artisa
     ];
 
     console.log('Making Single Call Test: Dual Output Generation');
-    const structuredResponse = await callOpenAI(model, singleCallMessages);
-    console.log('Single call completed, response length:', structuredResponse.length);
+    const streamingResponse = await callOpenAI(model, singleCallMessages, true);
+    console.log('Single call initiated with streaming');
 
-    // Parse the structured response
-    let parsedResponse;
-    try {
-      // Extract JSON from code blocks if present
-      const jsonMatch = structuredResponse.match(/```json\s*([\s\S]*?)\s*```/) || 
-                       structuredResponse.match(/```\s*([\s\S]*?)\s*```/) ||
-                       [null, structuredResponse];
-      
-      const jsonString = jsonMatch[1] || structuredResponse;
-      parsedResponse = JSON.parse(jsonString);
-      
-      if (!parsedResponse.fullContent || !parsedResponse.artisanCut) {
-        throw new Error('Missing required fields in structured response');
+    // Create a streaming response
+    const encoder = new TextEncoder();
+    let fullResponseText = '';
+    
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          const reader = streamingResponse.body?.getReader();
+          if (!reader) {
+            throw new Error('No response body available');
+          }
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = new TextDecoder().decode(value);
+            const lines = chunk.split('\n').filter(line => line.trim());
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') continue;
+
+                try {
+                  const parsed = JSON.parse(data);
+                  const delta = parsed.choices?.[0]?.delta?.content;
+                  
+                  if (delta) {
+                    fullResponseText += delta;
+                    
+                    // Stream the delta to frontend
+                    const streamData = JSON.stringify({ 
+                      type: 'content_delta', 
+                      delta: delta 
+                    }) + '\n';
+                    controller.enqueue(encoder.encode(streamData));
+                  }
+                } catch (parseError) {
+                  console.error('Error parsing streaming chunk:', parseError);
+                }
+              }
+            }
+          }
+
+          // Parse the complete structured response
+          let parsedResponse;
+          try {
+            console.log('Full response received, length:', fullResponseText.length);
+            
+            // Extract JSON from code blocks if present
+            const jsonMatch = fullResponseText.match(/```json\s*([\s\S]*?)\s*```/) || 
+                             fullResponseText.match(/```\s*([\s\S]*?)\s*```/) ||
+                             [null, fullResponseText];
+            
+            const jsonString = jsonMatch[1] || fullResponseText;
+            parsedResponse = JSON.parse(jsonString);
+            
+            if (!parsedResponse.fullContent || !parsedResponse.artisanCut) {
+              throw new Error('Missing required fields in structured response');
+            }
+            
+            console.log('Successfully parsed structured response');
+            console.log('Full content length:', parsedResponse.fullContent.length);
+            console.log('Artisan cut length:', parsedResponse.artisanCut.length);
+            
+          } catch (parseError) {
+            console.error('Failed to parse structured response:', parseError);
+            console.log('Raw response:', fullResponseText);
+            
+            // Fallback: treat entire response as fullContent, generate basic artisan cut
+            parsedResponse = {
+              fullContent: fullResponseText,
+              artisanCut: `Boss: ${userQuestion.split(' ').slice(0, 5).join(' ')}... / ${persona.charAt(0).toUpperCase() + persona.slice(1)}: ${fullResponseText.split(' ').slice(0, 10).join(' ')}...`
+            };
+            console.log('Using fallback parsing');
+          }
+
+          // Send final response data
+          const finalData = JSON.stringify({
+            type: 'complete',
+            response: parsedResponse.fullContent,
+            essence: parsedResponse.artisanCut,
+            persona: persona
+          }) + '\n';
+          controller.enqueue(encoder.encode(finalData));
+          
+          controller.close();
+
+        } catch (error) {
+          console.error('Streaming error:', error);
+          const errorData = JSON.stringify({
+            type: 'error',
+            error: error.message
+          }) + '\n';
+          controller.enqueue(encoder.encode(errorData));
+          controller.close();
+        }
       }
-      
-      console.log('Successfully parsed structured response');
-      console.log('Full content length:', parsedResponse.fullContent.length);
-      console.log('Artisan cut length:', parsedResponse.artisanCut.length);
-      
-    } catch (parseError) {
-      console.error('Failed to parse structured response:', parseError);
-      console.log('Raw response:', structuredResponse);
-      
-      // Fallback: treat entire response as fullContent, generate basic artisan cut
-      parsedResponse = {
-        fullContent: structuredResponse,
-        artisanCut: `Boss: ${userQuestion.split(' ').slice(0, 5).join(' ')}... / ${persona.charAt(0).toUpperCase() + persona.slice(1)}: ${structuredResponse.split(' ').slice(0, 10).join(' ')}...`
-      };
-      console.log('Using fallback parsing');
-    }
+    });
 
-    const personaResponse = parsedResponse.fullContent;
-    const essenceExtract = parsedResponse.artisanCut;
-
-    return new Response(JSON.stringify({ 
-      response: personaResponse,
-      essence: essenceExtract,
-      persona: persona
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    return new Response(stream, {
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'text/plain',
+        'Cache-Control': 'no-cache',
+      },
     });
 
   } catch (error) {

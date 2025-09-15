@@ -168,6 +168,18 @@ const ChatInterface = () => {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
+    // Create AI message placeholder for streaming
+    const aiMessageId = crypto.randomUUID();
+    const aiMessage: Message = {
+      id: aiMessageId,
+      content: '', // Start empty for streaming
+      persona: selectedPersona || 'gunnar',
+      timestamp: new Date(),
+      isUser: false
+    };
+
+    setMessages(prev => [...prev, aiMessage]);
+
     try {
       // Save user message to database
       await saveMessage(userMessage, uploadedFiles);
@@ -192,32 +204,66 @@ const ChatInterface = () => {
         throw error;
       }
 
-      if (!data?.response) {
-        throw new Error('No response from AI');
+      // Handle streaming response
+      if (data && typeof data === 'string') {
+        const lines = data.split('\n').filter(line => line.trim());
+        let streamingContent = '';
+        let finalResponse = '';
+        let essence = '';
+
+        for (const line of lines) {
+          try {
+            const parsed = JSON.parse(line);
+            
+            if (parsed.type === 'content_delta') {
+              streamingContent += parsed.delta;
+              // Update the AI message with streaming content
+              setMessages(prev => prev.map(msg => 
+                msg.id === aiMessageId 
+                  ? { ...msg, content: streamingContent }
+                  : msg
+              ));
+            } else if (parsed.type === 'complete') {
+              finalResponse = parsed.response;
+              essence = parsed.essence;
+              
+              // Update with final content
+              setMessages(prev => prev.map(msg => 
+                msg.id === aiMessageId 
+                  ? { ...msg, content: finalResponse }
+                  : msg
+              ));
+            } else if (parsed.type === 'error') {
+              throw new Error(parsed.error);
+            }
+          } catch (parseError) {
+            console.error('Error parsing streaming response:', parseError);
+          }
+        }
+
+        // Save final AI message
+        const finalAiMessage = {
+          ...aiMessage,
+          content: finalResponse || streamingContent
+        };
+        await saveMessage(finalAiMessage);
+
+        // Save journal entries if essence is available
+        if (essence) {
+          const essenceLines = essence.split('\n').filter((line: string) => line.trim());
+          const newJournalEntries = essenceLines.map((line: string) => ({
+            persona: line.split(':')[0]?.trim() || 'Unknown',
+            content: line.split(':').slice(1).join(':').trim() || line
+          }));
+          
+          setJournal(prev => [...prev, ...newJournalEntries]);
+          await saveJournalEntries(newJournalEntries);
+        }
+
+      } else {
+        throw new Error('Invalid response format from chat-stream function');
       }
 
-      const aiMessage: Message = {
-        id: crypto.randomUUID(),
-        content: data.response,
-        persona: selectedPersona || 'gunnar',
-        timestamp: new Date(),
-        isUser: false
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-      await saveMessage(aiMessage);
-
-      // Save journal entries
-      if (data.essence) {
-        const essenceLines = data.essence.split('\n').filter((line: string) => line.trim());
-        const newJournalEntries = essenceLines.map((line: string) => ({
-          persona: line.split(':')[0]?.trim() || 'Unknown',
-          content: line.split(':').slice(1).join(':').trim() || line
-        }));
-        
-        setJournal(prev => [...prev, ...newJournalEntries]);
-        await saveJournalEntries(newJournalEntries);
-      }
     } catch (error) {
       console.error('Error:', error);
       const errorMessage: Message = {
@@ -227,7 +273,11 @@ const ChatInterface = () => {
         timestamp: new Date(),
         isUser: false
       };
-      setMessages(prev => [...prev.slice(0, -1), errorMessage]);
+      
+      // Replace the placeholder AI message with error message
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId ? errorMessage : msg
+      ));
       await saveMessage(errorMessage);
     } finally {
       setIsLoading(false);

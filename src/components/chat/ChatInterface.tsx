@@ -41,8 +41,7 @@ const ChatInterface = () => {
     journal,
     setMessages,
     setJournal,
-    saveMessage,
-    saveJournalEntries,
+    saveToSuperjournal,
   } = useChat();
 
   const models = [
@@ -181,9 +180,6 @@ const ChatInterface = () => {
     setMessages(prev => [...prev, aiMessage]);
 
     try {
-      // Save user message to database
-      await saveMessage(userMessage, uploadedFiles);
-
       // Format messages for OpenAI API
       const formattedMessages = [...messages, userMessage].map(msg => ({
         role: msg.isUser ? 'user' as const : 'assistant' as const,
@@ -287,50 +283,15 @@ const ChatInterface = () => {
         reader.releaseLock();
       }
 
-      // Save final AI message
+      // Save conversation turn to superjournal in R2
       const finalAiMessage = {
         ...aiMessage,
         content: streamingContent
       };
-      await saveMessage(finalAiMessage);
-
-      // Save conversation turn to superjournal in R2
-      try {
-        const journalEntry = {
-          id: crypto.randomUUID(),
-          timestamp: new Date().toISOString(),
-          userMessage: {
-            content: userMessage.content,
-            persona: userMessage.persona,
-            attachments: userMessage.attachments
-          },
-          aiResponse: {
-            content: streamingContent,
-            persona: finalAiMessage.persona,
-            model: selectedModel
-          }
-        };
-
-        console.log('💾 Saving conversation turn to superjournal...');
-        
-        // Use background task to avoid blocking the UI
-        const superjournalResponse = await fetch(`https://suncgglbheilkeimwuxt.supabase.co/functions/v1/superjournal?action=append`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA`,
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA',
-          },
-          body: JSON.stringify(journalEntry),
-        });
-
-        if (superjournalResponse.ok) {
-          console.log('✅ Conversation turn saved to superjournal');
-        } else {
-          console.warn('⚠️ Failed to save to superjournal:', await superjournalResponse.text());
-        }
-      } catch (superjournalError) {
-        console.warn('⚠️ Superjournal save failed (non-blocking):', superjournalError);
+      
+      const saved = await saveToSuperjournal(userMessage, finalAiMessage, selectedModel);
+      if (!saved) {
+        console.warn('⚠️ Failed to save conversation to superjournal');
       }
 
     } catch (error) {
@@ -347,7 +308,6 @@ const ChatInterface = () => {
       setMessages(prev => prev.map(msg => 
         msg.id === aiMessageId ? errorMessage : msg
       ));
-      await saveMessage(errorMessage);
     } finally {
       setIsLoading(false);
     }

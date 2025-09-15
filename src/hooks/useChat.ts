@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   id: string;
@@ -16,23 +15,15 @@ interface Message {
   }[];
 }
 
+const SUPABASE_URL = 'https://suncgglbheilkeimwuxt.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA';
+
 export const useChat = () => {
-  const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [journal, setJournal] = useState<Array<{persona: string, content: string}>>([]);
-  const [superjournalLoaded, setSuperjournalLoaded] = useState(false);
 
-  // Clear any stale browser storage on startup
+  // Load superjournal on startup
   useEffect(() => {
-    // Clear any localStorage/sessionStorage entries that might interfere
-    localStorage.removeItem('chat-messages');
-    localStorage.removeItem('chat-conversation');
-    localStorage.removeItem('superjournal-cache');
-    sessionStorage.removeItem('chat-messages');
-    sessionStorage.removeItem('chat-conversation');
-    sessionStorage.removeItem('superjournal-cache');
-    
-    // Load superjournal first, then initialize conversation
     loadSuperjournalFromR2();
   }, []);
 
@@ -40,11 +31,11 @@ export const useChat = () => {
     try {
       console.log('📖 Loading superjournal from R2...');
       
-      const response = await fetch(`https://suncgglbheilkeimwuxt.supabase.co/functions/v1/superjournal?action=load`, {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/superjournal?action=load`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA`,
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_ANON_KEY,
         },
       });
 
@@ -76,191 +67,58 @@ export const useChat = () => {
           });
         });
         
-        // Set messages from superjournal (this will be the scrollback)
+        // Set messages from superjournal
         setMessages(superjournalMessages);
-        setSuperjournalLoaded(true);
-        
-        // Initialize conversation after superjournal loads
-        await initializeConversation();
         
       } else {
-        console.warn('⚠️ Failed to load superjournal, falling back to database');
-        setSuperjournalLoaded(true);
-        await initializeConversation();
+        console.warn('⚠️ Failed to load superjournal:', await response.text());
       }
       
     } catch (error) {
       console.error('❌ Error loading superjournal:', error);
-      setSuperjournalLoaded(true);
-      await initializeConversation();
     }
   };
 
-  const initializeConversation = async () => {
-    // Skip database load if superjournal has been loaded
-    if (superjournalLoaded) {
-      console.log('🏃‍♂️ Skipping database load - superjournal already loaded');
-      return;
-    }
-    
-    // Try to get or create a single conversation
-    const { data, error } = await supabase
-      .from('conversations')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(1);
+  const saveToSuperjournal = async (userMessage: Message, aiMessage: Message, model: string) => {
+    try {
+      const journalEntry = {
+        id: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        userMessage: {
+          content: userMessage.content,
+          persona: userMessage.persona,
+          attachments: userMessage.attachments
+        },
+        aiResponse: {
+          content: aiMessage.content,
+          persona: aiMessage.persona,
+          model: model
+        }
+      };
 
-    if (error) {
-      console.error('Error loading conversation:', error);
-      return;
-    }
-
-    let currentConversation;
-    
-    if (data && data.length > 0) {
-      // Use existing conversation
-      currentConversation = data[0];
-    } else {
-      // Create new conversation
-      const { data: newConversation, error: createError } = await supabase
-        .from('conversations')
-        .insert([{ title: 'Chat' }])
-        .select()
-        .single();
-
-      if (createError) {
-        console.error('Error creating conversation:', createError);
-        return;
-      }
+      console.log('💾 Saving conversation turn to superjournal...', journalEntry);
       
-      currentConversation = newConversation;
-    }
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/superjournal?action=append`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify(journalEntry),
+      });
 
-    setConversationId(currentConversation.id);
-    
-    // Only load messages from DB if superjournal didn't load
-    if (!superjournalLoaded) {
-      await loadMessages(currentConversation.id);
-    }
-    await loadJournalEntries(currentConversation.id);
-  };
-
-  const loadMessages = async (conversationId: string) => {
-    const { data: messagesData, error: messagesError } = await supabase
-      .from('chat_messages')
-      .select(`
-        *,
-        file_attachments (*)
-      `)
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
-
-    if (messagesError) {
-      console.error('Error loading messages:', messagesError);
-      return;
-    }
-
-    const formattedMessages: Message[] = (messagesData || []).map(msg => ({
-      id: msg.id,
-      content: msg.content,
-      persona: msg.persona,
-      timestamp: new Date(msg.created_at),
-      isUser: msg.is_user,
-      attachments: msg.file_attachments?.map((att: any) => ({
-        fileName: att.file_name,
-        publicUrl: att.public_url,
-        originalName: att.original_name,
-        size: att.file_size,
-        type: att.file_type,
-      })) || undefined
-    }));
-
-    setMessages(formattedMessages);
-  };
-
-  const loadJournalEntries = async (conversationId: string) => {
-    const { data, error } = await supabase
-      .from('journal_entries')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.error('Error loading journal:', error);
-      return;
-    }
-
-    const formattedJournal = (data || []).map(entry => ({
-      persona: entry.persona,
-      content: entry.content
-    }));
-
-    setJournal(formattedJournal);
-  };
-
-  const saveMessage = async (message: Message, attachments?: any[]) => {
-    if (!conversationId) return;
-
-    const { data: messageData, error: messageError } = await supabase
-      .from('chat_messages')
-      .insert([{
-        conversation_id: conversationId,
-        content: message.content,
-        persona: message.persona,
-        is_user: message.isUser || false,
-      }])
-      .select()
-      .single();
-
-    if (messageError) {
-      console.error('Error saving message:', messageError);
-      return;
-    }
-
-    // Save attachments if any
-    if (attachments && attachments.length > 0) {
-      const attachmentInserts = attachments.map(att => ({
-        message_id: messageData.id,
-        file_name: att.fileName,
-        public_url: att.publicUrl,
-        original_name: att.originalName,
-        file_size: att.size,
-        file_type: att.type,
-      }));
-
-      const { error: attachmentError } = await supabase
-        .from('file_attachments')
-        .insert(attachmentInserts);
-
-      if (attachmentError) {
-        console.error('Error saving attachments:', attachmentError);
+      if (response.ok) {
+        console.log('✅ Conversation turn saved to superjournal');
+        return true;
+      } else {
+        const errorText = await response.text();
+        console.error('❌ Failed to save to superjournal:', response.status, errorText);
+        return false;
       }
-    }
-
-    // Update conversation timestamp
-    await supabase
-      .from('conversations')
-      .update({ updated_at: new Date().toISOString() })
-      .eq('id', conversationId);
-
-    return messageData.id;
-  };
-
-  const saveJournalEntries = async (entries: Array<{persona: string, content: string}>) => {
-    if (!conversationId || entries.length === 0) return;
-
-    const journalInserts = entries.map(entry => ({
-      conversation_id: conversationId,
-      persona: entry.persona,
-      content: entry.content,
-    }));
-
-    const { error } = await supabase
-      .from('journal_entries')
-      .insert(journalInserts);
-
-    if (error) {
-      console.error('Error saving journal entries:', error);
+    } catch (error) {
+      console.error('❌ Superjournal save error:', error);
+      return false;
     }
   };
 
@@ -269,7 +127,6 @@ export const useChat = () => {
     journal,
     setMessages,
     setJournal,
-    saveMessage,
-    saveJournalEntries,
+    saveToSuperjournal,
   };
 };

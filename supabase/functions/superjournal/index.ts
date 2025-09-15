@@ -252,6 +252,7 @@ async function loadSuperjournal(): Promise<JournalEntry[]> {
     console.error('❌ Error loading superjournal:', error);
     return [];
   }
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests

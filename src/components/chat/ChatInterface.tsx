@@ -190,78 +190,95 @@ const ChatInterface = () => {
         content: msg.content
       }));
       
-      const { data, error } = await supabase.functions.invoke('chat-stream', {
-        body: {
+      // Use direct fetch for streaming support
+      const response = await fetch(`https://suncgglbheilkeimwuxt.supabase.co/functions/v1/chat-stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA`,
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA',
+        },
+        body: JSON.stringify({
           messages: formattedMessages,
           model: selectedModel,
           persona: selectedPersona || 'gunnar',
           journal: journal
-        }
+        }),
       });
 
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw error;
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Handle streaming response
-      if (data && typeof data === 'string') {
-        const lines = data.split('\n').filter(line => line.trim());
-        let streamingContent = '';
-        let finalResponse = '';
-        let essence = '';
+      if (!response.body) {
+        throw new Error('No response body available');
+      }
 
-        for (const line of lines) {
-          try {
-            const parsed = JSON.parse(line);
-            
-            if (parsed.type === 'content_delta') {
-              streamingContent += parsed.delta;
-              // Update the AI message with streaming content
-              setMessages(prev => prev.map(msg => 
-                msg.id === aiMessageId 
-                  ? { ...msg, content: streamingContent }
-                  : msg
-              ));
-            } else if (parsed.type === 'complete') {
-              finalResponse = parsed.response;
-              essence = parsed.essence;
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let streamingContent = '';
+      let finalResponse = '';
+      let essence = '';
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n').filter(line => line.trim());
+
+          for (const line of lines) {
+            try {
+              const parsed = JSON.parse(line);
               
-              // Update with final content
-              setMessages(prev => prev.map(msg => 
-                msg.id === aiMessageId 
-                  ? { ...msg, content: finalResponse }
-                  : msg
-              ));
-            } else if (parsed.type === 'error') {
-              throw new Error(parsed.error);
+              if (parsed.type === 'content_delta') {
+                streamingContent += parsed.delta;
+                // Update the AI message with streaming content
+                setMessages(prev => prev.map(msg => 
+                  msg.id === aiMessageId 
+                    ? { ...msg, content: streamingContent }
+                    : msg
+                ));
+              } else if (parsed.type === 'complete') {
+                finalResponse = parsed.response;
+                essence = parsed.essence;
+                
+                // Update with final content
+                setMessages(prev => prev.map(msg => 
+                  msg.id === aiMessageId 
+                    ? { ...msg, content: finalResponse }
+                    : msg
+                ));
+              } else if (parsed.type === 'error') {
+                throw new Error(parsed.error);
+              }
+            } catch (parseError) {
+              console.error('Error parsing streaming response:', parseError);
             }
-          } catch (parseError) {
-            console.error('Error parsing streaming response:', parseError);
           }
         }
+      } finally {
+        reader.releaseLock();
+      }
 
-        // Save final AI message
-        const finalAiMessage = {
-          ...aiMessage,
-          content: finalResponse || streamingContent
-        };
-        await saveMessage(finalAiMessage);
+      // Save final AI message
+      const finalAiMessage = {
+        ...aiMessage,
+        content: finalResponse || streamingContent
+      };
+      await saveMessage(finalAiMessage);
 
-        // Save journal entries if essence is available
-        if (essence) {
-          const essenceLines = essence.split('\n').filter((line: string) => line.trim());
-          const newJournalEntries = essenceLines.map((line: string) => ({
-            persona: line.split(':')[0]?.trim() || 'Unknown',
-            content: line.split(':').slice(1).join(':').trim() || line
-          }));
-          
-          setJournal(prev => [...prev, ...newJournalEntries]);
-          await saveJournalEntries(newJournalEntries);
-        }
-
-      } else {
-        throw new Error('Invalid response format from chat-stream function');
+      // Save journal entries if essence is available
+      if (essence) {
+        const essenceLines = essence.split('\n').filter((line: string) => line.trim());
+        const newJournalEntries = essenceLines.map((line: string) => ({
+          persona: line.split(':')[0]?.trim() || 'Unknown',
+          content: line.split(':').slice(1).join(':').trim() || line
+        }));
+        
+        setJournal(prev => [...prev, ...newJournalEntries]);
+        await saveJournalEntries(newJournalEntries);
       }
 
     } catch (error) {

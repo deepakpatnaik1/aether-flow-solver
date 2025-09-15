@@ -130,6 +130,39 @@ async function loadPersonaProfile(personaName: string): Promise<string> {
   }
 }
 
+// Load relevant knowledge from knowledge_entries table
+async function loadRelevantKnowledge(userMessage: string, personaName: string): Promise<string> {
+  try {
+    // Get recent conversations and key strategic context
+    const { data: knowledge, error } = await supabase
+      .from('knowledge_entries')
+      .select('title, content, entry_type, tags')
+      .or(`entry_type.eq.conversation,entry_type.eq.strategy,entry_type.eq.decision,tags.cs.{${personaName.toLowerCase()}}`)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (error) {
+      console.log('ℹ️ No knowledge entries found');
+      return '';
+    }
+
+    if (!knowledge || knowledge.length === 0) {
+      return '';
+    }
+
+    let knowledgeContext = '\n## Relevant Context from Previous Conversations:\n\n';
+    
+    for (const entry of knowledge) {
+      knowledgeContext += `### ${entry.title}\n${entry.content.substring(0, 500)}...\n\n`;
+    }
+
+    return knowledgeContext;
+  } catch (error) {
+    console.error('❌ Error loading knowledge:', error);
+    return '';
+  }
+}
+
 // Load full journal table
 async function loadFullJournal(): Promise<string> {
   try {
@@ -325,6 +358,7 @@ serve(async (req) => {
       turnProtocol,
       bossProfile, 
       personaProfile,
+      knowledgeContext,
       fullJournal,
       latestEphemeralAttachment,
       persistentAttachments
@@ -332,6 +366,7 @@ serve(async (req) => {
       loadTurnProtocol(),
       loadBossProfile(),
       loadPersonaProfile(persona),
+      loadRelevantKnowledge(actualQuestion, persona),
       loadFullJournal(),
       loadLatestEphemeralAttachment(),
       loadPersistentAttachments()
@@ -360,6 +395,9 @@ ${bossProfile}
 
 [3] ACTIVE PERSONA PROFILE:
 ${personaProfile}
+
+[3.5] RELEVANT KNOWLEDGE FROM PREVIOUS CONVERSATIONS:
+${knowledgeContext}
 
 [4] MODEL NAME:
 ${model}

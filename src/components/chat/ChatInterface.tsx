@@ -252,10 +252,25 @@ const ChatInterface = () => {
               if (parsed.type === 'content_delta') {
                 streamingContent += parsed.delta;
                 console.log('Streaming content updated, length:', streamingContent.length);
-                // Update the AI message with streaming content
+                
+                // Try to extract content from JSON structure during streaming
+                let displayContent = streamingContent;
+                try {
+                  // Look for fullContent field in the streaming JSON
+                  const fullContentMatch = streamingContent.match(/"fullContent":\s*"([^"\\]*(\\.[^"\\]*)*)/);
+                  if (fullContentMatch) {
+                    // Unescape the JSON string and use it as display content
+                    displayContent = fullContentMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+                  }
+                } catch (e) {
+                  // If parsing fails, keep showing raw content
+                  console.log('Could not extract content from streaming JSON, showing raw');
+                }
+                
+                // Update the AI message with processed streaming content
                 setMessages(prev => prev.map(msg => 
                   msg.id === aiMessageId 
-                    ? { ...msg, content: streamingContent }
+                    ? { ...msg, content: displayContent }
                     : msg
                 ));
               } else if (parsed.type === 'complete') {

@@ -46,7 +46,7 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
         <DialogHeader>
           <DialogTitle>Organize File Upload</DialogTitle>
           <DialogDescription>
-            Choose how to organize your files in R2 storage
+            Choose how to organize your files in Supabase storage
           </DialogDescription>
         </DialogHeader>
         

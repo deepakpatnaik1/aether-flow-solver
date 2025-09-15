@@ -308,7 +308,7 @@ const ChatInterface = () => {
         reader.releaseLock();
       }
 
-      // Save conversation turn to superjournal in R2
+      // Save conversation turn to superjournal database
       const finalAiMessage = {
         ...aiMessage,
         content: streamingContent

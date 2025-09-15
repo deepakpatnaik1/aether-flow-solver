@@ -218,7 +218,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, model = 'gpt-4o-mini', persona = 'gunnar', turnId } = await req.json();
+    const { messages, model = 'gpt-5-2025-08-07', persona = 'gunnar', turnId } = await req.json();
     console.log('Received request:', { 
       messagesCount: messages?.length, 
       model, 

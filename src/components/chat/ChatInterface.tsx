@@ -151,8 +151,10 @@ const ChatInterface = () => {
   };
 
   const handleSendMessage = async () => {
+    console.log('🚀 handleSendMessage called, message:', message, 'isLoading:', isLoading);
     if (!message.trim() || isLoading) return;
 
+    console.log('✅ Proceeding with message send');
     const userMessage: Message = {
       id: Date.now().toString(),
       content: message,
@@ -166,6 +168,7 @@ const ChatInterface = () => {
     setUploadedFiles([]);
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
+    console.log('📝 User message added to UI, starting AI response...');
 
     // Create AI message placeholder for streaming
     const aiMessageId = crypto.randomUUID();

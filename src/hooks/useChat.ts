@@ -96,16 +96,17 @@ export const useChat = () => {
     }
   };
 
-  const saveToSuperjournal = async (userMessage: Message, aiMessage: Message, model: string) => {
+  const saveToSuperjournal = async (userMessage: Message, aiMessage: Message, model: string, turnId?: string) => {
     console.log('🚀 saveToSuperjournal called with:', {
       userContent: userMessage.content.substring(0, 50),
       aiContent: aiMessage.content.substring(0, 50),
-      model
+      model,
+      turnId
     });
     
     try {
       const journalEntry = {
-        id: crypto.randomUUID(),
+        id: turnId || crypto.randomUUID(), // Use provided turnId or generate new one
         timestamp: new Date().toISOString(),
         userMessage: {
           content: userMessage.content,

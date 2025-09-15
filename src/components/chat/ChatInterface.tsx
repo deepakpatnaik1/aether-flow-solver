@@ -197,7 +197,8 @@ const ChatInterface = () => {
         body: JSON.stringify({
           messages: formattedMessages,
           model: selectedModel,
-          persona: selectedPersona || 'gunnar'
+          persona: selectedPersona || 'gunnar',
+          turnId: crypto.randomUUID() // Generate turnId for linking
         }),
       });
 
@@ -213,6 +214,7 @@ const ChatInterface = () => {
       const decoder = new TextDecoder();
       let streamingContent = '';
       let buffer = ''; // Buffer for incomplete JSON chunks
+      let receivedTurnId = ''; // Capture turnId from response
 
       console.log('Starting streaming response...');
 
@@ -244,6 +246,9 @@ const ChatInterface = () => {
               
               if (parsed.type === 'content_delta' && parsed.delta) {
                 streamingContent += parsed.delta;
+                if (parsed.turnId) {
+                  receivedTurnId = parsed.turnId; // Capture turnId
+                }
                 console.log('🌊 STREAMING UPDATE:', `"${parsed.delta}"`, '| Total length:', streamingContent.length);
                 
                 // Update the AI message with streaming content
@@ -257,6 +262,9 @@ const ChatInterface = () => {
                 await new Promise(resolve => setTimeout(resolve, 50));
                 
               } else if (parsed.type === 'complete') {
+                if (parsed.turnId) {
+                  receivedTurnId = parsed.turnId; // Capture turnId from completion
+                }
                 console.log('🏁 Streaming complete, final content length:', streamingContent.length);
               } else if (parsed.type === 'error') {
                 throw new Error(parsed.error);
@@ -297,11 +305,11 @@ const ChatInterface = () => {
       });
       
       try {
-        const saved = await saveToSuperjournal(userMessage, finalAiMessage, selectedModel);
+        const saved = await saveToSuperjournal(userMessage, finalAiMessage, selectedModel, receivedTurnId);
         if (!saved) {
           console.warn('⚠️ Failed to save conversation to superjournal');
         } else {
-          console.log('✅ Successfully saved conversation turn');
+          console.log('✅ Successfully saved conversation turn with turnId:', receivedTurnId);
         }
       } catch (saveError) {
         console.error('💥 Error during save attempt:', saveError);

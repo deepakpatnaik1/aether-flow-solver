@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.superjournal]
 verify_jwt = false
+
+[functions.journal]
+verify_jwt = false

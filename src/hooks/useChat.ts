@@ -20,9 +20,10 @@ export const useChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [journal, setJournal] = useState<Array<{persona: string, content: string}>>([]);
 
-  // Load superjournal on startup
+  // Load superjournal and journal entries on startup
   useEffect(() => {
     loadSuperjournalFromSupabase();
+    loadJournalFromSupabase();
   }, []);
 
   const loadSuperjournalFromSupabase = async () => {
@@ -99,6 +100,73 @@ export const useChat = () => {
     }
   };
 
+  const loadJournalFromSupabase = async () => {
+    try {
+      console.log('📖 Loading journal entries from Supabase DB...');
+      
+      const { data: entries, error } = await supabase
+        .from('journal_entries')
+        .select('*')
+        .order('timestamp', { ascending: true });
+
+      if (error) {
+        console.error('❌ Error loading journal entries:', error);
+        return;
+      }
+
+      console.log(`✅ Loaded ${entries?.length || 0} journal entries`);
+      
+      if (entries && entries.length > 0) {
+        const journalEntries = entries.map(entry => ({
+          persona: entry.ai_response_persona,
+          content: entry.ai_response_content
+        }));
+        
+        setJournal(journalEntries);
+        console.log('📥 Loaded', journalEntries.length, 'journal entries');
+      }
+      
+    } catch (error) {
+      console.error('❌ Error loading journal entries:', error);
+    }
+  };
+
+  const saveToJournal = async (userMessage: Message, aiMessage: Message, model: string, turnId?: string) => {
+    try {
+      const entryId = turnId || crypto.randomUUID();
+      const timestamp = new Date().toISOString();
+
+      console.log('💾 Saving to journal_entries table:', entryId);
+      
+      const { error } = await supabase
+        .from('journal_entries')
+        .insert({
+          entry_id: entryId,
+          timestamp: timestamp,
+          user_message_content: userMessage.content,
+          user_message_persona: userMessage.persona,
+          user_message_attachments: userMessage.attachments || [],
+          ai_response_content: aiMessage.content,
+          ai_response_persona: aiMessage.persona,
+          ai_response_model: model
+        });
+
+      if (error) {
+        console.error('❌ Failed to save journal entry:', error);
+        return false;
+      }
+
+      // Add to local journal state
+      setJournal(prev => [...prev, { persona: aiMessage.persona, content: aiMessage.content }]);
+      console.log('✅ Journal entry saved');
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Journal save error:', error);
+      return false;
+    }
+  };
+
   const saveToSuperjournal = async (userMessage: Message, aiMessage: Message, model: string, turnId?: string) => {
     console.log('🚀 saveToSuperjournal called with:', {
       userContent: userMessage.content.substring(0, 50),
@@ -136,6 +204,10 @@ export const useChat = () => {
       }
 
       console.log('✅ Conversation turn saved to superjournal DB');
+      
+      // Also save to journal entries
+      await saveToJournal(userMessage, aiMessage, model, entryId);
+      
       return true;
       
     } catch (error) {
@@ -150,5 +222,6 @@ export const useChat = () => {
     setMessages,
     setJournal,
     saveToSuperjournal,
+    saveToJournal,
   };
 };

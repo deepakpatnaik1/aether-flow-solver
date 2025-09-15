@@ -31,10 +31,10 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
     if (!scrollPendingRef.current) {
       scrollPendingRef.current = true;
       requestAnimationFrame(() => {
-        const scrollContainer = messagesEndRef.current?.parentElement?.parentElement;
-        if (scrollContainer) {
-          scrollContainer.scrollTop = scrollContainer.scrollHeight;
-        }
+        messagesEndRef.current?.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'end'
+        });
         scrollPendingRef.current = false;
       });
     }

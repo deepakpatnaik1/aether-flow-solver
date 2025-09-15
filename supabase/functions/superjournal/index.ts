@@ -36,18 +36,23 @@ async function signR2Request(
 ) {
   const encoder = new TextEncoder();
   
+  // Normalize headers to lowercase for consistent signing
+  const normalizedHeaders: Record<string, string> = {};
+  for (const [key, value] of Object.entries(headers)) {
+    normalizedHeaders[key.toLowerCase()] = value;
+  }
+  
   // Create canonical request
   const urlObj = new URL(url);
   const canonicalUri = urlObj.pathname;
   const canonicalQuerystring = urlObj.search.slice(1);
   
-  const canonicalHeaders = Object.entries(headers)
+  const canonicalHeaders = Object.entries(normalizedHeaders)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key.toLowerCase()}:${value}`)
+    .map(([key, value]) => `${key}:${value}`)
     .join('\n');
     
-  const signedHeaders = Object.keys(headers)
-    .map(key => key.toLowerCase())
+  const signedHeaders = Object.keys(normalizedHeaders)
     .sort()
     .join(';');
 
@@ -138,11 +143,18 @@ async function signR2Request(
   // Create authorization header
   const authorization = `${algorithm} Credential=${R2_ACCESS_KEY_ID}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
   
-  return {
-    ...headers,
+  // Return headers with proper casing for HTTP requests
+  const finalHeaders: Record<string, string> = {
     'Authorization': authorization,
     'X-Amz-Date': timestamp,
   };
+  
+  // Add original headers with proper casing
+  for (const [key, value] of Object.entries(headers)) {
+    finalHeaders[key] = value;
+  }
+  
+  return finalHeaders;
 }
 
 async function appendToSuperjournal(entry: JournalEntry) {
@@ -276,9 +288,10 @@ serve(async (req) => {
 
     if (req.method === 'POST' && action === 'append') {
       const entry: JournalEntry = await req.json();
-      console.log('📝 Appending journal entry:', entry.id);
+      console.log('📝 Appending journal entry:', entry.id, 'user content:', entry.userMessage.content.substring(0, 50));
       
       await appendToSuperjournal(entry);
+      console.log('✅ Successfully appended journal entry:', entry.id);
       
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -288,6 +301,7 @@ serve(async (req) => {
       console.log('📖 Loading superjournal...');
       
       const entries = await loadSuperjournal();
+      console.log(`📋 Found ${entries.length} superjournal entries`);
       
       return new Response(JSON.stringify({ entries }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

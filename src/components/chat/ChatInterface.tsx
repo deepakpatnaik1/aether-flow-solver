@@ -13,6 +13,13 @@ interface Message {
   persona: string;
   timestamp: Date;
   isUser?: boolean;
+  attachments?: {
+    fileName: string;
+    publicUrl: string;
+    originalName: string;
+    size: number;
+    type: string;
+  }[];
 }
 
 const ChatInterface = () => {
@@ -20,6 +27,8 @@ const ChatInterface = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gpt-5-2025-08-07');
   const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load model from localStorage on mount
   useEffect(() => {
@@ -54,6 +63,30 @@ const ChatInterface = () => {
     { id: 'stefan', name: 'Stefan' }
   ];
 
+  const handleFileUpload = async (files: FileList) => {
+    const uploadPromises = Array.from(files).map(async (file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await supabase.functions.invoke('upload-file', {
+        body: formData,
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      return response.data;
+    });
+
+    try {
+      const uploadResults = await Promise.all(uploadPromises);
+      setUploadedFiles(prev => [...prev, ...uploadResults]);
+    } catch (error) {
+      console.error('Upload failed:', error);
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!message.trim() || isLoading) return;
 
@@ -62,11 +95,13 @@ const ChatInterface = () => {
       content: message,
       persona: 'Boss',
       timestamp: new Date(),
-      isUser: true
+      isUser: true,
+      attachments: uploadedFiles.length > 0 ? uploadedFiles : undefined,
     };
 
     const currentMessage = message;
     setMessage('');
+    setUploadedFiles([]);
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
@@ -201,23 +236,42 @@ const ChatInterface = () => {
       {/* Input Bar */}
       <div className="input-bar-container">
         <div className="input-bar-content">
-          <div className="flex items-center gap-2 flex-1">
-            <Input
-              ref={inputRef}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type a message..."
-              className="chat-input flex-1"
-            />
-            
-            <Button 
-              onClick={handleSendMessage}
-              disabled={!message.trim() || isLoading}
-              className="send-btn"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+          <div className="flex flex-col gap-2 flex-1">
+            {uploadedFiles.length > 0 && (
+              <div className="flex flex-wrap gap-2 p-2 bg-background/50 rounded border">
+                {uploadedFiles.map((file, index) => (
+                  <div key={index} className="flex items-center gap-2 bg-background rounded px-3 py-1 text-sm border">
+                    <span className="truncate max-w-32">{file.originalName}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-0 h-4 w-4"
+                      onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <Input
+                ref={inputRef}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Type a message..."
+                className="chat-input flex-1"
+              />
+              
+              <Button 
+                onClick={handleSendMessage}
+                disabled={!message.trim() || isLoading}
+                className="send-btn"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           
           {/* Model Selection Controls */}
@@ -227,9 +281,21 @@ const ChatInterface = () => {
                 variant="ghost" 
                 size="sm"
                 className="attachment-btn"
+                onClick={() => fileInputRef.current?.click()}
               >
                 <Paperclip className="h-4 w-4" />
               </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    handleFileUpload(e.target.files);
+                  }
+                }}
+              />
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

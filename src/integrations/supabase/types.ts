@@ -143,6 +143,48 @@ export type Database = {
           },
         ]
       }
+      superjournal_entries: {
+        Row: {
+          ai_response_content: string
+          ai_response_model: string
+          ai_response_persona: string
+          created_at: string
+          entry_id: string
+          id: string
+          timestamp: string
+          updated_at: string
+          user_message_attachments: Json | null
+          user_message_content: string
+          user_message_persona: string
+        }
+        Insert: {
+          ai_response_content: string
+          ai_response_model: string
+          ai_response_persona: string
+          created_at?: string
+          entry_id: string
+          id?: string
+          timestamp?: string
+          updated_at?: string
+          user_message_attachments?: Json | null
+          user_message_content: string
+          user_message_persona: string
+        }
+        Update: {
+          ai_response_content?: string
+          ai_response_model?: string
+          ai_response_persona?: string
+          created_at?: string
+          entry_id?: string
+          id?: string
+          timestamp?: string
+          updated_at?: string
+          user_message_attachments?: Json | null
+          user_message_content?: string
+          user_message_persona?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

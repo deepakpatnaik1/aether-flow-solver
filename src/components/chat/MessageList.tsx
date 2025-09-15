@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { PersonaBadge } from './PersonaBadge';
 import { MarkdownRenderer } from './MarkdownRenderer';
@@ -24,46 +24,14 @@ interface MessageListProps {
 
 export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const lastMessageCountRef = useRef(0);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
 
-  const scrollToBottom = useCallback(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ 
-        behavior: 'auto',
-        block: 'end'
-      });
-    }
-  }, []);
-
-  const debouncedScrollToBottom = useCallback(() => {
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-    scrollTimeoutRef.current = setTimeout(scrollToBottom, 10);
-  }, [scrollToBottom]);
-
-  // Handle new messages and content updates
-  useLayoutEffect(() => {
-    // Check if this is a new message vs content update
-    if (messages.length > lastMessageCountRef.current) {
-      // New message - use smooth scroll
-      lastMessageCountRef.current = messages.length;
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'end'
-        });
-      }
-    } else if (messages.length === lastMessageCountRef.current && messages.length > 0) {
-      // Content update to existing message - use debounced instant scroll
-      debouncedScrollToBottom();
-    }
-  }, [messages, debouncedScrollToBottom]);
+  useEffect(() => {
+    // Always scroll to bottom when messages change
+    messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+  }, [messages]);
 
   return (
-    <div ref={containerRef} className="message-list overflow-y-auto">
+    <div className="message-list">
       {messages.map((message) => (
         <div key={message.id} className="message-container">
           <div className="flex items-center justify-between mb-2">

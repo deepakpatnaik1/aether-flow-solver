@@ -113,7 +113,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
         elements.push(
           <div key={i} className="flex items-start gap-2 my-1">
             <span className="mt-2 leading-none" style={{ color: personaColor }}>•</span>
-            <div className="flex-1 text-foreground">
+            <div className="flex-1 message-text">
               {processInlineMarkdown(listContent)}
             </div>
           </div>
@@ -129,7 +129,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
           elements.push(
             <div key={i} className="flex items-start gap-2 my-1">
               <span className="mt-2 leading-none font-medium" style={{ color: personaColor }}>{number}.</span>
-              <div className="flex-1 text-foreground">
+              <div className="flex-1 message-text">
                 {processInlineMarkdown(listContent)}
               </div>
             </div>
@@ -170,7 +170,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
       // Handle regular paragraphs
       if (line.trim()) {
         elements.push(
-          <p key={i} className="text-foreground leading-relaxed my-1">
+          <p key={i} className="message-text">
             {processInlineMarkdown(line)}
           </p>
         );

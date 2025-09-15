@@ -13,36 +13,11 @@ interface FileUploadModalProps {
 }
 
 const categories = [
-  { 
-    value: 'attachments', 
-    label: 'Chat Attachments', 
-    bucket: 'attachments',
-    description: 'Files shared in conversations'
-  },
-  { 
-    value: 'documents', 
-    label: 'General Documents', 
-    bucket: 'documents',
-    description: 'PDFs, text files, spreadsheets'
-  },
-  { 
-    value: 'boss', 
-    label: 'Boss Files', 
-    bucket: 'boss',
-    description: 'Files for the Boss persona'
-  },
-  { 
-    value: 'persona', 
-    label: 'Persona Files', 
-    bucket: 'persona',
-    description: 'Files for AI personas'
-  },
-  { 
-    value: 'processes', 
-    label: 'Process Files', 
-    bucket: 'processes',
-    description: 'Workflow and process documents'
-  },
+  { value: 'attachments', label: 'Chat Attachments', bucket: 'attachments' },
+  { value: 'documents', label: 'General Documents', bucket: 'documents' },
+  { value: 'boss', label: 'Boss Files', bucket: 'boss' },
+  { value: 'persona', label: 'Persona Files', bucket: 'persona' },
+  { value: 'processes', label: 'Process Files', bucket: 'processes' },
 ];
 
 export const FileUploadModal: React.FC<FileUploadModalProps> = ({
@@ -84,46 +59,29 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
             </div>
           )}
 
-          <div className="space-y-3">
-            <Label className="text-base font-medium">Storage Location</Label>
-            <div className="grid gap-3">
-              {categories.map((category) => (
-                <div
-                  key={category.value}
-                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                    selectedCategory === category.value
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                  onClick={() => setSelectedCategory(category.value)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="font-medium">{category.label}</h4>
-                      <p className="text-sm text-muted-foreground">{category.description}</p>
-                      <code className="text-xs bg-muted px-2 py-1 rounded mt-1 inline-block">
-                        {category.bucket}/
-                      </code>
-                    </div>
-                    <div className={`w-4 h-4 rounded-full border-2 mt-1 ${
-                      selectedCategory === category.value
-                        ? 'border-primary bg-primary'
-                        : 'border-border'
-                    }`} />
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="space-y-2">
+            <Label>Category</Label>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.value} value={category.value}>
+                    {category.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {selectedCategoryData && (
-            <div className="p-3 bg-primary/5 border border-primary/20 rounded text-sm">
-              <p className="font-medium text-primary">Selected: {selectedCategoryData.label}</p>
-              <p className="text-muted-foreground">
-                Files will be uploaded to the <code className="bg-background px-1 rounded">{selectedCategoryData.bucket}</code> bucket
-              </p>
-            </div>
-          )}
+          <div className="p-3 bg-muted rounded text-sm">
+            <p className="font-medium">Files will be stored in:</p>
+            <code className="text-xs">
+              {selectedCategoryData?.bucket}/
+              {files ? Array.from(files)[0]?.name : 'filename.ext'}
+            </code>
+          </div>
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={onClose}>

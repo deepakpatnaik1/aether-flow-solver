@@ -221,14 +221,20 @@ const ChatInterface = () => {
       let essence = '';
       let buffer = ''; // Buffer for incomplete JSON chunks
 
+      console.log('Starting streaming response...');
+
       try {
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            console.log('Stream complete');
+            break;
+          }
 
           // Decode chunk and add to buffer
           const chunk = decoder.decode(value, { stream: true });
           buffer += chunk;
+          console.log('Received chunk:', chunk);
 
           // Split by newlines and process complete lines
           const lines = buffer.split('\n');
@@ -238,11 +244,14 @@ const ChatInterface = () => {
           for (const line of lines) {
             if (!line.trim()) continue;
             
+            console.log('Processing line:', line);
             try {
               const parsed = JSON.parse(line);
+              console.log('Parsed data:', parsed);
               
               if (parsed.type === 'content_delta') {
                 streamingContent += parsed.delta;
+                console.log('Streaming content updated, length:', streamingContent.length);
                 // Update the AI message with streaming content
                 setMessages(prev => prev.map(msg => 
                   msg.id === aiMessageId 
@@ -252,6 +261,7 @@ const ChatInterface = () => {
               } else if (parsed.type === 'complete') {
                 finalResponse = parsed.response;
                 essence = parsed.essence;
+                console.log('Final response received:', { finalResponse: finalResponse.length, essence });
                 
                 // Update with final content
                 setMessages(prev => prev.map(msg => 
@@ -270,6 +280,7 @@ const ChatInterface = () => {
         
         // Process any remaining data in buffer
         if (buffer.trim()) {
+          console.log('Processing final buffer:', buffer);
           try {
             const parsed = JSON.parse(buffer);
             if (parsed.type === 'complete') {

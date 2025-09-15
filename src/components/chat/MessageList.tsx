@@ -27,18 +27,9 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const lastMessageCountRef = useRef(0);
   const scrollTimeoutRef = useRef<NodeJS.Timeout>();
-  const isNearBottomRef = useRef(true);
-
-  const checkIfNearBottom = useCallback(() => {
-    if (!containerRef.current) return true;
-    
-    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-    const threshold = 100; // pixels from bottom
-    return scrollHeight - scrollTop - clientHeight < threshold;
-  }, []);
 
   const scrollToBottom = useCallback(() => {
-    if (messagesEndRef.current && isNearBottomRef.current) {
+    if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ 
         behavior: 'auto',
         block: 'end'
@@ -53,26 +44,12 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
     scrollTimeoutRef.current = setTimeout(scrollToBottom, 10);
   }, [scrollToBottom]);
 
-  // Check scroll position on scroll events
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      isNearBottomRef.current = checkIfNearBottom();
-    };
-
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [checkIfNearBottom]);
-
-  // Handle new messages
+  // Handle new messages and content updates
   useLayoutEffect(() => {
     // Check if this is a new message vs content update
     if (messages.length > lastMessageCountRef.current) {
-      // New message - always scroll and use smooth behavior
+      // New message - use smooth scroll
       lastMessageCountRef.current = messages.length;
-      isNearBottomRef.current = true; // Force scroll for new messages
       if (messagesEndRef.current) {
         messagesEndRef.current.scrollIntoView({ 
           behavior: 'smooth',
@@ -80,7 +57,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
         });
       }
     } else if (messages.length === lastMessageCountRef.current && messages.length > 0) {
-      // Content update to existing message - only scroll if user is near bottom
+      // Content update to existing message - use debounced instant scroll
       debouncedScrollToBottom();
     }
   }, [messages, debouncedScrollToBottom]);

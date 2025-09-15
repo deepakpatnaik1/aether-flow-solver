@@ -112,7 +112,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
         const listContent = line.replace(/^[\-\*\+]\s/, '');
         elements.push(
           <div key={i} className="flex items-baseline gap-2 my-1">
-            <span className="leading-none flex-shrink-0" style={{ color: personaColor, lineHeight: '1.4', fontSize: '13px' }}>•</span>
+            <span className="leading-none flex-shrink-0 font-bold" style={{ color: personaColor, lineHeight: '1.4', fontSize: '13px' }}>•</span>
             <div className="flex-1 message-text">
               {processInlineMarkdown(listContent)}
             </div>
@@ -128,7 +128,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
           const [, number, listContent] = match;
           elements.push(
             <div key={i} className="flex items-baseline gap-2 my-1">
-              <span className="leading-none font-medium flex-shrink-0" style={{ color: personaColor, lineHeight: '1.4', fontSize: '13px' }}>{number}.</span>
+              <span className="leading-none font-bold flex-shrink-0" style={{ color: personaColor, lineHeight: '1.4', fontSize: '13px' }}>{number}.</span>
               <div className="flex-1 message-text">
                 {processInlineMarkdown(listContent)}
               </div>
@@ -148,7 +148,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
         
         elements.push(
           <div key={i} className="flex items-baseline gap-2 my-1 ml-6">
-            <span className="leading-none text-sm opacity-70 flex-shrink-0" style={{ color: personaColor, lineHeight: '1.4', fontSize: '11px' }}>
+            <span className="leading-none text-sm opacity-70 flex-shrink-0 font-bold" style={{ color: personaColor, lineHeight: '1.4', fontSize: '11px' }}>
               {isNumbered ? '◦' : '◦'}
             </span>
             <div className="flex-1 text-foreground/90 text-sm">

@@ -38,6 +38,7 @@ const ChatInterface = () => {
   }, []);
   const inputRef = useRef<HTMLInputElement>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [journal, setJournal] = useState<Array<{persona: string, content: string}>>([]);
 
   const models = [
     { id: 'gpt-5-2025-08-07', name: 'GPT-5' },
@@ -81,7 +82,9 @@ const ChatInterface = () => {
       const { data, error } = await supabase.functions.invoke('chat-stream', {
         body: {
           messages: formattedMessages,
-          model: selectedModel
+          model: selectedModel,
+          persona: selectedPersona || 'gunnar',
+          journal: journal
         }
       });
 
@@ -94,22 +97,32 @@ const ChatInterface = () => {
         throw new Error('No response from AI');
       }
 
+      // Create AI message with persona response  
       const aiMessage: Message = {
         id: crypto.randomUUID(),
         content: data.response,
-        persona: selectedModel,
+        persona: selectedPersona || 'gunnar',
         timestamp: new Date(),
         isUser: false
       };
 
       setMessages(prev => [...prev, aiMessage]);
+
+      // Store essence extract in journal for context
+      if (data.essence) {
+        const essenceLines = data.essence.split('\n').filter((line: string) => line.trim());
+        setJournal(prev => [...prev, ...essenceLines.map((line: string) => ({
+          persona: line.split(':')[0]?.trim() || 'Unknown',
+          content: line.split(':').slice(1).join(':').trim() || line
+        }))]);
+      }
     } catch (error) {
       console.error('Error:', error);
       // Add error message
       const errorMessage: Message = {
         id: (Date.now() + 2).toString(),
         content: 'Sorry, I encountered an error while processing your request.',
-        persona: 'Samara',
+        persona: selectedPersona || 'gunnar',
         timestamp: new Date(),
         isUser: false
       };

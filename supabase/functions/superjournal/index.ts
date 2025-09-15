@@ -153,9 +153,10 @@ async function appendToSuperjournal(entry: JournalEntry) {
     // First, try to get existing journal
     let existingContent = '';
     try {
+      const emptyBodyHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
       const getHeaders = await signR2Request('GET', r2Endpoint, {
-        'Host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-        'x-amz-content-sha256': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+        'host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+        'x-amz-content-sha256': emptyBodyHash
       });
       
       const getResponse = await fetch(r2Endpoint, {
@@ -174,21 +175,21 @@ async function appendToSuperjournal(entry: JournalEntry) {
     const newLine = JSON.stringify(entry) + '\n';
     const updatedContent = existingContent + newLine;
     
-  // Calculate content hash for the updated content
-  const encoder = new TextEncoder();
-  const contentBytes = encoder.encode(updatedContent);
-  const contentHashArray = await crypto.subtle.digest('SHA-256', contentBytes);
-  const contentHash = Array.from(new Uint8Array(contentHashArray))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+    // Calculate content hash for the updated content
+    const encoder = new TextEncoder();
+    const contentBytes = encoder.encode(updatedContent);
+    const contentHashArray = await crypto.subtle.digest('SHA-256', contentBytes);
+    const contentHash = Array.from(new Uint8Array(contentHashArray))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
 
-  // Upload updated journal
-  const putHeaders = await signR2Request('PUT', r2Endpoint, {
-    'Host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    'Content-Type': 'application/jsonl',
-    'Content-Length': updatedContent.length.toString(),
-    'x-amz-content-sha256': contentHash
-  }, updatedContent);
+    // Upload updated journal
+    const putHeaders = await signR2Request('PUT', r2Endpoint, {
+      'host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      'content-type': 'application/jsonl',
+      'content-length': updatedContent.length.toString(),
+      'x-amz-content-sha256': contentHash
+    }, updatedContent);
     
     const putResponse = await fetch(r2Endpoint, {
       method: 'PUT',
@@ -214,9 +215,10 @@ async function loadSuperjournal(): Promise<JournalEntry[]> {
   const r2Endpoint = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${journalKey}`;
   
   try {
+    const emptyBodyHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
     const getHeaders = await signR2Request('GET', r2Endpoint, {
-      'Host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-      'x-amz-content-sha256': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      'host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      'x-amz-content-sha256': emptyBodyHash
     });
     
     const response = await fetch(r2Endpoint, {

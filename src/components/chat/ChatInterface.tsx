@@ -435,7 +435,7 @@ const ChatInterface = () => {
                   handleSendMessage();
                 }}
                 disabled={!message.trim() || isLoading}
-                className="send-btn"
+                className="send-btn focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <Send className="h-4 w-4" />
               </Button>

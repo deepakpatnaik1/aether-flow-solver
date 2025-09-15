@@ -111,11 +111,8 @@ const ChatInterface = () => {
       if (selectedPersona !== persona) {
         setSelectedPersona(persona);
       }
-    } else if (message.length === 0) {
-      // Only clear persona if input is completely empty
-      setSelectedPersona(null);
     }
-    // Keep current persona while typing partial matches
+    // Keep current persona while typing - never auto-clear
   }, [message, selectedPersona]);
 
   const handleFileSelect = (files: FileList | null) => {

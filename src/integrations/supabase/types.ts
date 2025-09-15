@@ -113,35 +113,69 @@ export type Database = {
       }
       journal_entries: {
         Row: {
-          content: string
-          conversation_id: string | null
+          ai_response_content: string
+          ai_response_model: string
+          ai_response_persona: string
           created_at: string
+          entry_id: string
           id: string
-          persona: string
+          timestamp: string
+          updated_at: string
+          user_message_attachments: Json | null
+          user_message_content: string
+          user_message_persona: string
         }
         Insert: {
-          content: string
-          conversation_id?: string | null
+          ai_response_content: string
+          ai_response_model: string
+          ai_response_persona: string
           created_at?: string
+          entry_id: string
           id?: string
-          persona: string
+          timestamp?: string
+          updated_at?: string
+          user_message_attachments?: Json | null
+          user_message_content: string
+          user_message_persona: string
         }
         Update: {
-          content?: string
-          conversation_id?: string | null
+          ai_response_content?: string
+          ai_response_model?: string
+          ai_response_persona?: string
           created_at?: string
+          entry_id?: string
           id?: string
-          persona?: string
+          timestamp?: string
+          updated_at?: string
+          user_message_attachments?: Json | null
+          user_message_content?: string
+          user_message_persona?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "journal_entries_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
+      }
+      journal_entries_backup: {
+        Row: {
+          content: string | null
+          conversation_id: string | null
+          created_at: string | null
+          id: string | null
+          persona: string | null
+        }
+        Insert: {
+          content?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          persona?: string | null
+        }
+        Update: {
+          content?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          persona?: string | null
+        }
+        Relationships: []
       }
       personas: {
         Row: {

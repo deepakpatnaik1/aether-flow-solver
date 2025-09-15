@@ -135,16 +135,17 @@ async function loadArtisanCutInstructions(): Promise<string> {
 // Save journal entry to Supabase database
 async function saveJournalEntry(entry: JournalEntry) {
   try {
-    // Combine boss input and persona response into content field
-    const content = `Boss: ${entry.bossInput}\n${entry.personaResponse}`;
-    
     const { error } = await supabase
       .from('journal_entries')
       .insert({
-        id: entry.id,
-        content: content,
-        persona: entry.personaResponse.split(':')[0] || 'unknown',
-        created_at: entry.timestamp
+        entry_id: entry.id, // Links to superjournal_entries.entry_id
+        timestamp: entry.timestamp,
+        user_message_content: entry.bossInput,
+        user_message_persona: 'Boss', // Always Boss for user messages
+        user_message_attachments: [], // No attachments in artisan cuts
+        ai_response_content: entry.personaResponse,
+        ai_response_persona: entry.personaResponse.split(':')[0]?.trim() || 'unknown',
+        ai_response_model: 'gpt-5-2025-08-07' // Model used for artisan cut generation
       });
 
     if (error) {

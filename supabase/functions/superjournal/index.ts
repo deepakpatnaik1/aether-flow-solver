@@ -252,42 +252,6 @@ async function loadSuperjournal(): Promise<JournalEntry[]> {
     console.error('❌ Error loading superjournal:', error);
     return [];
   }
-}
-    
-    const response = await fetch(r2Endpoint, {
-      method: 'GET',
-      headers: getHeaders
-    });
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        console.log('📝 No superjournal found, returning empty array');
-        return [];
-      }
-      throw new Error(`Failed to load journal: ${response.status}`);
-    }
-    
-    const content = await response.text();
-    const entries: JournalEntry[] = [];
-    
-    // Parse JSONL content
-    const lines = content.trim().split('\n').filter(line => line.trim());
-    for (const line of lines) {
-      try {
-        entries.push(JSON.parse(line));
-      } catch (parseError) {
-        console.warn('⚠️ Failed to parse journal line:', line);
-      }
-    }
-    
-    console.log(`📖 Loaded ${entries.length} journal entries from R2`);
-    return entries;
-    
-  } catch (error) {
-    console.error('❌ Error loading superjournal:', error);
-    return [];
-  }
-}
 
 serve(async (req) => {
   // Handle CORS preflight requests

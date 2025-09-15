@@ -351,6 +351,9 @@ serve(async (req) => {
     // Generate turnId if not provided (for linking superjournal and journal)
     const conversationTurnId = turnId || crypto.randomUUID();
     
+    // Capture user question first
+    const actualQuestion = messages[messages.length - 1]?.content || '';
+    
     console.log('🔄 Loading all Call 1 components...');
     
     // Load all 9 required components for Call 1
@@ -365,7 +368,7 @@ serve(async (req) => {
     ] = await Promise.all([
       loadTurnProtocol(),
       loadBossProfile(),
-      loadPersonaProfile(persona),
+      loadPersonaProfile(persona.charAt(0).toUpperCase() + persona.slice(1).toLowerCase()), // Normalize case
       loadRelevantKnowledge(actualQuestion, persona),
       loadFullJournal(),
       loadLatestEphemeralAttachment(),
@@ -427,8 +430,6 @@ ${actualQuestion}`;
 
     // Capture user message for Call 2
     const userMessage = messages[messages.length - 1]?.content || '';
-
-    console.log('🚀 CALL 1: Starting streaming response with persona:', persona);
     const streamingResponse = await callOpenAI(model, chatMessages, true);
 
     // Create a streaming response

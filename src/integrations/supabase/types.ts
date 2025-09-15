@@ -14,41 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      chat_messages: {
-        Row: {
-          content: string
-          conversation_id: string | null
-          created_at: string
-          id: string
-          is_user: boolean
-          persona: string
-        }
-        Insert: {
-          content: string
-          conversation_id?: string | null
-          created_at?: string
-          id?: string
-          is_user?: boolean
-          persona: string
-        }
-        Update: {
-          content?: string
-          conversation_id?: string | null
-          created_at?: string
-          id?: string
-          is_user?: boolean
-          persona?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "chat_messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       conversations: {
         Row: {
           created_at: string
@@ -101,15 +66,7 @@ export type Database = {
           original_name?: string
           public_url?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "file_attachments_message_id_fkey"
-            columns: ["message_id"]
-            isOneToOne: false
-            referencedRelation: "chat_messages"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       journal_entries: {
         Row: {

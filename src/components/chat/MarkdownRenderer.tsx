@@ -2,10 +2,26 @@ import React from 'react';
 
 interface MarkdownRendererProps {
   content: string;
+  persona?: string;
   className?: string;
 }
 
-export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className = "" }) => {
+export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, persona, className = "" }) => {
+  
+  // Get persona color based on persona name
+  const getPersonaColor = (personaName?: string): string => {
+    const normalizedPersona = personaName?.toLowerCase();
+    switch (normalizedPersona) {
+      case 'boss': return 'hsl(var(--persona-boss))';
+      case 'gunnar': return 'hsl(var(--persona-gunnar))';  
+      case 'samara': return 'hsl(var(--persona-samara))';
+      case 'kirby': return 'hsl(var(--persona-kirby))';
+      case 'stefan': return 'hsl(var(--persona-stefan))';
+      default: return 'hsl(var(--primary))'; // fallback to primary
+    }
+  };
+
+  const personaColor = getPersonaColor(persona);
   const renderMarkdown = (text: string): JSX.Element[] => {
     const lines = text.split('\n');
     const elements: JSX.Element[] = [];
@@ -83,7 +99,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
       // Handle blockquotes
       if (line.startsWith('> ')) {
         elements.push(
-          <blockquote key={i} className="border-l-4 border-primary/50 pl-4 py-2 my-2 bg-muted/20 italic text-muted-foreground">
+          <blockquote key={i} className="border-l-4 pl-4 py-2 my-2 bg-muted/20 italic text-muted-foreground" 
+            style={{ borderLeftColor: personaColor }}>
             {processInlineMarkdown(line.slice(2))}
           </blockquote>
         );
@@ -95,7 +112,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
         const listContent = line.replace(/^[\-\*\+]\s/, '');
         elements.push(
           <div key={i} className="flex items-start gap-2 my-1">
-            <span className="text-primary mt-2 leading-none">•</span>
+            <span className="mt-2 leading-none" style={{ color: personaColor }}>•</span>
             <div className="flex-1 text-foreground">
               {processInlineMarkdown(listContent)}
             </div>
@@ -111,7 +128,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
           const [, number, listContent] = match;
           elements.push(
             <div key={i} className="flex items-start gap-2 my-1">
-              <span className="text-primary mt-2 leading-none font-medium">{number}.</span>
+              <span className="mt-2 leading-none font-medium" style={{ color: personaColor }}>{number}.</span>
               <div className="flex-1 text-foreground">
                 {processInlineMarkdown(listContent)}
               </div>
@@ -131,7 +148,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
         
         elements.push(
           <div key={i} className="flex items-start gap-2 my-1 ml-6">
-            <span className="text-primary/70 mt-2 leading-none text-sm">
+            <span className="mt-2 leading-none text-sm opacity-70" style={{ color: personaColor }}>
               {isNumbered ? '◦' : '◦'}
             </span>
             <div className="flex-1 text-foreground/90 text-sm">
@@ -227,7 +244,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-primary hover:text-primary/80 underline"
+          className="hover:opacity-80 underline"
+          style={{ color: personaColor }}
         >
           {linkText}
         </a>

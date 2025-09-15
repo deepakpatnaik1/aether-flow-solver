@@ -68,7 +68,10 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
                 ))}
               </div>
             )}
-            <MarkdownRenderer content={message.content} />
+            <MarkdownRenderer 
+              content={message.content} 
+              persona={message.isUser ? 'boss' : message.persona}
+            />
           </div>
         </div>
       ))}

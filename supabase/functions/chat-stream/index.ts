@@ -135,13 +135,16 @@ async function loadArtisanCutInstructions(): Promise<string> {
 // Save journal entry to Supabase database
 async function saveJournalEntry(entry: JournalEntry) {
   try {
+    // Combine boss input and persona response into content field
+    const content = `Boss: ${entry.bossInput}\n${entry.personaResponse}`;
+    
     const { error } = await supabase
       .from('journal_entries')
       .insert({
-        entry_id: entry.id,
-        timestamp: entry.timestamp,
-        boss_input: entry.bossInput,
-        persona_response: entry.personaResponse
+        id: entry.id,
+        content: content,
+        persona: entry.personaResponse.split(':')[0] || 'unknown',
+        created_at: entry.timestamp
       });
 
     if (error) {

@@ -24,43 +24,14 @@ interface MessageListProps {
 
 export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const parentContainerRef = useRef<HTMLDivElement>(null);
-  const rafIdRef = useRef<number>();
-  const lastScrollTimeRef = useRef(0);
-
-  const performScroll = () => {
-    const parent = messagesEndRef.current?.parentElement?.parentElement;
-    if (parent) {
-      // Use native scrollTo for better performance
-      parent.scrollTo({
-        top: parent.scrollHeight,
-        behavior: 'auto'
-      });
-    }
-  };
-
-  const throttledScroll = () => {
-    const now = Date.now();
-    if (now - lastScrollTimeRef.current > 16) { // ~60fps throttling
-      lastScrollTimeRef.current = now;
-      performScroll();
-    }
-  };
 
   useEffect(() => {
-    // Cancel any pending scroll
-    if (rafIdRef.current) {
-      cancelAnimationFrame(rafIdRef.current);
+    // Always scroll to bottom instantly with direct DOM manipulation
+    const scrollContainer = messagesEndRef.current?.parentElement?.parentElement;
+    if (scrollContainer) {
+      // Direct scrollTop assignment for instant scroll without animation
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
     }
-    
-    // Schedule scroll for next frame
-    rafIdRef.current = requestAnimationFrame(throttledScroll);
-    
-    return () => {
-      if (rafIdRef.current) {
-        cancelAnimationFrame(rafIdRef.current);
-      }
-    };
   }, [messages]);
 
   return (

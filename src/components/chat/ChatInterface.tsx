@@ -247,7 +247,8 @@ const ChatInterface = () => {
     if (persona) {
       setSelectedPersona(personaId);
       setMessage(`${persona.name}, `);
-      inputRef.current?.focus();
+      // Delay focus to ensure dropdown has fully closed
+      setTimeout(() => inputRef.current?.focus(), 0);
     }
   };
 

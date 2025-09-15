@@ -207,6 +207,52 @@ async function loadSuperjournal(): Promise<JournalEntry[]> {
       'host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
       'x-amz-content-sha256': emptyBodyHash
     });
+
+    console.log('🔍 Attempting to load from R2:', r2Endpoint);
+    
+    const response = await fetch(r2Endpoint, {
+      method: 'GET',
+      headers: getHeaders
+    });
+
+    console.log('📡 R2 GET response status:', response.status);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        console.log('📝 No superjournal found, returning empty array');
+        return [];
+      }
+      throw new Error(`Failed to load journal: ${response.status}`);
+    }
+
+    const content = await response.text();
+    console.log('📖 Raw journal content length:', content.length);
+    console.log('📄 First 200 chars:', content.substring(0, 200));
+    
+    const entries: JournalEntry[] = [];
+    const lines = content.trim().split('\n');
+    
+    console.log('📊 Processing', lines.length, 'lines from journal');
+    
+    for (const line of lines) {
+      if (line.trim()) {
+        try {
+          const entry = JSON.parse(line);
+          entries.push(entry);
+        } catch (parseError) {
+          console.warn('⚠️ Failed to parse journal line:', line, parseError);
+        }
+      }
+    }
+    
+    console.log('✅ Successfully loaded', entries.length, 'journal entries');
+    return entries;
+    
+  } catch (error) {
+    console.error('❌ Error loading superjournal:', error);
+    return [];
+  }
+}
     
     const response = await fetch(r2Endpoint, {
       method: 'GET',

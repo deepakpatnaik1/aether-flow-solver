@@ -39,14 +39,28 @@ export const useChat = () => {
         },
       });
 
+      console.log('📡 Superjournal load response status:', response.status);
+
       if (response.ok) {
-        const { entries } = await response.json();
+        const responseData = await response.json();
+        console.log('📊 Superjournal response:', responseData);
+        const { entries } = responseData;
         console.log(`✅ Loaded ${entries.length} entries from superjournal`);
+        
+        if (entries.length > 0) {
+          console.log('🔍 First entry:', entries[0]);
+        }
         
         // Convert superjournal entries to messages format
         const superjournalMessages: Message[] = [];
         
-        entries.forEach((entry: any) => {
+        entries.forEach((entry: any, index: number) => {
+          console.log(`🔄 Processing entry ${index + 1}:`, {
+            id: entry.id,
+            userContent: entry.userMessage?.content?.substring(0, 50),
+            aiContent: entry.aiResponse?.content?.substring(0, 50)
+          });
+          
           // Add user message
           superjournalMessages.push({
             id: entry.id + '-user',
@@ -67,11 +81,14 @@ export const useChat = () => {
           });
         });
         
+        console.log(`🎯 Created ${superjournalMessages.length} messages from ${entries.length} entries`);
+        
         // Set messages from superjournal
         setMessages(superjournalMessages);
         
       } else {
-        console.warn('⚠️ Failed to load superjournal:', await response.text());
+        const errorText = await response.text();
+        console.warn('⚠️ Failed to load superjournal:', response.status, errorText);
       }
       
     } catch (error) {

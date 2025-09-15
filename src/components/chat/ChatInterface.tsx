@@ -201,8 +201,7 @@ const ChatInterface = () => {
         body: JSON.stringify({
           messages: formattedMessages,
           model: selectedModel,
-          persona: selectedPersona || 'gunnar',
-          journal: journal
+          persona: selectedPersona || 'gunnar'
         }),
       });
 
@@ -217,8 +216,6 @@ const ChatInterface = () => {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let streamingContent = '';
-      let finalResponse = '';
-      let essence = '';
       let buffer = ''; // Buffer for incomplete JSON chunks
 
       console.log('Starting streaming response...');
@@ -253,79 +250,15 @@ const ChatInterface = () => {
                 streamingContent += parsed.delta;
                 console.log('Streaming content updated, length:', streamingContent.length);
                 
-                // Try to extract content from JSON structure during streaming
-                let displayContent = '';
-                try {
-                  // Try to parse the JSON if it looks complete enough
-                  if (streamingContent.includes('"fullContent":') && streamingContent.includes('"artisanCut":')) {
-                    // Try to parse the complete JSON
-                    const jsonMatch = streamingContent.match(/\{[\s\S]*\}/);
-                    if (jsonMatch) {
-                      const parsedJson = JSON.parse(jsonMatch[0]);
-                      displayContent = parsedJson.fullContent || '';
-                    }
-                  } else if (streamingContent.includes('"fullContent":')) {
-                    // Extract content between quotes, handling escaped characters properly
-                    const fullContentStart = streamingContent.indexOf('"fullContent":');
-                    if (fullContentStart !== -1) {
-                      const quoteStart = streamingContent.indexOf('"', fullContentStart + 14) + 1;
-                      if (quoteStart > 0) {
-                        let quoteEnd = quoteStart;
-                        let escapeNext = false;
-                        
-                        for (let i = quoteStart; i < streamingContent.length; i++) {
-                          const char = streamingContent[i];
-                          if (escapeNext) {
-                            escapeNext = false;
-                            continue;
-                          }
-                          if (char === '\\') {
-                            escapeNext = true;
-                            continue;
-                          }
-                          if (char === '"') {
-                            quoteEnd = i;
-                            break;
-                          }
-                        }
-                        
-                        if (quoteEnd > quoteStart) {
-                          const extractedContent = streamingContent.substring(quoteStart, quoteEnd);
-                          displayContent = extractedContent
-                            .replace(/\\n/g, '\n')
-                            .replace(/\\"/g, '"')
-                            .replace(/\\t/g, '\t')
-                            .replace(/\\\\/g, '\\');
-                        }
-                      }
-                    }
-                  }
-                } catch (e) {
-                  console.log('Could not extract content from streaming JSON:', e);
-                }
-                
-                // Fall back to showing raw content if extraction fails
-                if (!displayContent) {
-                  displayContent = streamingContent;
-                }
-                
-                // Update the AI message with processed streaming content
+                // Update the AI message with streaming content directly
                 setMessages(prev => prev.map(msg => 
                   msg.id === aiMessageId 
-                    ? { ...msg, content: displayContent }
+                    ? { ...msg, content: streamingContent }
                     : msg
                 ));
               } else if (parsed.type === 'complete') {
-                finalResponse = parsed.response;
-                essence = parsed.essence;
-                console.log('Final response received:', { finalResponse: finalResponse.length, essence });
-                
-                // Update with final content
-                setMessages(prev => prev.map(msg => 
-                  msg.id === aiMessageId 
-                    ? { ...msg, content: finalResponse }
-                    : msg
-                ));
+                console.log('Streaming complete');
+                // No additional processing needed for completion
               } else if (parsed.type === 'error') {
                 throw new Error(parsed.error);
               }
@@ -341,13 +274,7 @@ const ChatInterface = () => {
           try {
             const parsed = JSON.parse(buffer);
             if (parsed.type === 'complete') {
-              finalResponse = parsed.response;
-              essence = parsed.essence;
-              setMessages(prev => prev.map(msg => 
-                msg.id === aiMessageId 
-                  ? { ...msg, content: finalResponse }
-                  : msg
-              ));
+              console.log('Final completion received');
             }
           } catch (parseError) {
             console.warn('Error parsing final buffer:', buffer, parseError);
@@ -360,21 +287,9 @@ const ChatInterface = () => {
       // Save final AI message
       const finalAiMessage = {
         ...aiMessage,
-        content: finalResponse || streamingContent
+        content: streamingContent
       };
       await saveMessage(finalAiMessage);
-
-      // Save journal entries if essence is available
-      if (essence) {
-        const essenceLines = essence.split('\n').filter((line: string) => line.trim());
-        const newJournalEntries = essenceLines.map((line: string) => ({
-          persona: line.split(':')[0]?.trim() || 'Unknown',
-          content: line.split(':').slice(1).join(':').trim() || line
-        }));
-        
-        setJournal(prev => [...prev, ...newJournalEntries]);
-        await saveJournalEntries(newJournalEntries);
-      }
 
     } catch (error) {
       console.error('Error:', error);

@@ -129,179 +129,55 @@ async function signR2Request(
 }
 
 async function appendToSuperjournal(entry: JournalEntry) {
-  const journalKey = 'superjournal/superjournal.jsonl';
-  const r2Endpoint = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${journalKey}`;
-  
   try {
-    // First, try to get existing journal
-    let existingContent = '';
-    try {
-      const emptyBodyHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
-      const getHeaders = await signR2Request('GET', r2Endpoint, {
-        'host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-        'x-amz-content-sha256': emptyBodyHash
-      });
-      
-      const getResponse = await fetch(r2Endpoint, {
-        method: 'GET',
-        headers: getHeaders
-      });
-      
-      if (getResponse.ok) {
-        existingContent = await getResponse.text();
-      }
-    } catch (error) {
-      console.log('No existing journal found, creating new one');
-    }
+    // Simple in-memory storage as fallback until R2 is fixed
+    console.log('💾 Saving entry to superjournal:', entry.id);
     
-    // Append new entry
-    const newLine = JSON.stringify(entry) + '\n';
-    const updatedContent = existingContent + newLine;
+    // Add to memory storage
+    memoryEntries.push(entry);
     
-    // Calculate content hash for the updated content
-    const encoder = new TextEncoder();
-    const contentBytes = encoder.encode(updatedContent);
-    const contentHashArray = await crypto.subtle.digest('SHA-256', contentBytes);
-    const contentHash = Array.from(new Uint8Array(contentHashArray))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-
-    // Upload updated journal - use exact same headers that will be signed
-    const putHeaders = await signR2Request('PUT', r2Endpoint, {
-      'host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-      'content-type': 'application/jsonl',
-      'content-length': updatedContent.length.toString(),
-      'x-amz-content-sha256': contentHash
-    }, updatedContent);
-    
-    console.log('🔐 PUT headers for R2:', putHeaders);
-    
-    const putResponse = await fetch(r2Endpoint, {
-      method: 'PUT',
-      headers: putHeaders,
-      body: updatedContent
-    });
-    
-    if (!putResponse.ok) {
-      const errorText = await putResponse.text();
-      console.error('❌ R2 PUT failed:', putResponse.status, errorText);
-      throw new Error(`Failed to upload journal: ${putResponse.status} ${errorText}`);
-    }
-    
-    console.log('✅ Journal entry saved to R2');
+    console.log('✅ Journal entry saved (in-memory), total entries:', memoryEntries.length);
     return { success: true };
-    
   } catch (error) {
     console.error('❌ Error saving to superjournal:', error);
     throw error;
   }
 }
 
-async function loadSuperjournal(): Promise<JournalEntry[]> {
-  // Try new filename first, then fall back to old filename
-  const journalKeys = ['superjournal/superjournal.jsonl', 'superjournal/journal.jsonl'];
-  
-  for (const journalKey of journalKeys) {
-    const r2Endpoint = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${journalKey}`;
-    
-    try {
-      const emptyBodyHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
-      const getHeaders = await signR2Request('GET', r2Endpoint, {
-        'host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-        'x-amz-content-sha256': emptyBodyHash
-      });
-
-      console.log('🔍 Attempting to load from R2:', r2Endpoint);
-      
-      const response = await fetch(r2Endpoint, {
-        method: 'GET',
-        headers: getHeaders
-      });
-
-      console.log('📡 R2 GET response status:', response.status);
-
-      if (response.ok) {
-        // Found entries in this file, process them
-
-        const content = await response.text();
-        console.log('📖 Raw journal content length:', content.length);
-        console.log('📄 First 200 chars:', content.substring(0, 200));
-        
-        const entries: JournalEntry[] = [];
-        const lines = content.trim().split('\n');
-        
-        console.log('📊 Processing', lines.length, 'lines from journal');
-        
-        for (const line of lines) {
-          if (line.trim()) {
-            try {
-              const entry = JSON.parse(line);
-              entries.push(entry);
-            } catch (parseError) {
-              console.warn('⚠️ Failed to parse journal line:', line, parseError);
-            }
-          }
-        }
-        
-        console.log('✅ Successfully loaded', entries.length, 'journal entries from', journalKey);
-        
-        // If we found entries in the old filename, migrate them to the new filename
-        if (journalKey.includes('journal.jsonl') && entries.length > 0) {
-          console.log('🔄 Migrating entries from old filename to new filename...');
-          try {
-            // Save all entries to the new filename
-            const newJournalKey = 'superjournal/superjournal.jsonl';
-            const newR2Endpoint = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${newJournalKey}`;
-            const migratedContent = entries.map(entry => JSON.stringify(entry)).join('\n') + '\n';
-            
-            // Calculate content hash
-            const encoder = new TextEncoder();
-            const contentBytes = encoder.encode(migratedContent);
-            const contentHashArray = await crypto.subtle.digest('SHA-256', contentBytes);
-            const contentHash = Array.from(new Uint8Array(contentHashArray))
-              .map(b => b.toString(16).padStart(2, '0'))
-              .join('');
-            
-            const putHeaders = await signR2Request('PUT', newR2Endpoint, {
-              'host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-              'content-type': 'application/jsonl',
-              'content-length': migratedContent.length.toString(),
-              'x-amz-content-sha256': contentHash
-            }, migratedContent);
-            
-            const putResponse = await fetch(newR2Endpoint, {
-              method: 'PUT',
-              headers: putHeaders,
-              body: migratedContent
-            });
-            
-            if (putResponse.ok) {
-              console.log('✅ Successfully migrated entries to new filename');
-            } else {
-              console.warn('⚠️ Failed to migrate entries:', putResponse.status);
-            }
-          } catch (migrateError) {
-            console.error('❌ Error migrating entries:', migrateError);
-          }
-        }
-        
-        return entries;
-      } else if (response.status === 404) {
-        console.log('📝 No file found at', journalKey);
-        continue; // Try next filename
-      } else {
-        throw new Error(`Failed to load journal from ${journalKey}: ${response.status}`);
-      }
-      
-    } catch (error) {
-      console.error('❌ Error loading from', journalKey, ':', error);
-      continue; // Try next filename
+// In-memory storage for now (until R2 is fixed)
+let memoryEntries: JournalEntry[] = [
+  {
+    "id": "fca57d8b-8230-4dab-b301-1fd1df6a72aa",
+    "timestamp": "2025-09-15T08:34:56.170Z",
+    "userMessage": {
+      "content": "Kirby, what is the capital of India?",
+      "persona": "Boss"
+    },
+    "aiResponse": {
+      "content": "New Delhi.",
+      "persona": "kirby",
+      "model": "gpt-5-2025-08-07"
+    }
+  },
+  {
+    "id": "b4e9f7d4-ef16-4267-8f59-d5cf8889a52a",
+    "timestamp": "2025-09-15T09:24:33.043Z",
+    "userMessage": {
+      "content": "Stefan, what is the capital of Nepal?",
+      "persona": "Boss"
+    },
+    "aiResponse": {
+      "content": "Kathmandu.",
+      "persona": "stefan",
+      "model": "gpt-5-mini-2025-08-07"
     }
   }
-  
-  // If we get here, no files were found
-  console.log('📝 No superjournal files found, returning empty array');
-  return [];
+];
+
+async function loadSuperjournal(): Promise<JournalEntry[]> {
+  console.log('📖 Loading superjournal from memory...');
+  console.log(`📋 Found ${memoryEntries.length} superjournal entries`);
+  return memoryEntries;
 }
 
 serve(async (req) => {

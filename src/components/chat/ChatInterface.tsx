@@ -189,6 +189,12 @@ const ChatInterface = () => {
         content: msg.content
       }));
       
+      console.log('🚀 About to call chat-stream with:', {
+        messagesCount: formattedMessages.length,
+        model: selectedModel,
+        persona: selectedPersona || 'gunnar'
+      });
+      
       // Use direct fetch for streaming support
       const response = await fetch(`https://suncgglbheilkeimwuxt.supabase.co/functions/v1/chat-stream`, {
         method: 'POST',
@@ -204,6 +210,8 @@ const ChatInterface = () => {
           turnId: crypto.randomUUID() // Generate turnId for linking
         }),
       });
+
+      console.log('📡 Fetch response received:', response.status, response.ok);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

@@ -289,12 +289,22 @@ const ChatInterface = () => {
         content: streamingContent
       };
       
-      console.log('🔄 About to save conversation turn...', { userContent: userMessage.content.substring(0, 50), aiContent: streamingContent.substring(0, 50), model: selectedModel });
-      const saved = await saveToSuperjournal(userMessage, finalAiMessage, selectedModel);
-      if (!saved) {
-        console.warn('⚠️ Failed to save conversation to superjournal');
-      } else {
-        console.log('✅ Successfully saved conversation turn');
+      console.log('🔄 About to save conversation turn...', { 
+        userContent: userMessage.content.substring(0, 50), 
+        aiContent: streamingContent.substring(0, 50), 
+        streamingContentLength: streamingContent.length,
+        model: selectedModel 
+      });
+      
+      try {
+        const saved = await saveToSuperjournal(userMessage, finalAiMessage, selectedModel);
+        if (!saved) {
+          console.warn('⚠️ Failed to save conversation to superjournal');
+        } else {
+          console.log('✅ Successfully saved conversation turn');
+        }
+      } catch (saveError) {
+        console.error('💥 Error during save attempt:', saveError);
       }
 
     } catch (error) {

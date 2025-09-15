@@ -80,6 +80,12 @@ export const useChat = () => {
   };
 
   const saveToSuperjournal = async (userMessage: Message, aiMessage: Message, model: string) => {
+    console.log('🚀 saveToSuperjournal called with:', {
+      userContent: userMessage.content.substring(0, 50),
+      aiContent: aiMessage.content.substring(0, 50),
+      model
+    });
+    
     try {
       const journalEntry = {
         id: crypto.randomUUID(),
@@ -96,7 +102,11 @@ export const useChat = () => {
         }
       };
 
-      console.log('💾 Saving conversation turn to superjournal...', journalEntry);
+      console.log('💾 About to POST to superjournal with entry:', {
+        id: journalEntry.id,
+        userContentLength: journalEntry.userMessage.content.length,
+        aiContentLength: journalEntry.aiResponse.content.length
+      });
       
       const response = await fetch(`${SUPABASE_URL}/functions/v1/superjournal?action=append`, {
         method: 'POST',
@@ -108,8 +118,11 @@ export const useChat = () => {
         body: JSON.stringify(journalEntry),
       });
 
+      console.log('📡 Superjournal response status:', response.status);
+
       if (response.ok) {
-        console.log('✅ Conversation turn saved to superjournal');
+        const responseData = await response.json();
+        console.log('✅ Conversation turn saved to superjournal:', responseData);
         return true;
       } else {
         const errorText = await response.text();

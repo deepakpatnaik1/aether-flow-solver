@@ -14,7 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      file_attachments: {
+      ephemeral_attachments: {
         Row: {
           created_at: string
           file_name: string
@@ -86,6 +86,42 @@ export type Database = {
           user_message_attachments?: Json | null
           user_message_content?: string
           user_message_persona?: string
+        }
+        Relationships: []
+      }
+      persistent_attachments: {
+        Row: {
+          category: string
+          created_at: string
+          file_name: string
+          file_size: number
+          file_type: string
+          id: string
+          original_name: string
+          public_url: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          file_name: string
+          file_size: number
+          file_type: string
+          id?: string
+          original_name: string
+          public_url: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          original_name?: string
+          public_url?: string
+          updated_at?: string
         }
         Relationships: []
       }

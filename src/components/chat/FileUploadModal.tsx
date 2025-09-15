@@ -13,7 +13,7 @@ interface FileUploadModalProps {
 }
 
 const categories = [
-  { value: 'attachments', label: 'Chat Attachments', bucket: 'attachments' },
+  { value: 'attachments', label: 'Chat Attachments (Ephemeral)', bucket: 'attachments' },
   { value: 'documents', label: 'General Documents', bucket: 'documents' },
   { value: 'boss', label: 'Boss Files', bucket: 'boss' },
   { value: 'persona', label: 'Persona Files', bucket: 'persona' },

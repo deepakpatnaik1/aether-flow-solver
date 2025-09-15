@@ -94,16 +94,34 @@ serve(async (req) => {
     const publicUrl = publicUrlData.publicUrl;
     console.log('Public URL:', publicUrl);
 
-    // Save metadata to file_attachments table
-    const { error: dbError } = await supabase
-      .from('file_attachments')
-      .insert({
-        file_name: sanitizedName,
-        original_name: file.name,
-        public_url: publicUrl,
-        file_size: file.size,
-        file_type: file.type || 'application/octet-stream'
-      });
+    // Save metadata to appropriate table based on category
+    let dbError;
+    if (category === 'attachments') {
+      // Ephemeral chat attachments
+      const { error } = await supabase
+        .from('ephemeral_attachments')
+        .insert({
+          file_name: sanitizedName,
+          original_name: file.name,
+          public_url: publicUrl,
+          file_size: file.size,
+          file_type: file.type || 'application/octet-stream'
+        });
+      dbError = error;
+    } else {
+      // Persistent documents (boss, persona, processes, documents)
+      const { error } = await supabase
+        .from('persistent_attachments')
+        .insert({
+          file_name: sanitizedName,
+          original_name: file.name,
+          public_url: publicUrl,
+          file_size: file.size,
+          file_type: file.type || 'application/octet-stream',
+          category: category
+        });
+      dbError = error;
+    }
 
     if (dbError) {
       console.error('Database error:', dbError);

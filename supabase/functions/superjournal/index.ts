@@ -129,7 +129,7 @@ async function signR2Request(
 }
 
 async function appendToSuperjournal(entry: JournalEntry) {
-  const journalKey = 'superjournal/journal.jsonl';
+  const journalKey = 'superjournal/superjournal.jsonl';
   const r2Endpoint = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${journalKey}`;
   
   try {
@@ -198,7 +198,7 @@ async function appendToSuperjournal(entry: JournalEntry) {
 }
 
 async function loadSuperjournal(): Promise<JournalEntry[]> {
-  const journalKey = 'superjournal/journal.jsonl';
+  const journalKey = 'superjournal/superjournal.jsonl';
   const r2Endpoint = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${journalKey}`;
   
   try {

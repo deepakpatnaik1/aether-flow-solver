@@ -157,124 +157,92 @@ serve(async (req) => {
 
     const userQuestion = messages[messages.length - 1]?.content || '';
     
-    // CALL 1: Turn Protocol - Generate authentic persona response
+    // SINGLE CALL TEST: Generate both full response and artisan cut in one structured output
     const bossContext = PERSONAS.boss;
     const personaContext = PERSONAS[persona as keyof typeof PERSONAS] || PERSONAS.gunnar;
     const journalContext = journal.map((entry: any) => `${entry.persona}: ${entry.content}`).join('\n');
     
-    const call1Messages: ChatMessage[] = [
+    const singleCallMessages: ChatMessage[] = [
       {
         role: 'system',
-        content: `# Turn Protocol - Call 1 (Display Response Only)
+        content: `# Single Call Test - Dual Output Generation
 
-## LLM Instructions
+## Context Bundle
 
-You are receiving a context bundle. Process it in this sequence:
-
-1. **Boss.md** - The human user you're responding to
-2. **Active Persona.md** - The specific voice Boss expects to hear from  
-3. **Journal Contents** - Refresh your memory with conversation history for sharp, relevant answers
-4. **User Prompt** - The actual message from Boss to respond to
-
-## Response Requirements
-
-1. **Respond authentically** as the active persona using their unique voice and expertise
-2. **Reference context** from journal and files when relevant
-3. **Return plain text response only** - NO JSON structure
-4. **Stream-friendly format** - natural conversational response
-
-## Response Format
-
-**Plain text response as the active persona**
-
-- Use your authentic voice and personality
-- Draw from context when relevant
-- Provide helpful, engaging conversation
-- **NO JSON objects**
-- **NO structured data**
-- **NO artisan cut generation**
-
-This is Call 1 of a dual-call system. Your job is to provide the natural, authentic persona response for real-time display.
-
----
-
-## Boss Context:
+**Boss Context:**
 ${bossContext}
 
-## Active Persona:
+**Active Persona:**
 ${personaContext}
 
-## Journal History:
+**Journal History:**
 ${journalContext}
 
-**User Prompt**: ${userQuestion}`
+## Task
+
+You must respond as the active persona while ALSO generating a compressed artisan cut. Return your response in this EXACT JSON format:
+
+\`\`\`json
+{
+  "fullContent": "[Your complete, natural conversational response as the persona - engaging, authentic, drawing from context]",
+  "artisanCut": "[Compressed essence - maximum 2 lines, capturing strategic wisdom and core concepts only]"
+}
+\`\`\`
+
+## Full Content Requirements
+- Respond authentically as ${persona.charAt(0).toUpperCase() + persona.slice(1)} using their unique voice and expertise
+- Reference context from journal when relevant  
+- Natural, engaging conversation
+- Use persona's characteristic tone and phrasing
+
+## Artisan Cut Requirements
+- Extract ONLY strategic essence from both question and your response
+- **CAPTURE**: Strategic advice, mentoring insights, course corrections, pattern recognition, risk assessments, growth insights, leadership guidance
+- **DISCARD**: Technical explanations, definitions, historical info, how-to instructions, examples, generic data
+- Maximum 2 lines: "Boss: [core concept] / ${persona.charAt(0).toUpperCase() + persona.slice(1)}: [strategic wisdom]"
+- Minimal tokens - concept level only
+
+**User Question**: ${userQuestion}`
       }
     ];
 
-    console.log('Making Call 1: Turn Protocol');
-    const personaResponse = await callOpenAI(model, call1Messages);
-    console.log('Call 1 completed, response length:', personaResponse.length);
+    console.log('Making Single Call Test: Dual Output Generation');
+    const structuredResponse = await callOpenAI(model, singleCallMessages);
+    console.log('Single call completed, response length:', structuredResponse.length);
 
-    // CALL 2: Artisan Cut Extraction - Extract essence
-    const call2Messages: ChatMessage[] = [
-      {
-        role: 'system',
-        content: `# Artisan Cut Extraction Protocol - Call 2
-
-## Input Requirements
-
-You receive exactly 3 inputs:
-
-1. **User Question**: The original input from Boss
-2. **Persona Response**: The complete response that was generated in Call 1
-3. **Artisan Cut Rules**: The compression specification
-
-## Your Task
-
-Apply artisan cut rules to extract essence ONLY from the question-response pair.
-
-**DO NOT generate new information**
-**DO NOT provide explanations**  
-**EXTRACT ESSENCE ONLY**
-
-## Processing Instructions
-
-### Boss Input Processing
-**CAPTURE**: Decision points, emotional states, strategic questions, business updates, learning moments, fears/concerns, goals, resource needs, market insights, financial decisions
-
-**DISCARD**: Greetings, politeness fillers, grammar padding, conversational connectors, confirmations
-
-### Persona Response Processing
-**CAPTURE**: Strategic advice, mentoring insights, course corrections, pattern recognition, framework applications, risk assessments, growth insights, leadership guidance, market observations, founder psychology
-
-**DISCARD**: Technical explanations, definitions, historical info, how-to instructions, code examples, generic market data, process descriptions, tool comparisons
-
-## Output Format
-
-Boss: [essence of user question - core concept without fillers]
-${persona.charAt(0).toUpperCase() + persona.slice(1)}: [essence of strategic wisdom with key details and persona attribution]
-
-## Constraints
-
-- **Maximum 2 lines output**
-- **Minimal tokens** - concept level only
-- **Preserve persona distinctiveness**
-- **NO JSON structure**
-- **NO explanations or meta-commentary**
-
-This is Call 2 of the dual-call system. Your only job is essence extraction.
-
----
-
-**User Question**: ${userQuestion}
-
-**Persona Response**: ${personaResponse}`
+    // Parse the structured response
+    let parsedResponse;
+    try {
+      // Extract JSON from code blocks if present
+      const jsonMatch = structuredResponse.match(/```json\s*([\s\S]*?)\s*```/) || 
+                       structuredResponse.match(/```\s*([\s\S]*?)\s*```/) ||
+                       [null, structuredResponse];
+      
+      const jsonString = jsonMatch[1] || structuredResponse;
+      parsedResponse = JSON.parse(jsonString);
+      
+      if (!parsedResponse.fullContent || !parsedResponse.artisanCut) {
+        throw new Error('Missing required fields in structured response');
       }
-    ];
+      
+      console.log('Successfully parsed structured response');
+      console.log('Full content length:', parsedResponse.fullContent.length);
+      console.log('Artisan cut length:', parsedResponse.artisanCut.length);
+      
+    } catch (parseError) {
+      console.error('Failed to parse structured response:', parseError);
+      console.log('Raw response:', structuredResponse);
+      
+      // Fallback: treat entire response as fullContent, generate basic artisan cut
+      parsedResponse = {
+        fullContent: structuredResponse,
+        artisanCut: `Boss: ${userQuestion.split(' ').slice(0, 5).join(' ')}... / ${persona.charAt(0).toUpperCase() + persona.slice(1)}: ${structuredResponse.split(' ').slice(0, 10).join(' ')}...`
+      };
+      console.log('Using fallback parsing');
+    }
 
-    console.log('Making Call 2: Artisan Cut Extraction');
-    const essenceExtract = await callOpenAI(model, call2Messages);
-    console.log('Call 2 completed, essence length:', essenceExtract.length);
+    const personaResponse = parsedResponse.fullContent;
+    const essenceExtract = parsedResponse.artisanCut;
 
     return new Response(JSON.stringify({ 
       response: personaResponse,

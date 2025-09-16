@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
@@ -9,6 +9,31 @@ interface MarkdownRendererProps {
 }
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, persona, className = "" }) => {
+  // State to track checkbox states
+  const [checkboxStates, setCheckboxStates] = useState<Record<string, boolean>>({});
+  
+  // Initialize checkbox states from content
+  useEffect(() => {
+    const lines = content.split('\n');
+    const initialStates: Record<string, boolean> = {};
+    
+    lines.forEach((line, index) => {
+      const match = line.match(/^[\s]*[-*+]\s*\[([x ])\]/);
+      if (match) {
+        const checkboxId = `checkbox-${index}`;
+        initialStates[checkboxId] = match[1].toLowerCase() === 'x';
+      }
+    });
+    
+    setCheckboxStates(initialStates);
+  }, [content]);
+  
+  const handleCheckboxChange = useCallback((checkboxId: string, checked: boolean) => {
+    setCheckboxStates(prev => ({
+      ...prev,
+      [checkboxId]: checked
+    }));
+  }, []);
   
   // Get persona color based on persona name
   const getPersonaColor = (personaName?: string): string => {
@@ -64,19 +89,21 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
       if (line.match(/^[\s]*[-*+]\s*\[([ x])\]/)) {
         const match = line.match(/^(\s*)[-*+]\s*\[([x ])\]\s*(.*)$/);
         if (match) {
-          const [, indent, checked, text] = match;
-          const isChecked = checked.toLowerCase() === 'x';
+          const [, indent, , text] = match;
+          const checkboxId = `checkbox-${i}`;
+          const isChecked = checkboxStates[checkboxId] || false;
           
           elements.push(
             <div key={i} className="flex items-center gap-3 my-1" style={{ marginLeft: `${indent.length * 0.5}rem` }}>
               <input 
                 type="checkbox" 
                 checked={isChecked} 
-                readOnly
-                className="rounded border-border"
+                onChange={(e) => handleCheckboxChange(checkboxId, e.target.checked)}
+                className="rounded border-border cursor-pointer"
                 style={{ accentColor: personaColor }}
               />
-              <span className={`message-text flex-1 ${isChecked ? 'line-through opacity-75' : ''}`}>
+              <span className={`message-text flex-1 cursor-pointer ${isChecked ? 'line-through opacity-75' : ''}`}
+                    onClick={() => handleCheckboxChange(checkboxId, !isChecked)}>
                 {processInlineMarkdown(text)}
               </span>
             </div>

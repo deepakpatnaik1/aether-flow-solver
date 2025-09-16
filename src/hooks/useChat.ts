@@ -132,39 +132,11 @@ export const useChat = () => {
   };
 
   const saveToJournal = async (userMessage: Message, aiMessage: Message, model: string, turnId?: string) => {
-    try {
-      const entryId = turnId || crypto.randomUUID();
-      const timestamp = new Date().toISOString();
-
-      console.log('💾 Saving to journal_entries table:', entryId);
-      
-      const { error } = await supabase
-        .from('journal_entries')
-        .insert({
-          entry_id: entryId,
-          timestamp: timestamp,
-          user_message_content: userMessage.content,
-          user_message_persona: userMessage.persona,
-          user_message_attachments: userMessage.attachments || [],
-          ai_response_content: aiMessage.content,
-          ai_response_persona: aiMessage.persona,
-          ai_response_model: model
-        });
-
-      if (error) {
-        console.error('❌ Failed to save journal entry:', error);
-        return false;
-      }
-
-      // Add to local journal state
-      setJournal(prev => [...prev, { persona: aiMessage.persona, content: aiMessage.content }]);
-      console.log('✅ Journal entry saved');
-      return true;
-      
-    } catch (error) {
-      console.error('❌ Journal save error:', error);
-      return false;
-    }
+    // NOTE: This function is now deprecated in favor of Call 2 (artisan-cut-extraction)
+    // Journal entries are now populated by the artisan cut extraction process
+    // This function is kept for backward compatibility but should not be used in normal flow
+    console.log('⚠️ saveToJournal called - should be handled by Call 2 instead');
+    return true;
   };
 
   const saveToSuperjournal = async (userMessage: Message, aiMessage: Message, model: string, turnId?: string) => {
@@ -205,14 +177,39 @@ export const useChat = () => {
 
       console.log('✅ Conversation turn saved to superjournal DB');
       
-      // Also save to journal entries
-      await saveToJournal(userMessage, aiMessage, model, entryId);
+      // Trigger Call 2 (Artisan Cut Extraction) in background - don't await
+      triggerArtisanCutExtraction(userMessage, aiMessage, model, entryId);
       
       return true;
       
     } catch (error) {
       console.error('❌ Superjournal save error:', error);
       return false;
+    }
+  };
+
+  const triggerArtisanCutExtraction = async (userMessage: Message, aiMessage: Message, model: string, entryId: string) => {
+    try {
+      console.log('🔍 Triggering Call 2 - Artisan Cut Extraction for:', entryId);
+      
+      const { error } = await supabase.functions.invoke('artisan-cut-extraction', {
+        body: {
+          userQuestion: userMessage.content,
+          personaResponse: aiMessage.content,
+          entryId,
+          userPersona: userMessage.persona,
+          aiPersona: aiMessage.persona,
+          model
+        }
+      });
+
+      if (error) {
+        console.error('❌ Call 2 failed:', error);
+      } else {
+        console.log('✅ Call 2 triggered successfully for:', entryId);
+      }
+    } catch (error) {
+      console.error('❌ Error triggering Call 2:', error);
     }
   };
 

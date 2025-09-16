@@ -1,22 +1,10 @@
 project_id = "suncgglbheilkeimwuxt"
 
-[functions.chat-stream]
-verify_jwt = false
-
 [functions.upload-file]
-verify_jwt = false
-
-[functions.superjournal]
-verify_jwt = false
-
-[functions.journal]
 verify_jwt = false
 
 [functions.process-journal-upload]
 verify_jwt = false
 
 [functions.process-persona-upload]
-verify_jwt = false
-
-[functions.artisan-cut-extraction]
 verify_jwt = false

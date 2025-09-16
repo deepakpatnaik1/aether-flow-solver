@@ -245,7 +245,8 @@ serve(async (req) => {
       {
         role: 'system',
         content: systemMessage
-      }
+      },
+      ...messages  // Include the actual user messages!
     ];
 
     const openaiStartTime = performance.now();

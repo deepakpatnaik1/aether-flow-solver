@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Paperclip, ChevronDown } from 'lucide-react';
+import { Send, Paperclip, ChevronDown, Chrome } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MessageList } from './MessageList';
 import { PersonaBadge } from './PersonaBadge';
 import { FileUploadModal } from './FileUploadModal';
+import GoogleIntegration from './GoogleIntegration';
+import GoogleServiceActions from './GoogleServiceActions';
 import { supabase } from '@/integrations/supabase/client';
 import { useChat } from '@/hooks/useChat';
+import { useGoogleConnection } from '@/hooks/useGoogleConnection';
 import { getBerlinTime } from '@/lib/timezone';
 
 interface Message {
@@ -33,6 +37,7 @@ const ChatInterface = () => {
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -44,6 +49,8 @@ const ChatInterface = () => {
     setJournal,
     saveToSuperjournal,
   } = useChat();
+
+  const { isConnected: isGoogleConnected, userEmail: googleUserEmail } = useGoogleConnection();
 
   const models = [
     { id: 'gpt-4o-mini', name: 'GPT-4o Mini (Fast)' },
@@ -395,8 +402,8 @@ const ChatInterface = () => {
           {/* Model Selection Controls */}
           <div className="model-controls">
             <div className="model-selectors">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 className="attachment-btn"
                 onClick={() => fileInputRef.current?.click()}
@@ -414,6 +421,16 @@ const ChatInterface = () => {
                   }
                 }}
               />
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`attachment-btn ${isGoogleConnected ? 'text-green-600' : 'text-muted-foreground'}`}
+                onClick={() => setShowGoogleModal(true)}
+                title={isGoogleConnected ? 'Google Workspace Connected' : 'Connect Google Workspace'}
+              >
+                <Chrome className="h-4 w-4" />
+              </Button>
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -476,6 +493,23 @@ const ChatInterface = () => {
         onUpload={handleFileUpload}
         files={pendingFiles}
       />
+
+      <Dialog open={showGoogleModal} onOpenChange={setShowGoogleModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Google Workspace Integration</DialogTitle>
+            <DialogDescription>
+              Connect your Google account and create emails, documents, and presentations
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6">
+            <GoogleIntegration />
+            {isGoogleConnected && googleUserEmail && (
+              <GoogleServiceActions userEmail={googleUserEmail} />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -67,7 +67,7 @@ const callOpenAI = async (messages: ChatMessage[]) => {
   const requestBody = {
     model: 'gpt-4o-mini', // Reliable model for extraction
     messages,
-    max_tokens: 150, // Sufficient for 2-line output
+    max_tokens: 4000, // Match Call 1 token allocation
     temperature: 0.1 // Low temperature for consistent extraction
   };
 

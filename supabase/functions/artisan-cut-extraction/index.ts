@@ -60,16 +60,23 @@ Boss: [essence of user question - core concept without fillers]
 Maximum 2 lines output. Minimal tokens - concept level only.
 `;
 
-const callOpenAI = async (messages: ChatMessage[]) => {
-  console.log('🔍 About to call OpenAI with model: gpt-4o-mini');
+const callOpenAI = async (messages: ChatMessage[], model: string) => {
+  console.log('🔍 About to call OpenAI with model:', model);
   console.log('🔍 Message count:', messages.length);
   
-  const requestBody = {
-    model: 'gpt-4o-mini', // Reliable model for extraction
-    messages,
-    max_tokens: 4000, // Match Call 1 token allocation
-    temperature: 0.1 // Low temperature for consistent extraction
+  const requestBody: any = {
+    model,
+    messages
   };
+
+  // Handle different model parameters based on model type
+  if (model.startsWith('gpt-5') || model.startsWith('gpt-4.1') || model.startsWith('o3') || model.startsWith('o4')) {
+    requestBody.max_completion_tokens = 4000;
+    // No temperature for newer models
+  } else {
+    requestBody.max_tokens = 4000;
+    requestBody.temperature = 0.1; // Low temperature for consistent extraction
+  }
 
   console.log('📤 Request body:', JSON.stringify(requestBody, null, 2));
 
@@ -159,7 +166,7 @@ Extract essence following artisan cut protocol above.`
     console.log('🚀 Calling OpenAI for artisan cut extraction...');
     console.log('📤 Sending to OpenAI:', JSON.stringify(messages, null, 2));
     
-    const openaiResponse = await callOpenAI(messages);
+    const openaiResponse = await callOpenAI(messages, model);
     console.log('📥 Full OpenAI response:', JSON.stringify(openaiResponse, null, 2));
     
     // Check for OpenAI API errors first

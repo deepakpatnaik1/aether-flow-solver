@@ -60,27 +60,77 @@ async function loadPersonaProfile(personaName: string): Promise<string> {
   }
 }
 
-// Load ALL knowledge from knowledge_entries table (full content)
+// Load ALL context data for the LLM
 async function loadRelevantKnowledge(): Promise<string> {
   try {
-    const { data: knowledge, error } = await supabase
-      .from('past_journals_full')
-      .select('title, content')
-      .order('created_at', { ascending: false });
-
-    if (error || !knowledge || knowledge.length === 0) {
-      return '';
-    }
-
-    let knowledgeContext = '\n## Relevant Context from Previous Conversations:\n\n';
+    console.log('📚 Loading all context data...');
     
-    for (const entry of knowledge) {
-      knowledgeContext += `### ${entry.title}\n${entry.content}\n\n`;
+    // Load all context sources in parallel
+    const [
+      pastJournalsResult,
+      journalEntriesResult,
+      ephemeralAttachmentsResult,
+      persistentAttachmentsResult
+    ] = await Promise.all([
+      supabase.from('past_journals_full').select('title, content').order('created_at', { ascending: false }),
+      supabase.from('journal_entries').select('*').order('created_at', { ascending: false }).limit(20),
+      supabase.from('ephemeral_attachments').select('*').order('created_at', { ascending: false }).limit(5),
+      supabase.from('persistent_attachments').select('*').order('created_at', { ascending: false })
+    ]);
+
+    let knowledgeContext = '\n## Complete Context Package:\n\n';
+    
+    // Past Journals Full
+    if (pastJournalsResult.data && pastJournalsResult.data.length > 0) {
+      knowledgeContext += '### Past Journal Entries (Full Content):\n';
+      for (const entry of pastJournalsResult.data) {
+        knowledgeContext += `**${entry.title}**\n${entry.content}\n\n`;
+      }
     }
+
+    // Recent Journal Entries 
+    if (journalEntriesResult.data && journalEntriesResult.data.length > 0) {
+      knowledgeContext += '### Recent Conversation History:\n';
+      for (const entry of journalEntriesResult.data) {
+        knowledgeContext += `**Turn ${entry.entry_id}** (${entry.timestamp})\n`;
+        knowledgeContext += `User (${entry.user_message_persona}): ${entry.user_message_content}\n`;
+        knowledgeContext += `AI (${entry.ai_response_persona}, ${entry.ai_response_model}): ${entry.ai_response_content}\n\n`;
+      }
+    }
+
+    // Recent Ephemeral Attachments
+    if (ephemeralAttachmentsResult.data && ephemeralAttachmentsResult.data.length > 0) {
+      knowledgeContext += '### Recent Chat Attachments:\n';
+      for (const attachment of ephemeralAttachmentsResult.data) {
+        knowledgeContext += `- ${attachment.original_name} (${attachment.file_type}, ${attachment.file_size} bytes) - ${attachment.created_at}\n`;
+      }
+      knowledgeContext += '\n';
+    }
+
+    // All Persistent Attachments
+    if (persistentAttachmentsResult.data && persistentAttachmentsResult.data.length > 0) {
+      knowledgeContext += '### Available Knowledge Assets:\n';
+      const categories = [...new Set(persistentAttachmentsResult.data.map(a => a.category))];
+      for (const category of categories) {
+        knowledgeContext += `**${category.toUpperCase()}:**\n`;
+        const categoryFiles = persistentAttachmentsResult.data.filter(a => a.category === category);
+        for (const file of categoryFiles) {
+          knowledgeContext += `- ${file.original_name} (${file.file_type})\n`;
+        }
+        knowledgeContext += '\n';
+      }
+    }
+
+    console.log('✅ Context package loaded:', {
+      pastJournals: pastJournalsResult.data?.length || 0,
+      journalEntries: journalEntriesResult.data?.length || 0, 
+      ephemeralAttachments: ephemeralAttachmentsResult.data?.length || 0,
+      persistentAttachments: persistentAttachmentsResult.data?.length || 0
+    });
 
     return knowledgeContext;
   } catch (error) {
-    console.error('❌ Error loading knowledge:', error);
+    console.error('❌ Error loading complete context:', error);
     return '';
   }
 }

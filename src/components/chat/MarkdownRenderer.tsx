@@ -18,10 +18,13 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
     const initialStates: Record<string, boolean> = {};
     
     lines.forEach((line, index) => {
-      const match = line.match(/^(\s*)[-*+]\s*\[([x\s])\]/i);
+      const match = line.match(/^(\s*)[-*+]\s*\[[\sx]\]/i);
       if (match) {
-        const checkboxId = `checkbox-${index}`;
-        initialStates[checkboxId] = match[2].toLowerCase().trim() === 'x';
+        const checkMatch = line.match(/^(\s*)[-*+]\s*\[([\sx])\]/i);
+        if (checkMatch) {
+          const checkboxId = `checkbox-${index}`;
+          initialStates[checkboxId] = checkMatch[2].toLowerCase().trim() === 'x';
+        }
       }
     });
     
@@ -85,13 +88,15 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
         }
       }
 
-      // Handle checkbox lists
-      if (line.match(/^(\s*)[-*+]\s*\[([x\s])\]/i)) {
-        const match = line.match(/^(\s*)[-*+]\s*\[([x\s])\]\s*(.*)$/i);
+      // Handle checkbox lists FIRST (before regular lists)
+      if (line.match(/^(\s*)[-*+]\s*\[[\sx]\]/i)) {
+        const match = line.match(/^(\s*)[-*+]\s*\[([\sx])\]\s*(.*)$/i);
         if (match) {
           const [, indent, checkMark, text] = match;
           const checkboxId = `checkbox-${i}`;
-          const isChecked = checkboxStates[checkboxId] !== undefined ? checkboxStates[checkboxId] : checkMark.toLowerCase().trim() === 'x';
+          const isChecked = checkboxStates[checkboxId] !== undefined ? 
+            checkboxStates[checkboxId] : 
+            checkMark.toLowerCase().trim() === 'x';
           
           elements.push(
             <div key={i} className="flex items-center gap-3 my-1" style={{ marginLeft: `${indent.length * 0.5}rem` }}>

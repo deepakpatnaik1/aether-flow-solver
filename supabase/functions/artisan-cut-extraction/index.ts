@@ -134,29 +134,21 @@ serve(async (req) => {
     const artisanCutRules = await loadArtisanCutRules();
     
     // Build focused system message
-    const systemMessage = `You are an expert at extracting key insights from conversations.
+    const systemMessage = `Extract key insights from this conversation in exactly 2 lines:
 
-Extract the core essence from this conversation in exactly 2 lines:
+Line 1: Boss: [core question/concern from user]
+Line 2: ${aiPersona}: [key insight/advice from response]
 
-Line 1: Boss: [key point from user question]
-Line 2: ${aiPersona}: [key strategic insight from response]
-
-Keep each line under 100 characters. Focus only on the most important concepts.`;
+Be extremely concise. Each line under 100 characters.`;
 
     const messages: ChatMessage[] = [
       {
-        role: 'system',
-        content: systemMessage
-      },
-      {
-        role: 'user', 
-        content: `Extract essence from:
+        role: 'user',
+        content: `User: ${userQuestion}
 
-User (${userPersona}): ${userQuestion}
+AI: ${personaResponse}
 
-AI (${aiPersona}): ${personaResponse}
-
-Return exactly 2 lines as specified.`
+Extract 2 lines as specified above.`
       }
     ];
 
@@ -274,17 +266,11 @@ Return exactly 2 lines as specified.`
 
     console.log('🎯 Final essences - Boss:', bossEssence, 'Persona:', personaEssence);
 
-    // FORCE content if still empty - this should never happen but let's be safe
-    if (!bossEssence) {
-      bossEssence = userQuestion;
-      console.log('🔧 FORCED boss essence from user question');
+    // Only save if we have proper extracted content
+    if (!bossEssence || !personaEssence) {
+      console.error('❌ Artisan cut extraction failed - not saving empty content');
+      throw new Error('Failed to extract essence from conversation');
     }
-    if (!personaEssence) {
-      personaEssence = personaResponse;
-      console.log('🔧 FORCED persona essence from full response');
-    }
-
-    console.log('🎯 FINAL essences after force check - Boss:', bossEssence.substring(0, 50), 'Persona:', personaEssence.substring(0, 50));
 
     // Save artisan cut to journal_entries
     const { error: journalError } = await supabase

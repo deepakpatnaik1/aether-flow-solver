@@ -61,14 +61,14 @@ Maximum 2 lines output. Minimal tokens - concept level only.
 `;
 
 const callOpenAI = async (messages: ChatMessage[]) => {
-  console.log('🔍 About to call OpenAI with model: gpt-5-mini-2025-08-07');
+  console.log('🔍 About to call OpenAI with model: gpt-4o-mini');
   console.log('🔍 Message count:', messages.length);
   
   const requestBody = {
-    model: 'gpt-5-mini-2025-08-07', // Fast model for extraction
+    model: 'gpt-4o-mini', // Reliable model for extraction
     messages,
-    max_completion_tokens: 200 // Keep it short
-    // No temperature parameter - GPT-5 models don't support it
+    max_tokens: 150, // Sufficient for 2-line output
+    temperature: 0.1 // Low temperature for consistent extraction
   };
 
   console.log('📤 Request body:', JSON.stringify(requestBody, null, 2));
@@ -133,41 +133,13 @@ serve(async (req) => {
     // Load artisan cut rules
     const artisanCutRules = await loadArtisanCutRules();
     
-    // Build artisan cut system message with full protocol
-    const systemMessage = `${artisanCutRules}
+    // Build simplified artisan cut prompt
+    const systemMessage = `Extract the essence of this conversation into exactly 2 lines:
 
-## Your Task
+Line 1: Boss: [core question/concern without greetings or filler]
+Line 2: ${aiPersona}: [key strategic insight/advice in their distinct style]
 
-Apply artisan cut rules to extract essence ONLY from the question-response pair.
-
-**DO NOT generate new information**
-**DO NOT provide explanations**
-**EXTRACT ESSENCE ONLY**
-
-## Processing Instructions
-
-### Boss Input Processing
-**CAPTURE**: Decision points, emotional states, strategic questions, business updates, learning moments, fears/concerns, goals, resource needs, market insights, financial decisions
-
-**DISCARD**: Greetings, politeness fillers, grammar padding, conversational connectors, confirmations
-
-### Persona Response Processing
-**CAPTURE**: Strategic advice, mentoring insights, course corrections, pattern recognition, framework applications, risk assessments, growth insights, leadership guidance, market observations, founder psychology
-
-**DISCARD**: Technical explanations, definitions, historical info, how-to instructions, code examples, generic market data, process descriptions, tool comparisons
-
-## Output Format
-
-Boss: [essence of user question - core concept without fillers]
-${aiPersona}: [essence of strategic wisdom with key details and persona attribution]
-
-## Constraints
-
-- **Maximum 2 lines output**
-- **Minimal tokens** - concept level only
-- **Preserve persona distinctiveness**
-- **NO JSON structure**
-- **NO explanations or meta-commentary**`;
+Keep it minimal - capture only the essential business insight.`;
 
     const messages: ChatMessage[] = [
       {

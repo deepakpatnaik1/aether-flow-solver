@@ -64,7 +64,7 @@ async function loadPersonaProfile(personaName: string): Promise<string> {
 async function loadRelevantKnowledge(): Promise<string> {
   try {
     const { data: knowledge, error } = await supabase
-      .from('knowledge_entries')
+      .from('past_journals_full')
       .select('title, content')
       .order('created_at', { ascending: false });
 

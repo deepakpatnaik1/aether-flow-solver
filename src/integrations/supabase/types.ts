@@ -113,7 +113,7 @@ export type Database = {
         }
         Relationships: []
       }
-      knowledge_entries: {
+      past_journals_full: {
         Row: {
           content: string
           created_at: string

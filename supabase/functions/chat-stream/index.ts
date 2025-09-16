@@ -289,12 +289,39 @@ serve(async (req) => {
             throw new Error('No response body available');
           }
 
-          console.log('🌊 INSTANT streaming active...');
+          console.log('🌊 Starting streaming...');
+          let fullPersonaResponse = ''; // Collect the complete response
+          let turnId = crypto.randomUUID(); // Generate unique turn ID
 
           while (true) {
             const { done, value } = await reader.read();
             if (done) {
-              console.log('✅ INSTANT stream complete!');
+              console.log('✅ Stream complete!');
+              
+              // TRIGGER CALL 2 automatically in background
+              if (fullPersonaResponse.trim()) {
+                console.log('🚀 Triggering Call 2 - Artisan Cut Processing...');
+                
+                // Background Call 2 - don't await, let it run silently
+                fetch('https://suncgglbheilkeimwuxt.supabase.co/functions/v1/artisan-cut-call2', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + SUPABASE_SERVICE_ROLE_KEY,
+                  },
+                  body: JSON.stringify({
+                    entryId: turnId,
+                    userInput: messages[messages.length - 1]?.content || 'No user input',
+                    personaResponse: fullPersonaResponse,
+                    userPersona: 'Boss',
+                    aiPersona: persona,
+                    model: model
+                  })
+                }).catch(error => {
+                  console.error('❌ Call 2 failed:', error);
+                });
+              }
+              
               break;
             }
 
@@ -311,10 +338,13 @@ serve(async (req) => {
                   const delta = parsed.choices?.[0]?.delta?.content;
                   
                   if (delta) {
-                    // INSTANT forward - zero processing delay
+                    fullPersonaResponse += delta; // Accumulate complete response
+                    
+                    // Stream to UI immediately  
                     controller.enqueue(encoder.encode(JSON.stringify({ 
                       type: 'content_delta', 
-                      delta: delta
+                      delta: delta,
+                      turnId: turnId
                     }) + '\n'));
                   }
                 } catch (parseError) {
@@ -326,7 +356,8 @@ serve(async (req) => {
 
           // Completion signal
           controller.enqueue(encoder.encode(JSON.stringify({
-            type: 'complete'
+            type: 'complete',
+            turnId: turnId
           }) + '\n'));
           
           controller.close();

@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.artisan-cut-extraction]
 verify_jwt = false
+
+[functions.artisan-cut-call2]
+verify_jwt = false

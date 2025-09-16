@@ -88,7 +88,36 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
         }
       }
 
-      // Handle checkbox lists FIRST (before regular lists)
+      // Handle standalone checkboxes FIRST (like "[x] Task")
+      if (line.match(/^(\s*)\[[ x]\]/i)) {
+        const match = line.match(/^(\s*)\[([x ])\]\s*(.*)$/i);
+        if (match) {
+          const [, indent, checkMark, text] = match;
+          const checkboxId = `checkbox-${i}`;
+          const isChecked = checkboxStates[checkboxId] !== undefined ? 
+            checkboxStates[checkboxId] : 
+            checkMark.toLowerCase().trim() === 'x';
+          
+          elements.push(
+            <div key={i} className="flex items-center gap-3 my-1" style={{ marginLeft: `${indent.length * 0.5}rem` }}>
+              <input 
+                type="checkbox" 
+                checked={isChecked} 
+                onChange={(e) => handleCheckboxChange(checkboxId, e.target.checked)}
+                className="rounded border-border cursor-pointer"
+                style={{ accentColor: personaColor }}
+              />
+              <span className={`message-text flex-1 cursor-pointer ${isChecked ? 'line-through opacity-75' : ''}`}
+                    onClick={() => handleCheckboxChange(checkboxId, !isChecked)}>
+                {processInlineMarkdown(text)}
+              </span>
+            </div>
+          );
+          continue;
+        }
+      }
+
+      // Handle checkbox lists SECOND (like "- [x] Task")
       if (line.match(/^(\s*)[-*+]\s*\[[ x]\]/i)) {
         const match = line.match(/^(\s*)[-*+]\s*\[([x ])\]\s*(.*)$/i);
         if (match) {

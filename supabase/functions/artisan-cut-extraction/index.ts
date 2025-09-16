@@ -64,8 +64,8 @@ const callOpenAI = async (messages: ChatMessage[]) => {
   const requestBody = {
     model: 'gpt-5-mini-2025-08-07', // Fast model for extraction
     messages,
-    max_completion_tokens: 200, // Keep it short
-    temperature: 0.1 // Very focused extraction
+    max_completion_tokens: 200 // Keep it short
+    // No temperature parameter - GPT-5 models don't support it
   };
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {

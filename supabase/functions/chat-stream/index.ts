@@ -209,7 +209,7 @@ serve(async (req) => {
 
   try {
     const requestStartTime = performance.now();
-    const { messages, model = 'gpt-5-2025-08-07', persona = 'gunnar' } = await req.json();
+    const { messages, model = 'gpt-5-mini-2025-08-07', persona = 'gunnar' } = await req.json();
     console.log('⚡ PERFORMANCE TRACKING - Request received:', { 
       messagesCount: messages?.length, 
       model, 

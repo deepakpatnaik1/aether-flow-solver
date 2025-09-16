@@ -190,6 +190,12 @@ Extract essence following artisan cut protocol above.`
     const openaiResponse = await callOpenAI(messages);
     console.log('📥 Full OpenAI response:', JSON.stringify(openaiResponse, null, 2));
     
+    // Check for OpenAI API errors first
+    if (openaiResponse.error) {
+      console.error('❌ OpenAI API Error:', openaiResponse.error);
+      throw new Error(`OpenAI API Error: ${openaiResponse.error.message || openaiResponse.error}`);
+    }
+    
     const extractedEssence = openaiResponse.choices?.[0]?.message?.content?.trim() || '';
 
     console.log('✨ Extracted essence (raw):', extractedEssence);
@@ -205,43 +211,7 @@ Extract essence following artisan cut protocol above.`
         content: openaiResponse.choices?.[0]?.message?.content || 'undefined'
       });
       
-      // Try to use the original input as fallback
-      console.log('🔄 Using input as fallback since OpenAI returned nothing');
-      const fallbackBoss = userQuestion;
-      const fallbackPersona = personaResponse.length > 200 ? personaResponse.substring(0, 200) + '...' : personaResponse;
-      
-      const { error: journalError } = await supabase
-        .from('journal_entries')
-        .insert({
-          entry_id: entryId,
-          timestamp: new Date(new Date().getTime() + (2 * 60 * 60 * 1000)).toISOString(),
-          user_message_content: fallbackBoss,
-          user_message_persona: userPersona,
-          ai_response_content: fallbackPersona,
-          ai_response_persona: aiPersona,
-          ai_response_model: model,
-          user_message_attachments: []
-        });
-
-      if (journalError) {
-        console.error('❌ Error saving fallback to journal:', journalError);
-        throw new Error(`Failed to save fallback: ${journalError.message}`);
-      }
-
-      const totalTime = performance.now() - startTime;
-      console.log('✅ Fallback saved in', Math.round(totalTime), 'ms');
-
-      return new Response(JSON.stringify({ 
-        success: true,
-        entryId,
-        extractedEssence: '',
-        bossEssence: fallbackBoss,
-        personaEssence: fallbackPersona,
-        processingTime: Math.round(totalTime),
-        usedFallback: true
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      throw new Error('OpenAI returned empty content - artisan cut extraction failed');
     }
 
     // Parse the essence to separate Boss and Persona parts

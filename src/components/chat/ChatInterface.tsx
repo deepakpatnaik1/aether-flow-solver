@@ -246,6 +246,8 @@ const ChatInterface = () => {
       let receivedTurnId = '';
 
       try {
+        let buffer = '';
+        
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -253,8 +255,9 @@ const ChatInterface = () => {
           const chunk = decoder.decode(value, { stream: true });
           buffer += chunk;
 
+          // Process complete lines only
           const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
+          buffer = lines.pop() || ''; // Keep incomplete line
 
           for (const line of lines) {
             if (!line.trim()) continue;
@@ -268,7 +271,7 @@ const ChatInterface = () => {
                   receivedTurnId = parsed.turnId;
                 }
                 
-                // Update the AI message with streaming content
+                // Immediate UI update for faster streaming
                 setMessages(prev => prev.map(msg => 
                   msg.id === aiMessageId 
                     ? { ...msg, content: streamingContent }
@@ -283,7 +286,7 @@ const ChatInterface = () => {
                 throw new Error(parsed.error);
               }
             } catch (parseError) {
-              console.warn('⚠️ Error parsing line:', line, parseError);
+              console.warn('⚠️ Parse error:', parseError);
             }
           }
         }

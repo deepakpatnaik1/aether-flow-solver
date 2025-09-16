@@ -304,7 +304,7 @@ Stay authentic to your character's voice and personality. Use context when relev
                   const delta = parsed.choices?.[0]?.delta?.content;
                   
                   if (delta) {
-                    // Stream the delta to frontend
+                    // Send delta immediately - no buffering
                     const streamData = JSON.stringify({ 
                       type: 'content_delta', 
                       delta: delta
@@ -312,7 +312,7 @@ Stay authentic to your character's voice and personality. Use context when relev
                     controller.enqueue(encoder.encode(streamData));
                   }
                 } catch (parseError) {
-                  console.error('❌ Error parsing streaming chunk:', parseError);
+                  console.error('❌ Parse error:', parseError);
                 }
               }
             }

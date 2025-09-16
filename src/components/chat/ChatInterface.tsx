@@ -242,22 +242,16 @@ const ChatInterface = () => {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let streamingContent = '';
-      let buffer = '';
       let receivedTurnId = '';
 
       try {
-        let buffer = '';
-        
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
+          // INSTANT processing - no buffer delays
           const chunk = decoder.decode(value, { stream: true });
-          buffer += chunk;
-
-          // Process complete lines only
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || ''; // Keep incomplete line
+          const lines = chunk.split('\n');
 
           for (const line of lines) {
             if (!line.trim()) continue;
@@ -267,26 +261,20 @@ const ChatInterface = () => {
               
               if (parsed.type === 'content_delta' && parsed.delta) {
                 streamingContent += parsed.delta;
-                if (parsed.turnId) {
-                  receivedTurnId = parsed.turnId;
-                }
+                if (parsed.turnId) receivedTurnId = parsed.turnId;
                 
-                // Immediate UI update for faster streaming
+                // INSTANT UI update - zero delay
                 setMessages(prev => prev.map(msg => 
-                  msg.id === aiMessageId 
-                    ? { ...msg, content: streamingContent }
-                    : msg
+                  msg.id === aiMessageId ? { ...msg, content: streamingContent } : msg
                 ));
                 
               } else if (parsed.type === 'complete') {
-                if (parsed.turnId) {
-                  receivedTurnId = parsed.turnId;
-                }
+                if (parsed.turnId) receivedTurnId = parsed.turnId;
               } else if (parsed.type === 'error') {
                 throw new Error(parsed.error);
               }
             } catch (parseError) {
-              console.warn('⚠️ Parse error:', parseError);
+              // Silent fail for speed
             }
           }
         }

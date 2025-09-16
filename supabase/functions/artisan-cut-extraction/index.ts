@@ -236,7 +236,7 @@ Return exactly 2 lines as specified.`
       .from('journal_entries')
       .insert({
         entry_id: entryId,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(new Date().getTime() + (2 * 60 * 60 * 1000)).toISOString(), // Berlin time (UTC+2)
         user_message_content: bossEssence,
         user_message_persona: userPersona,
         ai_response_content: personaEssence,

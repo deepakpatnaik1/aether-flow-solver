@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getBerlinTimeISO, getBerlinTime } from '@/lib/timezone';
 
 interface Message {
   id: string;
@@ -149,7 +150,7 @@ export const useChat = () => {
     
     try {
       const entryId = turnId || crypto.randomUUID();
-      const timestamp = new Date().toISOString();
+      const timestamp = getBerlinTimeISO();
 
       console.log('💾 About to save to superjournal DB:', {
         id: entryId,

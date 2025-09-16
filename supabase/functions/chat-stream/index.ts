@@ -214,7 +214,7 @@ serve(async (req) => {
       messagesCount: messages?.length, 
       model, 
       persona,
-      timestamp: new Date().toISOString()
+      timestamp: new Date(new Date().getTime() + (2 * 60 * 60 * 1000)).toISOString() // Berlin time (UTC+2)
     });
 
     if (!messages || !Array.isArray(messages)) {

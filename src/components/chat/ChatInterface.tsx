@@ -8,6 +8,7 @@ import { PersonaBadge } from './PersonaBadge';
 import { FileUploadModal } from './FileUploadModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useChat } from '@/hooks/useChat';
+import { getBerlinTime } from '@/lib/timezone';
 
 interface Message {
   id: string;
@@ -178,7 +179,7 @@ const ChatInterface = () => {
       id: Date.now().toString(),
       content: message,
       persona: 'Boss',
-      timestamp: new Date(),
+      timestamp: getBerlinTime(),
       isUser: true,
       attachments: uploadedFiles.length > 0 ? uploadedFiles : undefined,
     };
@@ -198,7 +199,7 @@ const ChatInterface = () => {
       id: aiMessageId,
       content: '', // Start empty for streaming
       persona: selectedPersona || 'gunnar',
-      timestamp: new Date(),
+      timestamp: getBerlinTime(),
       isUser: false
     };
 
@@ -359,7 +360,7 @@ const ChatInterface = () => {
         id: (Date.now() + 2).toString(),
         content: 'Sorry, I encountered an error while processing your request.',
         persona: selectedPersona || 'gunnar',
-        timestamp: new Date(),
+        timestamp: getBerlinTime(),
         isUser: false
       };
       

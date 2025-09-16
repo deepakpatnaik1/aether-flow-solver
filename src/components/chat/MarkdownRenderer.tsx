@@ -18,10 +18,10 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
     const initialStates: Record<string, boolean> = {};
     
     lines.forEach((line, index) => {
-      const match = line.match(/^[\s]*[-*+]\s*\[([x ])\]/);
+      const match = line.match(/^(\s*)[-*+]\s*\[([x\s])\]/i);
       if (match) {
         const checkboxId = `checkbox-${index}`;
-        initialStates[checkboxId] = match[1].toLowerCase() === 'x';
+        initialStates[checkboxId] = match[2].toLowerCase().trim() === 'x';
       }
     });
     

@@ -11,13 +11,19 @@ serve(async (req) => {
   }
 
   try {
+    console.log('google-auth-url function called');
+    
     const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
+    console.log('Client ID found:', clientId ? 'Yes' : 'No');
     
     if (!clientId) {
+      console.error('Google Client ID not configured');
       throw new Error('Google Client ID not configured');
     }
 
     const redirectUri = new URL(req.url).origin;
+    console.log('Redirect URI:', redirectUri);
+    
     const scopes = [
       'https://www.googleapis.com/auth/gmail.send',
       'https://www.googleapis.com/auth/documents',
@@ -37,6 +43,8 @@ serve(async (req) => {
       `access_type=offline&` +
       `prompt=consent&` +
       `state=${encodeURIComponent(state)}`;
+
+    console.log('Generated auth URL:', authUrl);
 
     return new Response(JSON.stringify({
       authUrl,

@@ -52,14 +52,20 @@ const GoogleIntegration: React.FC = () => {
     setIsConnecting(true);
     
     try {
+      console.log('Initiating Google Auth...');
+      
       // Get the proper OAuth URL from our edge function
       const { data, error } = await supabase.functions.invoke('google-auth-url');
       
+      console.log('Edge function response:', { data, error });
+      
       if (error) {
+        console.error('Edge function error:', error);
         throw error;
       }
 
       console.log('Using Google Client ID:', data.clientId);
+      console.log('Auth URL:', data.authUrl);
       
       // Open popup for OAuth
       const popup = window.open(data.authUrl, 'google-auth', 'width=500,height=600');

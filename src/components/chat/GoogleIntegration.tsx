@@ -48,40 +48,40 @@ const GoogleIntegration: React.FC = () => {
     }
   };
 
-  const initiateGoogleAuth = () => {
-    const clientId = 'your-google-client-id'; // This should be set by the user
-    const redirectUri = window.location.origin;
-    const scopes = [
-      'https://www.googleapis.com/auth/gmail.send',
-      'https://www.googleapis.com/auth/documents',
-      'https://www.googleapis.com/auth/presentations',
-      'https://www.googleapis.com/auth/drive.file',
-      'email',
-      'profile'
-    ].join(' ');
-
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=${clientId}&` +
-      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-      `scope=${encodeURIComponent(scopes)}&` +
-      `response_type=code&` +
-      `access_type=offline&` +
-      `prompt=consent`;
-
-    // Store the auth state
+  const initiateGoogleAuth = async () => {
     setIsConnecting(true);
     
-    // Open popup for OAuth
-    const popup = window.open(authUrl, 'google-auth', 'width=500,height=600');
-    
-    // Listen for the auth code
-    const checkClosed = setInterval(() => {
-      if (popup?.closed) {
-        clearInterval(checkClosed);
-        setIsConnecting(false);
-        checkConnectionStatus();
+    try {
+      // Get the proper OAuth URL from our edge function
+      const { data, error } = await supabase.functions.invoke('google-auth-url');
+      
+      if (error) {
+        throw error;
       }
-    }, 1000);
+
+      console.log('Using Google Client ID:', data.clientId);
+      
+      // Open popup for OAuth
+      const popup = window.open(data.authUrl, 'google-auth', 'width=500,height=600');
+      
+      // Listen for the auth code
+      const checkClosed = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(checkClosed);
+          setIsConnecting(false);
+          checkConnectionStatus();
+        }
+      }, 1000);
+      
+    } catch (error) {
+      console.error('OAuth initiation error:', error);
+      setIsConnecting(false);
+      toast({
+        title: "OAuth Error",
+        description: error.message || "Failed to initiate Google OAuth. Please check your configuration.",
+        variant: "destructive",
+      });
+    }
   };
 
   const disconnectGoogle = async () => {

@@ -24,6 +24,9 @@ verify_jwt = false
 [functions.artisan-cut-call2]
 verify_jwt = false
 
+[functions.google-auth-url]
+verify_jwt = false
+
 [functions.google-oauth]
 verify_jwt = false
 

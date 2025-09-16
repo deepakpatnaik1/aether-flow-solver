@@ -144,7 +144,7 @@ Keep each line under 100 characters. Focus only on the most important concepts.`
 
 User (${userPersona}): ${userQuestion}
 
-AI (${aiPersona}): ${personaResponse.substring(0, 500)}...
+AI (${aiPersona}): ${personaResponse}
 
 Return exactly 2 lines as specified.`
       }

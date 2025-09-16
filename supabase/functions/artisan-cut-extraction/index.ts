@@ -133,22 +133,54 @@ serve(async (req) => {
     // Load artisan cut rules
     const artisanCutRules = await loadArtisanCutRules();
     
-    // Build focused system message
-    const systemMessage = `Extract key insights from this conversation in exactly 2 lines:
+    // Build artisan cut system message with full protocol
+    const systemMessage = `${artisanCutRules}
 
-Line 1: Boss: [core question/concern from user]
-Line 2: ${aiPersona}: [key insight/advice from response]
+## Your Task
 
-Be extremely concise. Each line under 100 characters.`;
+Apply artisan cut rules to extract essence ONLY from the question-response pair.
+
+**DO NOT generate new information**
+**DO NOT provide explanations**
+**EXTRACT ESSENCE ONLY**
+
+## Processing Instructions
+
+### Boss Input Processing
+**CAPTURE**: Decision points, emotional states, strategic questions, business updates, learning moments, fears/concerns, goals, resource needs, market insights, financial decisions
+
+**DISCARD**: Greetings, politeness fillers, grammar padding, conversational connectors, confirmations
+
+### Persona Response Processing
+**CAPTURE**: Strategic advice, mentoring insights, course corrections, pattern recognition, framework applications, risk assessments, growth insights, leadership guidance, market observations, founder psychology
+
+**DISCARD**: Technical explanations, definitions, historical info, how-to instructions, code examples, generic market data, process descriptions, tool comparisons
+
+## Output Format
+
+Boss: [essence of user question - core concept without fillers]
+${aiPersona}: [essence of strategic wisdom with key details and persona attribution]
+
+## Constraints
+
+- **Maximum 2 lines output**
+- **Minimal tokens** - concept level only
+- **Preserve persona distinctiveness**
+- **NO JSON structure**
+- **NO explanations or meta-commentary**`;
 
     const messages: ChatMessage[] = [
       {
+        role: 'system',
+        content: systemMessage
+      },
+      {
         role: 'user',
-        content: `User: ${userQuestion}
+        content: `User Question: ${userQuestion}
 
-AI: ${personaResponse}
+Persona Response: ${personaResponse}
 
-Extract 2 lines as specified above.`
+Extract essence following artisan cut protocol above.`
       }
     ];
 

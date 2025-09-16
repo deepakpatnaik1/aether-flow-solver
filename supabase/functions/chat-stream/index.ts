@@ -60,93 +60,126 @@ async function loadPersonaProfile(personaName: string): Promise<string> {
   }
 }
 
-// Load OPTIMIZED context data for the LLM - SPEED FOCUSED
-async function loadRelevantKnowledge(): Promise<string> {
+// Load CALL 1 complete data package for the LLM
+async function loadCall1DataPackage(personaName: string): Promise<string> {
   try {
     const startTime = performance.now();
-    console.log('🚀 Loading optimized context data...');
+    console.log('🚀 Loading Call 1 complete data package...');
     
-    // Load ALL context sources (except ephemeral - only latest)
+    // Load ALL required data sources in parallel
     const [
+      turnProtocolResult,
+      bossResult,
+      personaResult,
       pastJournalsResult,
-      journalEntriesResult,
-      ephemeralAttachmentsResult,
-      persistentAttachmentsResult
+      persistentAttachmentsResult,
+      ephemeralAttachmentsResult
     ] = await Promise.all([
-      supabase.from('past_journals_full').select('title, content').order('created_at', { ascending: false }),
-      supabase.from('journal_entries').select('entry_id, timestamp, user_message_content, ai_response_content, user_message_persona, ai_response_persona').order('created_at', { ascending: false }),
-      supabase.from('ephemeral_attachments').select('original_name, file_type, file_size').order('created_at', { ascending: false }).limit(1),
-      supabase.from('persistent_attachments').select('original_name, file_type, category').order('created_at', { ascending: false })
+      supabase.from('processes').select('*').eq('name', 'turn-protocol').single(),
+      supabase.from('boss').select('*').single(),
+      supabase.from('personas').select('*').eq('name', personaName).single(),
+      supabase.from('past_journals_full').select('*').order('created_at', { ascending: false }),
+      supabase.from('persistent_attachments').select('*').order('created_at', { ascending: false }),
+      supabase.from('ephemeral_attachments').select('*').order('created_at', { ascending: false }).limit(1)
     ]);
 
-    // Build detailed knowledge context with ALL data
-    const knowledgeContext = buildKnowledgeContext(
+    // Build the complete Call 1 context package
+    const call1Context = buildCall1Context(
+      turnProtocolResult.data,
+      bossResult.data,
+      personaResult.data,
       pastJournalsResult.data || [],
-      journalEntriesResult.data || [],
-      ephemeralAttachmentsResult.data || [],
-      persistentAttachmentsResult.data || []
+      persistentAttachmentsResult.data || [],
+      ephemeralAttachmentsResult.data || []
     );
 
     const loadTime = performance.now() - startTime;
-    console.log('⚡ SPEED OPTIMIZED Context loaded in', Math.round(loadTime), 'ms:', {
+    console.log('✅ Call 1 data package loaded in', Math.round(loadTime), 'ms:', {
+      turnProtocol: turnProtocolResult.data ? 'loaded' : 'missing',
+      boss: bossResult.data ? 'loaded' : 'missing',
+      persona: personaResult.data ? 'loaded' : 'missing',
       pastJournals: pastJournalsResult.data?.length || 0,
-      journalEntries: journalEntriesResult.data?.length || 0, 
-      ephemeralAttachments: ephemeralAttachmentsResult.data?.length || 0,
       persistentAttachments: persistentAttachmentsResult.data?.length || 0,
-      contextSize: knowledgeContext.length
+      ephemeralAttachments: ephemeralAttachmentsResult.data?.length || 0,
+      contextSize: call1Context.length
     });
 
-    return knowledgeContext;
+    return call1Context;
   } catch (error) {
-    console.error('❌ Error loading context:', error);
+    console.error('❌ Error loading Call 1 data package:', error);
     return '';
   }
 }
 
-// Full detailed context builder - ALL data with complete formatting
-function buildKnowledgeContext(pastJournals: any[], journalEntries: any[], ephemeralAttachments: any[], persistentAttachments: any[]): string {
-  let context = '\n## Knowledge Context:\n\n';
+// Build complete Call 1 context package with all required data
+function buildCall1Context(
+  turnProtocol: any, 
+  boss: any, 
+  persona: any, 
+  pastJournals: any[], 
+  persistentAttachments: any[], 
+  ephemeralAttachments: any[]
+): string {
+  let context = '';
   
-  // Past journals with full content
+  // 1. Turn Protocol (comes first and includes everything in the list)
+  if (turnProtocol) {
+    context += `# TURN PROTOCOL\n\n${turnProtocol.content}\n\n`;
+    context += `This protocol governs how to use all the following context data:\n\n`;
+  }
+  
+  // 2. Boss Profile
+  if (boss) {
+    context += `## BOSS PROFILE\n`;
+    context += `**Name:** ${boss.name}\n`;
+    context += `**Description:** ${boss.description}\n\n`;
+  }
+
+  // 3. Active Persona Profile
+  if (persona) {
+    context += `## ACTIVE PERSONA: ${persona.name}\n`;
+    context += `**Description:** ${persona.description}\n\n`;
+  }
+
+  // 4. Past Journals Full Table (entire table)
   if (pastJournals.length > 0) {
-    context += '### Past Journal Entries:\n';
+    context += `## PAST JOURNALS\n`;
     pastJournals.forEach(journal => {
-      context += `#### ${journal.title}\n`;
-      context += `${journal.content}\n\n`;
+      context += `### ${journal.title}\n`;
+      context += `**Type:** ${journal.entry_type}\n`;
+      context += `**Created:** ${journal.created_at}\n`;
+      if (journal.tags && journal.tags.length > 0) {
+        context += `**Tags:** ${journal.tags.join(', ')}\n`;
+      }
+      context += `**Content:**\n${journal.content}\n\n`;
     });
   }
 
-  // Full conversation history
-  if (journalEntries.length > 0) {
-    context += '### Conversation History:\n';
-    journalEntries.forEach(entry => {
-      context += `**${entry.entry_id}** (${entry.timestamp})\n`;
-      context += `User (${entry.user_message_persona}): ${entry.user_message_content}\n`;
-      context += `AI (${entry.ai_response_persona}): ${entry.ai_response_content}\n\n`;
-    });
-  }
-
-  // Ephemeral attachments (latest only)
-  if (ephemeralAttachments.length > 0) {
-    context += '### Latest Ephemeral Attachment:\n';
-    ephemeralAttachments.forEach(attachment => {
-      context += `- ${attachment.original_name} (${attachment.file_type}, ${attachment.file_size} bytes)\n`;
-    });
-    context += '\n';
-  }
-
-  // All persistent attachments by category
+  // 5. Persistent Attachments Table (entire table)
   if (persistentAttachments.length > 0) {
-    context += '### Persistent Attachments:\n';
+    context += `## PERSISTENT ATTACHMENTS\n`;
     const categories = [...new Set(persistentAttachments.map(a => a.category))];
     categories.forEach(category => {
       const categoryFiles = persistentAttachments.filter(a => a.category === category);
-      context += `#### ${category}:\n`;
+      context += `### ${category.toUpperCase()}\n`;
       categoryFiles.forEach(file => {
-        context += `- ${file.original_name} (${file.file_type})\n`;
+        context += `- **${file.original_name}** (${file.file_type}) - ${file.file_size} bytes\n`;
+        context += `  Created: ${file.created_at}\n`;
       });
       context += '\n';
     });
+  }
+
+  // 6. Ephemeral Attachments (latest row only)
+  if (ephemeralAttachments.length > 0) {
+    context += `## LATEST EPHEMERAL ATTACHMENT\n`;
+    const attachment = ephemeralAttachments[0];
+    context += `- **${attachment.original_name}** (${attachment.file_type}) - ${attachment.file_size} bytes\n`;
+    context += `  Created: ${attachment.created_at}\n`;
+    if (attachment.message_id) {
+      context += `  Message ID: ${attachment.message_id}\n`;
+    }
+    context += '\n';
   }
 
   return context;
@@ -210,7 +243,7 @@ serve(async (req) => {
   try {
     const requestStartTime = performance.now();
     const { messages, model = 'gpt-4o-mini', persona = 'gunnar' } = await req.json();
-    console.log('⚡ INSTANT MODE - Request received:', { 
+    console.log('📋 CALL 1 - Request received:', { 
       messagesCount: messages?.length, 
       model, 
       persona
@@ -220,8 +253,14 @@ serve(async (req) => {
       throw new Error('Messages array is required');
     }
 
-    // INSTANT MODE: Minimal context, maximum speed
-    const systemMessage = `You are ${persona}. Be ${persona === 'gunnar' ? 'sharp and direct' : persona === 'samara' ? 'analytical' : persona === 'kirby' ? 'creative' : 'technical'}. Keep responses concise and authentic to your character.`;
+    // CALL 1: Load complete data package
+    console.log('🔄 Loading Call 1 complete data package...');
+    const call1Context = await loadCall1DataPackage(persona);
+    
+    // Build system message with complete context
+    const systemMessage = call1Context + `\n## USER QUESTION\nThe user is asking the following question to ${persona}:\n\n`;
+    
+    console.log('📝 System message size:', systemMessage.length, 'characters');
     
     const chatMessages: ChatMessage[] = [
       {
@@ -231,11 +270,13 @@ serve(async (req) => {
       ...messages
     ];
 
-    console.log('🚀 INSTANT OpenAI call - no context loading delay');
+    console.log('🚀 Starting OpenAI call with persona:', persona);
+    const contextLoadTime = performance.now() - requestStartTime;
+    console.log('✅ Context loaded in', Math.round(contextLoadTime), 'ms');
     
     const streamingResponse = await callOpenAI(model, chatMessages, true);
 
-    console.log('🏁 INSTANT TOTAL TIME:', Math.round(performance.now() - requestStartTime), 'ms');
+    console.log('🏁 CALL 1 TOTAL TIME:', Math.round(performance.now() - requestStartTime), 'ms');
 
     // Create ultra-fast streaming response
     const encoder = new TextEncoder();

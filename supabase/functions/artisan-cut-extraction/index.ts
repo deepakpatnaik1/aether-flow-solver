@@ -124,10 +124,14 @@ serve(async (req) => {
     const artisanCutRules = await loadArtisanCutRules();
     
     // Build focused system message
-    const systemMessage = `${artisanCutRules}
+    const systemMessage = `You are an expert at extracting key insights from conversations.
 
-## Your Task
-Extract essence from the conversation following the format above. Output exactly 2 lines maximum.`;
+Extract the core essence from this conversation in exactly 2 lines:
+
+Line 1: Boss: [key point from user question]
+Line 2: ${aiPersona}: [key strategic insight from response]
+
+Keep each line under 100 characters. Focus only on the most important concepts.`;
 
     const messages: ChatMessage[] = [
       {
@@ -135,25 +139,32 @@ Extract essence from the conversation following the format above. Output exactly
         content: systemMessage
       },
       {
-        role: 'user',
-        content: `Extract artisan cut essence from this conversation:
+        role: 'user', 
+        content: `Extract essence from:
 
-**User Question (${userPersona}):** ${userQuestion}
+User (${userPersona}): ${userQuestion}
 
-**Response (${aiPersona}):** ${personaResponse}
+AI (${aiPersona}): ${personaResponse.substring(0, 500)}...
 
-Return exactly 2 lines in this format:
-Boss: [essence of user question]  
-${aiPersona}: [essence of strategic wisdom]`
+Return exactly 2 lines as specified.`
       }
     ];
 
     console.log('🚀 Calling OpenAI for artisan cut extraction...');
+    console.log('📤 Sending to OpenAI:', JSON.stringify(messages, null, 2));
+    
     const openaiResponse = await callOpenAI(messages);
-    const extractedEssence = openaiResponse.choices[0].message.content.trim();
+    console.log('📥 Full OpenAI response:', JSON.stringify(openaiResponse, null, 2));
+    
+    const extractedEssence = openaiResponse.choices?.[0]?.message?.content?.trim() || '';
 
     console.log('✨ Extracted essence (raw):', extractedEssence);
     console.log('✨ Extracted essence length:', extractedEssence.length);
+    
+    if (!extractedEssence) {
+      console.error('❌ OpenAI returned empty content');
+      console.log('🔍 Response choices:', openaiResponse.choices);
+    }
 
     // Parse the essence to separate Boss and Persona parts
     const lines = extractedEssence.split('\n').filter(line => line.trim());

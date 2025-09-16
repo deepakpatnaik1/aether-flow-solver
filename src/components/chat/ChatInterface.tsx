@@ -209,24 +209,96 @@ const ChatInterface = () => {
     });
 
     try {
-      // Simple response placeholder
-      const responseContent = `Hello! I'm ${selectedPersona || 'Gunnar'}. Your message has been received: "${userMessage.content.slice(0, 100)}${userMessage.content.length > 100 ? '...' : ''}"`;
+      // Format messages for OpenAI API
+      const formattedMessages = [...messages, userMessage].map(msg => ({
+        role: msg.isUser ? 'user' as const : 'assistant' as const,
+        content: msg.content
+      }));
       
-      // Update the AI message with the response  
-      setMessages(prev => prev.map(msg => 
-        msg.id === aiMessageId 
-          ? { ...msg, content: responseContent }
-          : msg
-      ));
+      // Use direct fetch for streaming support
+      const response = await fetch('https://suncgglbheilkeimwuxt.supabase.co/functions/v1/chat-stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA',
+        },
+        body: JSON.stringify({
+          messages: formattedMessages,
+          model: selectedModel,
+          persona: selectedPersona || 'gunnar',
+          turnId: crypto.randomUUID()
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      if (!response.body) {
+        throw new Error('No response body available');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let streamingContent = '';
+      let buffer = '';
+      let receivedTurnId = '';
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          buffer += chunk;
+
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            
+            try {
+              const parsed = JSON.parse(line);
+              
+              if (parsed.type === 'content_delta' && parsed.delta) {
+                streamingContent += parsed.delta;
+                if (parsed.turnId) {
+                  receivedTurnId = parsed.turnId;
+                }
+                
+                // Update the AI message with streaming content
+                setMessages(prev => prev.map(msg => 
+                  msg.id === aiMessageId 
+                    ? { ...msg, content: streamingContent }
+                    : msg
+                ));
+                
+              } else if (parsed.type === 'complete') {
+                if (parsed.turnId) {
+                  receivedTurnId = parsed.turnId;
+                }
+              } else if (parsed.type === 'error') {
+                throw new Error(parsed.error);
+              }
+            } catch (parseError) {
+              console.warn('⚠️ Error parsing line:', line, parseError);
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+      }
 
       // Save conversation turn to superjournal database
       const finalAiMessage = {
         ...aiMessage,
-        content: responseContent
+        content: streamingContent
       };
       
       try {
-        const saved = await saveToSuperjournal(userMessage, finalAiMessage, selectedModel);
+        const saved = await saveToSuperjournal(userMessage, finalAiMessage, selectedModel, receivedTurnId);
         if (!saved) {
           console.warn('⚠️ Failed to save conversation to superjournal');
         } else {

@@ -188,6 +188,17 @@ Stay in character while being helpful. Reference specific past conversations, de
     ];
 
     console.log('🚀 Starting streaming response with persona:', persona);
+    
+    // Log detailed message info for debugging
+    console.log('📝 System message length:', systemMessage.length);
+    console.log('📝 Total messages to OpenAI:', chatMessages.length);
+    console.log('📝 Message breakdown:', chatMessages.map((msg, idx) => ({
+      index: idx,
+      role: msg.role,
+      contentLength: msg.content.length,
+      contentPreview: msg.content.slice(0, 100) + (msg.content.length > 100 ? '...' : '')
+    })));
+    
     const streamingResponse = await callOpenAI(model, chatMessages, true);
 
     // Create a streaming response

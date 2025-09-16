@@ -217,7 +217,9 @@ const ChatInterface = () => {
       console.log('🚀 About to call chat-stream with:', {
         messagesCount: formattedMessages.length,
         model: selectedModel,
-        persona: selectedPersona || 'gunnar'
+        persona: selectedPersona || 'gunnar',
+        lastUserMessage: userMessage.content.slice(0, 100) + (userMessage.content.length > 100 ? '...' : ''),
+        conversationLength: formattedMessages.length
       });
       
       // Use direct fetch for streaming support

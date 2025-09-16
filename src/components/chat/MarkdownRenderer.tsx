@@ -18,9 +18,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
     const initialStates: Record<string, boolean> = {};
     
     lines.forEach((line, index) => {
-      const match = line.match(/^(\s*)[-*+]\s*\[[\sx]\]/i);
+      const match = line.match(/^(\s*)[-*+]\s*\[[ x]\]/i);
       if (match) {
-        const checkMatch = line.match(/^(\s*)[-*+]\s*\[([\sx])\]/i);
+        const checkMatch = line.match(/^(\s*)[-*+]\s*\[([x ])\]/i);
         if (checkMatch) {
           const checkboxId = `checkbox-${index}`;
           initialStates[checkboxId] = checkMatch[2].toLowerCase().trim() === 'x';
@@ -89,8 +89,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
       }
 
       // Handle checkbox lists FIRST (before regular lists)
-      if (line.match(/^(\s*)[-*+]\s*\[[\sx]\]/i)) {
-        const match = line.match(/^(\s*)[-*+]\s*\[([\sx])\]\s*(.*)$/i);
+      if (line.match(/^(\s*)[-*+]\s*\[[ x]\]/i)) {
+        const match = line.match(/^(\s*)[-*+]\s*\[([x ])\]\s*(.*)$/i);
         if (match) {
           const [, indent, checkMark, text] = match;
           const checkboxId = `checkbox-${i}`;

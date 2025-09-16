@@ -86,12 +86,12 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
       }
 
       // Handle checkbox lists
-      if (line.match(/^[\s]*[-*+]\s*\[([ x])\]/)) {
-        const match = line.match(/^(\s*)[-*+]\s*\[([x ])\]\s*(.*)$/);
+      if (line.match(/^(\s*)[-*+]\s*\[([x\s])\]/i)) {
+        const match = line.match(/^(\s*)[-*+]\s*\[([x\s])\]\s*(.*)$/i);
         if (match) {
-          const [, indent, , text] = match;
+          const [, indent, checkMark, text] = match;
           const checkboxId = `checkbox-${i}`;
-          const isChecked = checkboxStates[checkboxId] || false;
+          const isChecked = checkboxStates[checkboxId] !== undefined ? checkboxStates[checkboxId] : checkMark.toLowerCase().trim() === 'x';
           
           elements.push(
             <div key={i} className="flex items-center gap-3 my-1" style={{ marginLeft: `${indent.length * 0.5}rem` }}>

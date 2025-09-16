@@ -69,7 +69,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600 hover:bg-gray-100/50"
                 onClick={() => copyToClipboard(message.content)}
               >
                 <Copy className="h-3 w-3" />

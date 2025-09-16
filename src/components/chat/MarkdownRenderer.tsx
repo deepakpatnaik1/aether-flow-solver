@@ -190,7 +190,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 m-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="h-8 w-8 p-0 m-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600 hover:bg-gray-100/50"
                     onClick={() => copyToClipboard(codeBlockContent)}
                   >
                     <Copy className="h-3 w-3" />
@@ -265,7 +265,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm"
+                    className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 backdrop-blur-sm text-gray-400 hover:text-gray-600"
                     onClick={() => {
                       const tableText = [
                         headers.join(' | '),
@@ -457,7 +457,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 m-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="h-8 w-8 p-0 m-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600 hover:bg-gray-100/50"
               onClick={() => copyToClipboard(codeBlockContent)}
             >
               <Copy className="h-3 w-3" />
@@ -488,7 +488,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
         processed.push(
           <code 
             key={i} 
-            className="px-1.5 py-0.5 bg-muted rounded text-sm font-mono text-foreground border cursor-pointer hover:bg-muted/80"
+            className="px-1.5 py-0.5 bg-gray-100 rounded text-sm font-mono text-gray-700 border cursor-pointer hover:bg-gray-200"
             onClick={() => copyToClipboard(part.slice(1, -1))}
             title="Click to copy"
           >

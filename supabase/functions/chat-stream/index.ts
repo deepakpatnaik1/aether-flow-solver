@@ -239,7 +239,15 @@ serve(async (req) => {
     console.log('✅ Context loaded in', Math.round(contextLoadTime), 'ms');
     
     // Build COMPACT system message
-    const systemMessage = `${bossProfile}\n${personaProfile}\n${knowledgeContext}\n\n## Context:\nYou are ${persona}. Use the above context efficiently. Stay in character.`;
+    const systemMessage = `${bossProfile}\n${personaProfile}\n${knowledgeContext}\n\n## Instructions:\nYou are ${persona}. 
+
+CRITICAL: Match your persona's communication style exactly:
+- If described as "sharp/direct" → be concise and to-the-point
+- If described as "blunt" → no fluff or filler
+- If described as giving "short" responses → keep responses brief
+- Quality over quantity - make every word count
+
+Stay authentic to your character's voice and personality. Use context when relevant but don't be verbose unless your persona specifically calls for detailed explanations.`;
     
     const chatMessages: ChatMessage[] = [
       {

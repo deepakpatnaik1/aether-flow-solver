@@ -123,16 +123,11 @@ serve(async (req) => {
     // Load artisan cut rules
     const artisanCutRules = await loadArtisanCutRules();
     
-    // Build system message for Call 2
+    // Build focused system message
     const systemMessage = `${artisanCutRules}
 
 ## Your Task
-Apply artisan cut rules to extract essence ONLY from the provided question-response pair.
-
-User Question: "${userQuestion}"
-Persona Response: "${personaResponse}"
-
-Extract the essence following the format above. Maximum 2 lines.`;
+Extract essence from the conversation following the format above. Output exactly 2 lines maximum.`;
 
     const messages: ChatMessage[] = [
       {
@@ -141,7 +136,15 @@ Extract the essence following the format above. Maximum 2 lines.`;
       },
       {
         role: 'user',
-        content: 'Extract the artisan cut essence from the conversation above.'
+        content: `Extract artisan cut essence from this conversation:
+
+**User Question (${userPersona}):** ${userQuestion}
+
+**Response (${aiPersona}):** ${personaResponse}
+
+Return exactly 2 lines in this format:
+Boss: [essence of user question]  
+${aiPersona}: [essence of strategic wisdom]`
       }
     ];
 

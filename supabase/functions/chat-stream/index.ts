@@ -209,7 +209,7 @@ serve(async (req) => {
 
   try {
     const requestStartTime = performance.now();
-    const { messages, model = 'gpt-5-2025-08-07', persona = 'gunnar' } = await req.json();
+    const { messages, model = 'gpt-4o-mini', persona = 'gunnar' } = await req.json();
     console.log('⚡ INSTANT MODE - Request received:', { 
       messagesCount: messages?.length, 
       model, 

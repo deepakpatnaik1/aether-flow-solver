@@ -28,7 +28,7 @@ interface Message {
 const ChatInterface = () => {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('gpt-5-2025-08-07');
+  const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
   const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
@@ -46,6 +46,8 @@ const ChatInterface = () => {
   } = useChat();
 
   const models = [
+    { id: 'gpt-4o-mini', name: 'GPT-4o Mini (INSTANT)' },
+    { id: 'gpt-4o', name: 'GPT-4o' },
     { id: 'gpt-5-2025-08-07', name: 'GPT-5' },
     { id: 'gpt-5-mini-2025-08-07', name: 'GPT-5 Mini' },
     { id: 'gpt-4.1-2025-04-14', name: 'GPT-4.1' },

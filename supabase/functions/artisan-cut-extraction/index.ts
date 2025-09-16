@@ -185,26 +185,47 @@ Return exactly 2 lines as specified.`
 
     for (const line of lines) {
       console.log('🔍 Processing line:', line);
-      if (line.toLowerCase().startsWith('boss:')) {
-        bossEssence = line.substring(5).trim();
+      const trimmedLine = line.trim();
+      
+      // Look for Boss: or boss: at start of line
+      if (trimmedLine.toLowerCase().startsWith('boss:')) {
+        bossEssence = trimmedLine.substring(5).trim();
         console.log('👤 Found boss essence:', bossEssence);
-      } else if (line.includes(':')) {
-        personaEssence = line.trim();
+      } 
+      // Look for any persona name followed by colon
+      else if (trimmedLine.toLowerCase().includes('gunnar:') || 
+               trimmedLine.toLowerCase().includes('samara:') ||
+               trimmedLine.toLowerCase().includes('kirby:') ||
+               trimmedLine.toLowerCase().includes('stefan:')) {
+        personaEssence = trimmedLine.trim();
         console.log('🤖 Found persona essence:', personaEssence);
+      }
+      // If no specific format, use first line as boss, second as persona
+      else if (!bossEssence && lines.indexOf(line) === 0) {
+        bossEssence = trimmedLine;
+        console.log('👤 Using first line as boss essence:', bossEssence);
+      }
+      else if (!personaEssence && lines.indexOf(line) === 1) {
+        personaEssence = trimmedLine;
+        console.log('🤖 Using second line as persona essence:', personaEssence);
       }
     }
 
     console.log('📊 Before fallback - Boss:', bossEssence, 'Persona:', personaEssence);
 
-    // Fallback if parsing fails
-    if (!bossEssence && !personaEssence) {
-      console.log('⚠️ Using fallback parsing');
-      if (lines.length >= 2) {
-        bossEssence = lines[0];
-        personaEssence = lines[1];
+    // Final fallback if parsing completely fails
+    if (!bossEssence && !personaEssence && extractedEssence) {
+      console.log('⚠️ Using fallback parsing - splitting extracted essence');
+      const fallbackLines = extractedEssence.split('\n').filter(l => l.trim());
+      if (fallbackLines.length >= 2) {
+        bossEssence = fallbackLines[0].trim();
+        personaEssence = fallbackLines[1].trim();
+      } else if (fallbackLines.length === 1) {
+        bossEssence = userQuestion.length > 100 ? userQuestion.substring(0, 100) + '...' : userQuestion;
+        personaEssence = fallbackLines[0].trim();
       } else {
         bossEssence = userQuestion.length > 100 ? userQuestion.substring(0, 100) + '...' : userQuestion;
-        personaEssence = extractedEssence;
+        personaEssence = extractedEssence.substring(0, 200);
       }
     }
 

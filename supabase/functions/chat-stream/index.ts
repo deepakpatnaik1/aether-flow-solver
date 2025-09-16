@@ -66,21 +66,21 @@ async function loadRelevantKnowledge(): Promise<string> {
     const startTime = performance.now();
     console.log('🚀 Loading optimized context data...');
     
-    // Load context sources with STRICT LIMITS for speed
+    // Load ALL context sources (except ephemeral - only latest)
     const [
       pastJournalsResult,
       journalEntriesResult,
       ephemeralAttachmentsResult,
       persistentAttachmentsResult
     ] = await Promise.all([
-      supabase.from('past_journals_full').select('title, content').order('created_at', { ascending: false }).limit(5),
-      supabase.from('journal_entries').select('entry_id, timestamp, user_message_content, ai_response_content, user_message_persona, ai_response_persona').order('created_at', { ascending: false }).limit(10),
+      supabase.from('past_journals_full').select('title, content').order('created_at', { ascending: false }),
+      supabase.from('journal_entries').select('entry_id, timestamp, user_message_content, ai_response_content, user_message_persona, ai_response_persona').order('created_at', { ascending: false }),
       supabase.from('ephemeral_attachments').select('original_name, file_type, file_size').order('created_at', { ascending: false }).limit(1),
-      supabase.from('persistent_attachments').select('original_name, file_type, category').order('created_at', { ascending: false }).limit(20)
+      supabase.from('persistent_attachments').select('original_name, file_type, category').order('created_at', { ascending: false })
     ]);
 
-    // OPTIMIZED: Skip detailed formatting, use compact format
-    const knowledgeContext = buildCompactContext(
+    // Build detailed knowledge context with ALL data
+    const knowledgeContext = buildKnowledgeContext(
       pastJournalsResult.data || [],
       journalEntriesResult.data || [],
       ephemeralAttachmentsResult.data || [],
@@ -103,28 +103,50 @@ async function loadRelevantKnowledge(): Promise<string> {
   }
 }
 
-// SPEED OPTIMIZED: Compact context builder
-function buildCompactContext(pastJournals: any[], journalEntries: any[], ephemeralAttachments: any[], persistentAttachments: any[]): string {
-  let context = '\n## Context:\n\n';
+// Full detailed context builder - ALL data with complete formatting
+function buildKnowledgeContext(pastJournals: any[], journalEntries: any[], ephemeralAttachments: any[], persistentAttachments: any[]): string {
+  let context = '\n## Knowledge Context:\n\n';
   
-  // Most recent journals only (titles)
+  // Past journals with full content
   if (pastJournals.length > 0) {
-    context += '### Recent Topics: ' + pastJournals.map(j => j.title).join(', ') + '\n\n';
+    context += '### Past Journal Entries:\n';
+    pastJournals.forEach(journal => {
+      context += `#### ${journal.title}\n`;
+      context += `${journal.content}\n\n`;
+    });
   }
 
-  // Compact conversation history
+  // Full conversation history
   if (journalEntries.length > 0) {
-    context += '### Recent Turns:\n';
-    journalEntries.slice(0, 5).forEach(entry => {
-      context += `${entry.entry_id}: ${entry.user_message_content.slice(0, 100)}...\n`;
+    context += '### Conversation History:\n';
+    journalEntries.forEach(entry => {
+      context += `**${entry.entry_id}** (${entry.timestamp})\n`;
+      context += `User (${entry.user_message_persona}): ${entry.user_message_content}\n`;
+      context += `AI (${entry.ai_response_persona}): ${entry.ai_response_content}\n\n`;
+    });
+  }
+
+  // Ephemeral attachments (latest only)
+  if (ephemeralAttachments.length > 0) {
+    context += '### Latest Ephemeral Attachment:\n';
+    ephemeralAttachments.forEach(attachment => {
+      context += `- ${attachment.original_name} (${attachment.file_type}, ${attachment.file_size} bytes)\n`;
     });
     context += '\n';
   }
 
-  // Files summary
+  // All persistent attachments by category
   if (persistentAttachments.length > 0) {
+    context += '### Persistent Attachments:\n';
     const categories = [...new Set(persistentAttachments.map(a => a.category))];
-    context += '### Available: ' + categories.join(', ') + '\n\n';
+    categories.forEach(category => {
+      const categoryFiles = persistentAttachments.filter(a => a.category === category);
+      context += `#### ${category}:\n`;
+      categoryFiles.forEach(file => {
+        context += `- ${file.original_name} (${file.file_type})\n`;
+      });
+      context += '\n';
+    });
   }
 
   return context;

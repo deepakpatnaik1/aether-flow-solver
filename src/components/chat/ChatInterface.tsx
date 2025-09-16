@@ -182,19 +182,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className = '' }) 
     });
 
     try {
-      // Simple response - replace this with your preferred AI service
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate AI thinking
+      // Simple response - you can integrate with any AI service here
+      // For now, just a placeholder response
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate thinking
       
-      const response = `Hello! I'm ${personas.find(p => p.id === selectedPersona)?.name || 'Gunnar'}. 
+      const response = `Hello! I'm ${personas.find(p => p.id === selectedPersona)?.name || 'Gunnar'}. I received your message: "${userMessage.content.substring(0, 50)}${userMessage.content.length > 50 ? '...' : ''}"
 
-I received your message: "${userMessage.content}"
+This is now a simplified chat system. The complex Call 1/Call 2 functionality has been removed. You can integrate this with any AI service you prefer.
 
-**System Status:** ✅ Simplified & Reliable
-- No more complex Call 1/Call 2 bugs
-- Beautiful Aether UI preserved  
-- Ready for your preferred AI integration
-
-*This is a placeholder response. You can integrate any AI service here (OpenAI, Anthropic, etc.) by replacing this simple response logic.*`;
+**Key Benefits:**
+- Clean, maintainable codebase
+- No complex async failures
+- Beautiful Aether design system
+- Easy to extend and integrate`;
       
       // Update the AI message with the response
       setMessages(prev => prev.map(msg => 

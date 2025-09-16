@@ -60,79 +60,74 @@ async function loadPersonaProfile(personaName: string): Promise<string> {
   }
 }
 
-// Load ALL context data for the LLM
+// Load OPTIMIZED context data for the LLM - SPEED FOCUSED
 async function loadRelevantKnowledge(): Promise<string> {
   try {
-    console.log('📚 Loading all context data...');
+    const startTime = performance.now();
+    console.log('🚀 Loading optimized context data...');
     
-    // Load all context sources in parallel
+    // Load context sources with STRICT LIMITS for speed
     const [
       pastJournalsResult,
       journalEntriesResult,
       ephemeralAttachmentsResult,
       persistentAttachmentsResult
     ] = await Promise.all([
-      supabase.from('past_journals_full').select('title, content').order('created_at', { ascending: false }),
-      supabase.from('journal_entries').select('*').order('created_at', { ascending: false }),
-      supabase.from('ephemeral_attachments').select('*').order('created_at', { ascending: false }).limit(1),
-      supabase.from('persistent_attachments').select('*').order('created_at', { ascending: false })
+      supabase.from('past_journals_full').select('title, content').order('created_at', { ascending: false }).limit(5),
+      supabase.from('journal_entries').select('entry_id, timestamp, user_message_content, ai_response_content, user_message_persona, ai_response_persona').order('created_at', { ascending: false }).limit(10),
+      supabase.from('ephemeral_attachments').select('original_name, file_type, file_size').order('created_at', { ascending: false }).limit(1),
+      supabase.from('persistent_attachments').select('original_name, file_type, category').order('created_at', { ascending: false }).limit(20)
     ]);
 
-    let knowledgeContext = '\n## Complete Context Package:\n\n';
-    
-    // Past Journals Full
-    if (pastJournalsResult.data && pastJournalsResult.data.length > 0) {
-      knowledgeContext += '### Past Journal Entries (Full Content):\n';
-      for (const entry of pastJournalsResult.data) {
-        knowledgeContext += `**${entry.title}**\n${entry.content}\n\n`;
-      }
-    }
+    // OPTIMIZED: Skip detailed formatting, use compact format
+    const knowledgeContext = buildCompactContext(
+      pastJournalsResult.data || [],
+      journalEntriesResult.data || [],
+      ephemeralAttachmentsResult.data || [],
+      persistentAttachmentsResult.data || []
+    );
 
-    // Recent Journal Entries 
-    if (journalEntriesResult.data && journalEntriesResult.data.length > 0) {
-      knowledgeContext += '### Recent Conversation History:\n';
-      for (const entry of journalEntriesResult.data) {
-        knowledgeContext += `**Turn ${entry.entry_id}** (${entry.timestamp})\n`;
-        knowledgeContext += `User (${entry.user_message_persona}): ${entry.user_message_content}\n`;
-        knowledgeContext += `AI (${entry.ai_response_persona}, ${entry.ai_response_model}): ${entry.ai_response_content}\n\n`;
-      }
-    }
-
-    // Recent Ephemeral Attachments
-    if (ephemeralAttachmentsResult.data && ephemeralAttachmentsResult.data.length > 0) {
-      knowledgeContext += '### Recent Chat Attachments:\n';
-      for (const attachment of ephemeralAttachmentsResult.data) {
-        knowledgeContext += `- ${attachment.original_name} (${attachment.file_type}, ${attachment.file_size} bytes) - ${attachment.created_at}\n`;
-      }
-      knowledgeContext += '\n';
-    }
-
-    // All Persistent Attachments
-    if (persistentAttachmentsResult.data && persistentAttachmentsResult.data.length > 0) {
-      knowledgeContext += '### Available Knowledge Assets:\n';
-      const categories = [...new Set(persistentAttachmentsResult.data.map(a => a.category))];
-      for (const category of categories) {
-        knowledgeContext += `**${category.toUpperCase()}:**\n`;
-        const categoryFiles = persistentAttachmentsResult.data.filter(a => a.category === category);
-        for (const file of categoryFiles) {
-          knowledgeContext += `- ${file.original_name} (${file.file_type})\n`;
-        }
-        knowledgeContext += '\n';
-      }
-    }
-
-    console.log('✅ Context package loaded:', {
+    const loadTime = performance.now() - startTime;
+    console.log('⚡ SPEED OPTIMIZED Context loaded in', Math.round(loadTime), 'ms:', {
       pastJournals: pastJournalsResult.data?.length || 0,
       journalEntries: journalEntriesResult.data?.length || 0, 
       ephemeralAttachments: ephemeralAttachmentsResult.data?.length || 0,
-      persistentAttachments: persistentAttachmentsResult.data?.length || 0
+      persistentAttachments: persistentAttachmentsResult.data?.length || 0,
+      contextSize: knowledgeContext.length
     });
 
     return knowledgeContext;
   } catch (error) {
-    console.error('❌ Error loading complete context:', error);
+    console.error('❌ Error loading context:', error);
     return '';
   }
+}
+
+// SPEED OPTIMIZED: Compact context builder
+function buildCompactContext(pastJournals: any[], journalEntries: any[], ephemeralAttachments: any[], persistentAttachments: any[]): string {
+  let context = '\n## Context:\n\n';
+  
+  // Most recent journals only (titles)
+  if (pastJournals.length > 0) {
+    context += '### Recent Topics: ' + pastJournals.map(j => j.title).join(', ') + '\n\n';
+  }
+
+  // Compact conversation history
+  if (journalEntries.length > 0) {
+    context += '### Recent Turns:\n';
+    journalEntries.slice(0, 5).forEach(entry => {
+      context += `${entry.entry_id}: ${entry.user_message_content.slice(0, 100)}...\n`;
+    });
+    context += '\n';
+  }
+
+  // Files summary
+  if (persistentAttachments.length > 0) {
+    const categories = [...new Set(persistentAttachments.map(a => a.category))];
+    context += '### Available: ' + categories.join(', ') + '\n\n';
+  }
+
+  return context;
 }
 
 const callOpenAI = async (model: string, messages: ChatMessage[], stream: boolean = false) => {
@@ -191,20 +186,23 @@ serve(async (req) => {
   }
 
   try {
+    const requestStartTime = performance.now();
     const { messages, model = 'gpt-5-2025-08-07', persona = 'gunnar' } = await req.json();
-    console.log('Received request:', { 
+    console.log('⚡ PERFORMANCE TRACKING - Request received:', { 
       messagesCount: messages?.length, 
       model, 
-      persona
+      persona,
+      timestamp: new Date().toISOString()
     });
 
     if (!messages || !Array.isArray(messages)) {
       throw new Error('Messages array is required');
     }
 
+    const contextStartTime = performance.now();
     console.log('🔄 Loading context...');
     
-    // Load context components
+    // Load context components with performance tracking
     const [
       bossProfile, 
       personaProfile,
@@ -215,37 +213,29 @@ serve(async (req) => {
       loadRelevantKnowledge()
     ]);
     
-    console.log('✅ Context loaded');
+    const contextLoadTime = performance.now() - contextStartTime;
+    console.log('✅ Context loaded in', Math.round(contextLoadTime), 'ms');
     
-    // Build system message with profiles and context
-    const systemMessage = `${bossProfile}
-
-${personaProfile}
-
-${knowledgeContext}
-
-## Current Context:
-You are responding as ${persona}. Draw upon the boss profile, your persona description, and relevant knowledge from previous conversations to provide contextually-aware responses that maintain consistency with past discussions and decisions.
-
-Stay in character while being helpful. Reference specific past conversations, decisions, or strategies when relevant to the current discussion.`;
+    // Build COMPACT system message
+    const systemMessage = `${bossProfile}\n${personaProfile}\n${knowledgeContext}\n\n## Context:\nYou are ${persona}. Use the above context efficiently. Stay in character.`;
     
     const chatMessages: ChatMessage[] = [
       {
         role: 'system',
         content: systemMessage
       }
-      // Note: No user/assistant messages here since conversation history is already in the system message via journals
     ];
 
-    console.log('🚀 Starting streaming response with persona:', persona);
-    
-    // Log detailed message info for debugging
-    console.log('📝 System message length:', systemMessage.length);
-    console.log('📝 Sending only system message (conversation history already in journals)');
-    console.log('📝 Model selected:', model);
-    console.log('📝 System message preview:', systemMessage.slice(0, 200) + '...');
+    const openaiStartTime = performance.now();
+    console.log('🚀 Starting OpenAI call with persona:', persona);
+    console.log('📝 System message size:', systemMessage.length, 'characters');
     
     const streamingResponse = await callOpenAI(model, chatMessages, true);
+    const openaiCallTime = performance.now() - openaiStartTime;
+    console.log('⚡ OpenAI call completed in', Math.round(openaiCallTime), 'ms');
+
+    const totalRequestTime = performance.now() - requestStartTime;
+    console.log('🏁 TOTAL REQUEST TIME:', Math.round(totalRequestTime), 'ms');
 
     // Create a streaming response
     const encoder = new TextEncoder();

@@ -170,10 +170,54 @@ Return exactly 2 lines as specified.`
 
     console.log('✨ Extracted essence (raw):', extractedEssence);
     console.log('✨ Extracted essence length:', extractedEssence.length);
+    console.log('✨ Extracted essence type:', typeof extractedEssence);
     
     if (!extractedEssence) {
       console.error('❌ OpenAI returned empty content');
-      console.log('🔍 Response choices:', openaiResponse.choices);
+      console.log('🔍 Response structure:', {
+        choices: openaiResponse.choices?.length || 'undefined',
+        firstChoice: openaiResponse.choices?.[0] || 'undefined',
+        message: openaiResponse.choices?.[0]?.message || 'undefined',
+        content: openaiResponse.choices?.[0]?.message?.content || 'undefined'
+      });
+      
+      // Try to use the original input as fallback
+      console.log('🔄 Using input as fallback since OpenAI returned nothing');
+      const fallbackBoss = userQuestion;
+      const fallbackPersona = personaResponse.length > 200 ? personaResponse.substring(0, 200) + '...' : personaResponse;
+      
+      const { error: journalError } = await supabase
+        .from('journal_entries')
+        .insert({
+          entry_id: entryId,
+          timestamp: new Date(new Date().getTime() + (2 * 60 * 60 * 1000)).toISOString(),
+          user_message_content: fallbackBoss,
+          user_message_persona: userPersona,
+          ai_response_content: fallbackPersona,
+          ai_response_persona: aiPersona,
+          ai_response_model: model,
+          user_message_attachments: []
+        });
+
+      if (journalError) {
+        console.error('❌ Error saving fallback to journal:', journalError);
+        throw new Error(`Failed to save fallback: ${journalError.message}`);
+      }
+
+      const totalTime = performance.now() - startTime;
+      console.log('✅ Fallback saved in', Math.round(totalTime), 'ms');
+
+      return new Response(JSON.stringify({ 
+        success: true,
+        entryId,
+        extractedEssence: '',
+        bossEssence: fallbackBoss,
+        personaEssence: fallbackPersona,
+        processingTime: Math.round(totalTime),
+        usedFallback: true
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     // Parse the essence to separate Boss and Persona parts
@@ -229,6 +273,18 @@ Return exactly 2 lines as specified.`
     }
 
     console.log('🎯 Final essences - Boss:', bossEssence, 'Persona:', personaEssence);
+
+    // FORCE content if still empty - this should never happen but let's be safe
+    if (!bossEssence) {
+      bossEssence = userQuestion;
+      console.log('🔧 FORCED boss essence from user question');
+    }
+    if (!personaEssence) {
+      personaEssence = personaResponse;
+      console.log('🔧 FORCED persona essence from full response');
+    }
+
+    console.log('🎯 FINAL essences after force check - Boss:', bossEssence.substring(0, 50), 'Persona:', personaEssence.substring(0, 50));
 
     // Save artisan cut to journal_entries
     const { error: journalError } = await supabase

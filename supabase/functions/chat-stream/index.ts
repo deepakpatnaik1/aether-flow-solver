@@ -73,8 +73,8 @@ async function loadRelevantKnowledge(): Promise<string> {
       persistentAttachmentsResult
     ] = await Promise.all([
       supabase.from('past_journals_full').select('title, content').order('created_at', { ascending: false }),
-      supabase.from('journal_entries').select('*').order('created_at', { ascending: false }).limit(20),
-      supabase.from('ephemeral_attachments').select('*').order('created_at', { ascending: false }).limit(5),
+      supabase.from('journal_entries').select('*').order('created_at', { ascending: false }),
+      supabase.from('ephemeral_attachments').select('*').order('created_at', { ascending: false }).limit(1),
       supabase.from('persistent_attachments').select('*').order('created_at', { ascending: false })
     ]);
 
@@ -233,21 +233,17 @@ Stay in character while being helpful. Reference specific past conversations, de
       {
         role: 'system',
         content: systemMessage
-      },
-      ...messages
+      }
+      // Note: No user/assistant messages here since conversation history is already in the system message via journals
     ];
 
     console.log('🚀 Starting streaming response with persona:', persona);
     
     // Log detailed message info for debugging
     console.log('📝 System message length:', systemMessage.length);
-    console.log('📝 Total messages to OpenAI:', chatMessages.length);
-    console.log('📝 Message breakdown:', chatMessages.map((msg, idx) => ({
-      index: idx,
-      role: msg.role,
-      contentLength: msg.content.length,
-      contentPreview: msg.content.slice(0, 100) + (msg.content.length > 100 ? '...' : '')
-    })));
+    console.log('📝 Sending only system message (conversation history already in journals)');
+    console.log('📝 Model selected:', model);
+    console.log('📝 System message preview:', systemMessage.slice(0, 200) + '...');
     
     const streamingResponse = await callOpenAI(model, chatMessages, true);
 

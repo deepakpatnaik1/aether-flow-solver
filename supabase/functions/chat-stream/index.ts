@@ -60,14 +60,13 @@ async function loadPersonaProfile(personaName: string): Promise<string> {
   }
 }
 
-// Load relevant knowledge from knowledge_entries table (simplified)
+// Load ALL knowledge from knowledge_entries table (full content)
 async function loadRelevantKnowledge(): Promise<string> {
   try {
     const { data: knowledge, error } = await supabase
       .from('knowledge_entries')
       .select('title, content')
-      .order('created_at', { ascending: false })
-      .limit(3);
+      .order('created_at', { ascending: false });
 
     if (error || !knowledge || knowledge.length === 0) {
       return '';
@@ -76,7 +75,7 @@ async function loadRelevantKnowledge(): Promise<string> {
     let knowledgeContext = '\n## Relevant Context from Previous Conversations:\n\n';
     
     for (const entry of knowledge) {
-      knowledgeContext += `### ${entry.title}\n${entry.content.substring(0, 400)}...\n\n`;
+      knowledgeContext += `### ${entry.title}\n${entry.content}\n\n`;
     }
 
     return knowledgeContext;

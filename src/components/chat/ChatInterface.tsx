@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { MessageList } from './MessageList';
 import { PersonaBadge } from './PersonaBadge';
 import { FileUploadModal } from './FileUploadModal';
-import { Upload, Send } from 'lucide-react';
+import { Upload, Send, Mic } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useChat } from '@/hooks/useChat';
 import { useToast } from '@/components/ui/use-toast';
@@ -188,7 +188,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className = '' }) 
       
       const response = `Hello! I'm ${personas.find(p => p.id === selectedPersona)?.name || 'Gunnar'}. I received your message: "${userMessage.content.substring(0, 50)}${userMessage.content.length > 50 ? '...' : ''}"
 
-This is now a simplified chat system. The complex Call 1/Call 2 functionality has been removed. You can integrate this with any AI service you prefer.`;
+This is now a simplified chat system. The complex Call 1/Call 2 functionality has been removed. You can integrate this with any AI service you prefer.
+
+**Key Benefits:**
+- Clean, maintainable codebase
+- No complex async failures
+- Beautiful Aether design system
+- Easy to extend and integrate`;
       
       // Update the AI message with the response
       setMessages(prev => prev.map(msg => 
@@ -225,71 +231,25 @@ This is now a simplified chat system. The complex Call 1/Call 2 functionality ha
   };
 
   return (
-    <div className={`flex flex-col h-full bg-gradient-to-br from-background via-background to-background/95 ${className}`}>
-      {/* Header */}
-      <div className="flex-none p-4 border-b border-border/40 bg-card/30 backdrop-blur-sm">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <PersonaBadge persona={selectedPersona} />
-            <div className="text-sm text-muted-foreground">
-              {messages.length} messages
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="model-select" className="text-sm whitespace-nowrap">Model:</Label>
-              <Select value={selectedModel} onValueChange={setSelectedModel}>
-                <SelectTrigger id="model-select" className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {models.map((model) => (
-                    <SelectItem key={model.id} value={model.id}>
-                      {model.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Label htmlFor="persona-select" className="text-sm whitespace-nowrap">Persona:</Label>
-              <Select value={selectedPersona} onValueChange={setSelectedPersona}>
-                <SelectTrigger id="persona-select" className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {personas.map((persona) => (
-                    <SelectItem key={persona.id} value={persona.id}>
-                      {persona.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Messages */}
+    <div className={`flex flex-col h-full bg-background ${className}`}>
+      {/* Messages Area */}
       <div className="flex-1 overflow-hidden">
         <MessageList messages={messages} />
       </div>
 
       {/* File attachments preview */}
       {uploadedFiles.length > 0 && (
-        <div className="flex-none p-2 border-t border-border/40 bg-muted/20">
-          <div className="flex flex-wrap gap-2">
+        <div className="flex-none px-6 py-2 border-t border-border/20">
+          <div className="flex flex-wrap gap-2 max-w-4xl mx-auto">
             {uploadedFiles.map((file, index) => (
-              <Card key={index} className="p-2 text-xs">
+              <Card key={index} className="p-2 text-xs bg-muted/20">
                 <CardContent className="p-0">
                   <div className="flex items-center gap-1">
-                    <span className="truncate max-w-32">{file.originalName}</span>
+                    <span className="truncate max-w-32 text-muted-foreground">{file.originalName}</span>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-4 w-4 p-0"
+                      className="h-4 w-4 p-0 text-muted-foreground hover:text-foreground"
                       onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
                     >
                       ×
@@ -302,47 +262,87 @@ This is now a simplified chat system. The complex Call 1/Call 2 functionality ha
         </div>
       )}
 
-      {/* Input */}
-      <div className="flex-none p-4 border-t border-border/40 bg-card/30 backdrop-blur-sm">
-        <div className="flex items-end gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => document.getElementById('file-input')?.click()}
-            className="shrink-0"
-          >
-            <Upload className="h-4 w-4" />
-          </Button>
-          <input
-            id="file-input"
-            type="file"
-            multiple
-            className="hidden"
-            onChange={(e) => {
-              const files = Array.from(e.target.files || []);
-              if (files.length > 0) {
-                handleFileSelect(files);
-              }
-            }}
-          />
-          <div className="flex-1">
-            <Input
-              ref={inputRef}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your message..."
-              disabled={isLoading}
-              className="min-h-[40px] resize-none"
-            />
+      {/* Input Bar */}
+      <div className="input-bar-container">
+        <div className="input-bar-content">
+          {/* Model Controls */}
+          <div className="model-controls">
+            <div className="model-selectors">
+              <Select value={selectedModel} onValueChange={setSelectedModel}>
+                <SelectTrigger className="model-selector w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  {models.map((model) => (
+                    <SelectItem key={model.id} value={model.id} className="hover:bg-accent">
+                      {model.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Select value={selectedPersona} onValueChange={setSelectedPersona}>
+                <SelectTrigger className="model-selector w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  {personas.map((persona) => (
+                    <SelectItem key={persona.id} value={persona.id} className="hover:bg-accent">
+                      {persona.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <PersonaBadge persona={selectedPersona} />
+              <div className="status-indicator" />
+            </div>
           </div>
-          <Button
-            onClick={handleSendMessage}
-            disabled={!message.trim() || isLoading}
-            className="shrink-0"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+
+          {/* Input Area */}
+          <div className="flex items-end gap-3">
+            <Button
+              onClick={() => document.getElementById('file-input')?.click()}
+              className="attachment-btn"
+              disabled={isLoading}
+            >
+              <Upload className="h-4 w-4" />
+            </Button>
+            <input
+              id="file-input"
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                if (files.length > 0) {
+                  handleFileSelect(files);
+                }
+              }}
+            />
+            
+            <div className="flex-1">
+              <Input
+                ref={inputRef}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Type your message..."
+                disabled={isLoading}
+                className="chat-input min-h-[40px] resize-none"
+              />
+            </div>
+            
+            <Button
+              onClick={handleSendMessage}
+              disabled={!message.trim() || isLoading}
+              className="send-btn"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 

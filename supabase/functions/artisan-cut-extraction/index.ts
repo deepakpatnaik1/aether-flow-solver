@@ -149,23 +149,32 @@ Extract the essence following the format above. Maximum 2 lines.`;
     const openaiResponse = await callOpenAI(messages);
     const extractedEssence = openaiResponse.choices[0].message.content.trim();
 
-    console.log('✨ Extracted essence:', extractedEssence);
+    console.log('✨ Extracted essence (raw):', extractedEssence);
+    console.log('✨ Extracted essence length:', extractedEssence.length);
 
     // Parse the essence to separate Boss and Persona parts
     const lines = extractedEssence.split('\n').filter(line => line.trim());
+    console.log('📝 Parsed lines:', lines);
+    
     let bossEssence = '';
     let personaEssence = '';
 
     for (const line of lines) {
+      console.log('🔍 Processing line:', line);
       if (line.toLowerCase().startsWith('boss:')) {
         bossEssence = line.substring(5).trim();
+        console.log('👤 Found boss essence:', bossEssence);
       } else if (line.includes(':')) {
         personaEssence = line.trim();
+        console.log('🤖 Found persona essence:', personaEssence);
       }
     }
 
+    console.log('📊 Before fallback - Boss:', bossEssence, 'Persona:', personaEssence);
+
     // Fallback if parsing fails
     if (!bossEssence && !personaEssence) {
+      console.log('⚠️ Using fallback parsing');
       if (lines.length >= 2) {
         bossEssence = lines[0];
         personaEssence = lines[1];
@@ -174,6 +183,8 @@ Extract the essence following the format above. Maximum 2 lines.`;
         personaEssence = extractedEssence;
       }
     }
+
+    console.log('🎯 Final essences - Boss:', bossEssence, 'Persona:', personaEssence);
 
     // Save artisan cut to journal_entries
     const { error: journalError } = await supabase

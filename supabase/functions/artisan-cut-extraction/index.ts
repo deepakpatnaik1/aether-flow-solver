@@ -179,53 +179,52 @@ Return exactly 2 lines as specified.`
     // Parse the essence to separate Boss and Persona parts
     const lines = extractedEssence.split('\n').filter(line => line.trim());
     console.log('📝 Parsed lines:', lines);
+    console.log('📝 Raw essence before parsing:', JSON.stringify(extractedEssence));
     
     let bossEssence = '';
     let personaEssence = '';
 
-    for (const line of lines) {
-      console.log('🔍 Processing line:', line);
-      const trimmedLine = line.trim();
-      
-      // Look for Boss: or boss: at start of line
-      if (trimmedLine.toLowerCase().startsWith('boss:')) {
-        bossEssence = trimmedLine.substring(5).trim();
-        console.log('👤 Found boss essence:', bossEssence);
-      } 
-      // Look for any persona name followed by colon
-      else if (trimmedLine.toLowerCase().includes('gunnar:') || 
-               trimmedLine.toLowerCase().includes('samara:') ||
-               trimmedLine.toLowerCase().includes('kirby:') ||
-               trimmedLine.toLowerCase().includes('stefan:')) {
-        personaEssence = trimmedLine.trim();
-        console.log('🤖 Found persona essence:', personaEssence);
-      }
-      // If no specific format, use first line as boss, second as persona
-      else if (!bossEssence && lines.indexOf(line) === 0) {
-        bossEssence = trimmedLine;
-        console.log('👤 Using first line as boss essence:', bossEssence);
-      }
-      else if (!personaEssence && lines.indexOf(line) === 1) {
-        personaEssence = trimmedLine;
-        console.log('🤖 Using second line as persona essence:', personaEssence);
+    // First, try simple line-by-line assignment if we have 2+ lines
+    if (lines.length >= 2) {
+      bossEssence = lines[0].replace(/^boss:\s*/i, '').trim();
+      personaEssence = lines[1].replace(/^(gunnar|samara|kirby|stefan):\s*/i, '').trim();
+      console.log('✅ Simple parsing - Boss:', bossEssence, 'Persona:', personaEssence);
+    }
+    
+    // If that didn't work, try more sophisticated parsing
+    if (!bossEssence || !personaEssence) {
+      for (const line of lines) {
+        console.log('🔍 Processing line:', line);
+        const trimmedLine = line.trim();
+        
+        // Look for Boss: or boss: at start of line
+        if (trimmedLine.toLowerCase().startsWith('boss:')) {
+          bossEssence = trimmedLine.substring(5).trim();
+          console.log('👤 Found boss essence:', bossEssence);
+        } 
+        // Look for any persona name followed by colon
+        else if (trimmedLine.toLowerCase().includes('gunnar:') || 
+                 trimmedLine.toLowerCase().includes('samara:') ||
+                 trimmedLine.toLowerCase().includes('kirby:') ||
+                 trimmedLine.toLowerCase().includes('stefan:')) {
+          personaEssence = trimmedLine.trim();
+          console.log('🤖 Found persona essence:', personaEssence);
+        }
       }
     }
 
-    console.log('📊 Before fallback - Boss:', bossEssence, 'Persona:', personaEssence);
+    console.log('📊 After parsing - Boss:', bossEssence, 'Persona:', personaEssence);
 
-    // Final fallback if parsing completely fails
-    if (!bossEssence && !personaEssence && extractedEssence) {
-      console.log('⚠️ Using fallback parsing - splitting extracted essence');
-      const fallbackLines = extractedEssence.split('\n').filter(l => l.trim());
-      if (fallbackLines.length >= 2) {
-        bossEssence = fallbackLines[0].trim();
-        personaEssence = fallbackLines[1].trim();
-      } else if (fallbackLines.length === 1) {
-        bossEssence = userQuestion.length > 100 ? userQuestion.substring(0, 100) + '...' : userQuestion;
-        personaEssence = fallbackLines[0].trim();
-      } else {
-        bossEssence = userQuestion.length > 100 ? userQuestion.substring(0, 100) + '...' : userQuestion;
-        personaEssence = extractedEssence.substring(0, 200);
+    // Ultimate fallback - use the entire response if we have something
+    if ((!bossEssence || !personaEssence) && extractedEssence.trim()) {
+      console.log('⚠️ Using ultimate fallback');
+      if (!bossEssence) {
+        bossEssence = userQuestion;
+        console.log('🔄 Using full user question as boss essence');
+      }
+      if (!personaEssence) {
+        personaEssence = extractedEssence.trim();
+        console.log('🔄 Using full extracted essence as persona essence');
       }
     }
 

@@ -46,12 +46,11 @@ const ChatInterface = () => {
   } = useChat();
 
   const models = [
-    { id: 'claude-3-5-haiku-20241022', name: 'Claude Haiku (Fastest)' },
     { id: 'gpt-4o-mini', name: 'GPT-4o Mini (Fast)' },
-    { id: 'claude-sonnet-4-20250514', name: 'Claude 4 Sonnet (Efficient)' },
     { id: 'gpt-4o', name: 'GPT-4o (Balanced)' },
-    { id: 'claude-opus-4-1-20250805', name: 'Claude 4 Opus (Superior)' },
     { id: 'gpt-5-2025-08-07', name: 'GPT-5 (Most Capable)' },
+    { id: 'gpt-5-mini-2025-08-07', name: 'GPT-5 Mini' },
+    { id: 'gpt-4.1-2025-04-14', name: 'GPT-4.1' },
     { id: 'o3-2025-04-16', name: 'O3 Reasoning' }
   ];
 

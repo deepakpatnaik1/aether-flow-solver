@@ -1,4 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { Copy } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
@@ -11,6 +14,22 @@ interface MarkdownRendererProps {
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, persona, className = "" }) => {
   // State to track checkbox states
   const [checkboxStates, setCheckboxStates] = useState<Record<string, boolean>>({});
+  const { toast } = useToast();
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        description: "Copied to clipboard",
+      });
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+      toast({
+        description: "Failed to copy to clipboard", 
+        variant: "destructive",
+      });
+    }
+  };
   
   // Initialize checkbox states from content
   useEffect(() => {
@@ -159,14 +178,24 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
           inCodeBlock = false;
           
           {
-            // Regular code block
+            // Regular code block with copy button
             elements.push(
-              <div key={i} className="my-3 rounded-lg bg-muted/50 border overflow-hidden">
-                {codeBlockLanguage && (
-                  <div className="px-3 py-1 bg-muted/70 text-xs text-muted-foreground border-b">
-                    {codeBlockLanguage}
-                  </div>
-                )}
+              <div key={i} className="my-3 rounded-lg bg-muted/50 border overflow-hidden group">
+                <div className="flex items-center justify-between">
+                  {codeBlockLanguage && (
+                    <div className="px-3 py-1 bg-muted/70 text-xs text-muted-foreground border-b flex-1">
+                      {codeBlockLanguage}
+                    </div>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 m-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => copyToClipboard(codeBlockContent)}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                </div>
                 <pre className="p-3 overflow-x-auto">
                   <code className="text-sm font-mono text-foreground">
                     {codeBlockContent}
@@ -231,29 +260,46 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
             }).filter(row => row.some(cell => cell !== ''));
             
             elements.push(
-              <div key={i} className="my-4 overflow-x-auto">
-                <table className="min-w-full border-collapse border border-border rounded-lg overflow-hidden">
-                  <thead>
-                    <tr className="bg-muted/50">
-                      {headers.map((header, idx) => (
-                        <th key={idx} className="border border-border px-3 py-2 text-left font-medium text-foreground">
-                          {processInlineMarkdown(header)}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row, rowIdx) => (
-                      <tr key={rowIdx} className="hover:bg-muted/20">
-                        {row.map((cell, cellIdx) => (
-                          <td key={cellIdx} className="border border-border px-3 py-2 text-foreground">
-                            {processInlineMarkdown(cell)}
-                          </td>
+              <div key={i} className="my-4 overflow-x-auto group">
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm"
+                    onClick={() => {
+                      const tableText = [
+                        headers.join(' | '),
+                        headers.map(() => '---').join(' | '),
+                        ...rows.map(row => row.join(' | '))
+                      ].join('\n');
+                      copyToClipboard(tableText);
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                  <table className="min-w-full border-collapse border border-border rounded-lg overflow-hidden">
+                    <thead>
+                      <tr className="bg-muted/50">
+                        {headers.map((header, idx) => (
+                          <th key={idx} className="border border-border px-3 py-2 text-left font-medium text-foreground">
+                            {processInlineMarkdown(header)}
+                          </th>
                         ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {rows.map((row, rowIdx) => (
+                        <tr key={rowIdx} className="hover:bg-muted/20">
+                          {row.map((cell, cellIdx) => (
+                            <td key={cellIdx} className="border border-border px-3 py-2 text-foreground">
+                              {processInlineMarkdown(cell)}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             );
             
@@ -401,12 +447,22 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
     // Handle any unclosed code block
     if (inCodeBlock && codeBlockContent) {
       elements.push(
-        <div key="unclosed-code" className="my-3 rounded-lg bg-muted/50 border overflow-hidden">
-          {codeBlockLanguage && (
-            <div className="px-3 py-1 bg-muted/70 text-xs text-muted-foreground border-b">
-              {codeBlockLanguage}
-            </div>
-          )}
+        <div key="unclosed-code" className="my-3 rounded-lg bg-muted/50 border overflow-hidden group">
+          <div className="flex items-center justify-between">
+            {codeBlockLanguage && (
+              <div className="px-3 py-1 bg-muted/70 text-xs text-muted-foreground border-b flex-1">
+                {codeBlockLanguage}
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 m-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={() => copyToClipboard(codeBlockContent)}
+            >
+              <Copy className="h-3 w-3" />
+            </Button>
+          </div>
           <pre className="p-3 overflow-x-auto">
             <code className="text-sm font-mono text-foreground">
               {codeBlockContent}
@@ -428,9 +484,14 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
       const part = parts[i];
       
       if (part.startsWith('`') && part.endsWith('`') && part.length > 1) {
-        // Inline code
+        // Inline code with copy on click
         processed.push(
-          <code key={i} className="px-1.5 py-0.5 bg-muted rounded text-sm font-mono text-foreground border">
+          <code 
+            key={i} 
+            className="px-1.5 py-0.5 bg-muted rounded text-sm font-mono text-foreground border cursor-pointer hover:bg-muted/80"
+            onClick={() => copyToClipboard(part.slice(1, -1))}
+            title="Click to copy"
+          >
             {part.slice(1, -1)}
           </code>
         );

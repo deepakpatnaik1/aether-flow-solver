@@ -1,7 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { format } from 'date-fns';
+import { Copy } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { PersonaBadge } from './PersonaBadge';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import { useToast } from '@/hooks/use-toast';
 
 interface Message {
   id: string;
@@ -25,6 +28,22 @@ interface MessageListProps {
 export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollPendingRef = useRef(false);
+  const { toast } = useToast();
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        description: "Copied to clipboard",
+      });
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+      toast({
+        description: "Failed to copy to clipboard",
+        variant: "destructive",
+      });
+    }
+  };
 
   useEffect(() => {
     // Debounce scroll using requestAnimationFrame to prevent flicker during streaming
@@ -43,12 +62,22 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   return (
     <div className="message-list">
       {messages.map((message) => (
-        <div key={message.id} className="message-container">
+        <div key={message.id} className="message-container group">
           <div className="flex items-center justify-between mb-2">
             <PersonaBadge persona={message.isUser ? 'Boss' : message.persona} />
-            <span className="text-xs text-muted-foreground">
-              {format(message.timestamp, 'HH:mm')}
-            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => copyToClipboard(message.content)}
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {format(message.timestamp, 'HH:mm')}
+              </span>
+            </div>
           </div>
           <div className="message-content">
             {message.attachments && message.attachments.length > 0 && (

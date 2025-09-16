@@ -1,8 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import mermaid from 'mermaid';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
-import { MermaidDiagram } from './MermaidDiagram';
 
 interface MarkdownRendererProps {
   content: string;
@@ -11,25 +9,6 @@ interface MarkdownRendererProps {
 }
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, persona, className = "" }) => {
-  const mermaidRef = useRef<number>(0);
-
-  useEffect(() => {
-    // Initialize mermaid
-    mermaid.initialize({ 
-      startOnLoad: false,
-      theme: 'dark',
-      themeVariables: {
-        darkMode: true,
-        background: '#2d2d2d',
-        primaryColor: '#bb86fc',
-        primaryTextColor: '#ffffff',
-        primaryBorderColor: '#bb86fc',
-        lineColor: '#ffffff',
-        secondaryColor: '#03dac6',
-        tertiaryColor: '#cf6679'
-      }
-    });
-  }, []);
   
   // Get persona color based on persona name
   const getPersonaColor = (personaName?: string): string => {
@@ -106,15 +85,6 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
         }
       }
 
-      // Handle mermaid diagrams
-      if (line.startsWith('```mermaid')) {
-        if (!inCodeBlock) {
-          inCodeBlock = true;
-          codeBlockLanguage = 'mermaid';
-          codeBlockContent = '';
-        }
-        continue;
-      }
       
       // Handle code blocks
       if (line.startsWith('```')) {
@@ -127,17 +97,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
           // Ending code block
           inCodeBlock = false;
           
-          if (codeBlockLanguage === 'mermaid') {
-            // Render mermaid diagram using dedicated component
-            const mermaidId = `mermaid-${mermaidRef.current++}`;
-            elements.push(
-              <MermaidDiagram 
-                key={i}
-                content={codeBlockContent}
-                id={mermaidId}
-              />
-            );
-          } else {
+          {
             // Regular code block
             elements.push(
               <div key={i} className="my-3 rounded-lg bg-muted/50 border overflow-hidden">

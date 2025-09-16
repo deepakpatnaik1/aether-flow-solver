@@ -226,14 +226,6 @@
     @apply text-foreground/80 ml-8 text-sm leading-snug;
   }
 
-  /* Enhanced Content Styles */
-  .mermaid-container {
-    @apply bg-background/50 rounded-lg p-4;
-  }
-
-  .mermaid-container .mermaid {
-    @apply text-center;
-  }
 
   /* Table Styles */
   .markdown-content table {

@@ -209,146 +209,28 @@ const ChatInterface = () => {
     });
 
     try {
-      // Format messages for OpenAI API
-      const formattedMessages = [...messages, userMessage].map(msg => ({
-        role: msg.isUser ? 'user' as const : 'assistant' as const,
-        content: msg.content
-      }));
+      // Simple response placeholder
+      const responseContent = `Hello! I'm ${selectedPersona || 'Gunnar'}. Your message has been received: "${userMessage.content.slice(0, 100)}${userMessage.content.length > 100 ? '...' : ''}"`;
       
-      console.log('🚀 About to call chat-stream with:', {
-        messagesCount: formattedMessages.length,
-        model: selectedModel,
-        persona: selectedPersona || 'gunnar',
-        lastUserMessage: userMessage.content.slice(0, 100) + (userMessage.content.length > 100 ? '...' : ''),
-        conversationLength: formattedMessages.length
-      });
-      
-      // Use direct fetch for streaming support
-      const response = await fetch(`https://suncgglbheilkeimwuxt.supabase.co/functions/v1/chat-stream`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA`,
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA',
-        },
-        body: JSON.stringify({
-          messages: formattedMessages,
-          model: selectedModel,
-          persona: selectedPersona || 'gunnar',
-          turnId: crypto.randomUUID() // Generate turnId for linking
-        }),
-      });
-
-      console.log('📡 Fetch response received:', response.status, response.ok);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      if (!response.body) {
-        throw new Error('No response body available');
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let streamingContent = '';
-      let buffer = ''; // Buffer for incomplete JSON chunks
-      let receivedTurnId = ''; // Capture turnId from response
-
-      console.log('Starting streaming response...');
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) {
-            console.log('✅ Stream complete');
-            break;
-          }
-
-          // Decode chunk and add to buffer
-          const chunk = decoder.decode(value, { stream: true });
-          buffer += chunk;
-          console.log('📥 Received chunk:', chunk.length, 'bytes');
-
-          // Split by newlines and process complete lines
-          const lines = buffer.split('\n');
-          // Keep the last (potentially incomplete) line in buffer
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            if (!line.trim()) continue;
-            
-            console.log('🔍 Processing line:', line);
-            try {
-              const parsed = JSON.parse(line);
-              console.log('📊 Parsed data:', parsed);
-              
-              if (parsed.type === 'content_delta' && parsed.delta) {
-                streamingContent += parsed.delta;
-                if (parsed.turnId) {
-                  receivedTurnId = parsed.turnId; // Capture turnId
-                }
-                console.log('🌊 STREAMING UPDATE:', `"${parsed.delta}"`, '| Total length:', streamingContent.length);
-                
-                // Update the AI message with streaming content
-                setMessages(prev => prev.map(msg => 
-                  msg.id === aiMessageId 
-                    ? { ...msg, content: streamingContent }
-                    : msg
-                ));
-
-                // Add a small delay to make streaming visible (remove this in production)
-                await new Promise(resolve => setTimeout(resolve, 50));
-                
-              } else if (parsed.type === 'complete') {
-                if (parsed.turnId) {
-                  receivedTurnId = parsed.turnId; // Capture turnId from completion
-                }
-                console.log('🏁 Streaming complete, final content length:', streamingContent.length);
-              } else if (parsed.type === 'error') {
-                throw new Error(parsed.error);
-              }
-            } catch (parseError) {
-              console.warn('⚠️ Error parsing line:', line, parseError);
-            }
-          }
-        }
-        
-        // Process any remaining data in buffer
-        if (buffer.trim()) {
-          console.log('Processing final buffer:', buffer);
-          try {
-            const parsed = JSON.parse(buffer);
-            if (parsed.type === 'complete') {
-              console.log('Final completion received');
-            }
-          } catch (parseError) {
-            console.warn('Error parsing final buffer:', buffer, parseError);
-          }
-        }
-      } finally {
-        reader.releaseLock();
-      }
+      // Update the AI message with the response  
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId 
+          ? { ...msg, content: responseContent }
+          : msg
+      ));
 
       // Save conversation turn to superjournal database
       const finalAiMessage = {
         ...aiMessage,
-        content: streamingContent
+        content: responseContent
       };
       
-      console.log('🔄 About to save conversation turn...', { 
-        userContent: userMessage.content.substring(0, 50), 
-        aiContent: streamingContent.substring(0, 50), 
-        streamingContentLength: streamingContent.length,
-        model: selectedModel 
-      });
-      
       try {
-        const saved = await saveToSuperjournal(userMessage, finalAiMessage, selectedModel, receivedTurnId);
+        const saved = await saveToSuperjournal(userMessage, finalAiMessage, selectedModel);
         if (!saved) {
           console.warn('⚠️ Failed to save conversation to superjournal');
         } else {
-          console.log('✅ Successfully saved conversation turn with turnId:', receivedTurnId);
+          console.log('✅ Successfully saved conversation turn');
         }
       } catch (saveError) {
         console.error('💥 Error during save attempt:', saveError);

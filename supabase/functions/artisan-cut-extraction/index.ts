@@ -61,12 +61,17 @@ Maximum 2 lines output. Minimal tokens - concept level only.
 `;
 
 const callOpenAI = async (messages: ChatMessage[]) => {
+  console.log('🔍 About to call OpenAI with model: gpt-5-mini-2025-08-07');
+  console.log('🔍 Message count:', messages.length);
+  
   const requestBody = {
     model: 'gpt-5-mini-2025-08-07', // Fast model for extraction
     messages,
     max_completion_tokens: 200 // Keep it short
     // No temperature parameter - GPT-5 models don't support it
   };
+
+  console.log('📤 Request body:', JSON.stringify(requestBody, null, 2));
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -77,13 +82,18 @@ const callOpenAI = async (messages: ChatMessage[]) => {
     body: JSON.stringify(requestBody),
   });
 
+  console.log('📥 OpenAI response status:', response.status);
+  console.log('📥 OpenAI response headers:', Object.fromEntries(response.headers.entries()));
+
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('OpenAI API error:', response.status, errorText);
+    console.error('❌ OpenAI API error:', response.status, errorText);
     throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
   }
 
-  return await response.json();
+  const result = await response.json();
+  console.log('📥 Full OpenAI result:', JSON.stringify(result, null, 2));
+  return result;
 };
 
 serve(async (req) => {

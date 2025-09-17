@@ -66,21 +66,23 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
     const startTime = performance.now();
     console.log('🚀 Loading Call 1 complete data package...');
     
-    // Load ALL required data sources in parallel
+    // Load ALL required data sources in parallel INCLUDING Google connection status
     const [
       turnProtocolResult,
       bossResult,
       personaResult,
       pastJournalsResult,
       persistentAttachmentsResult,
-      ephemeralAttachmentsResult
+      ephemeralAttachmentsResult,
+      googleTokensResult
     ] = await Promise.all([
       supabase.from('processes').select('*').eq('name', 'turn-protocol').single(),
       supabase.from('boss').select('*').single(),
       supabase.from('personas').select('*').eq('name', personaName).single(),
       supabase.from('past_journals_full').select('*').order('created_at', { ascending: false }),
       supabase.from('persistent_attachments').select('*').order('created_at', { ascending: false }),
-      supabase.from('ephemeral_attachments').select('*').order('created_at', { ascending: false }).limit(1)
+      supabase.from('ephemeral_attachments').select('*').order('created_at', { ascending: false }).limit(1),
+      supabase.from('google_tokens').select('user_email, scope, expires_at').limit(1)
     ]);
 
     // Build the complete Call 1 context package
@@ -90,7 +92,8 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
       personaResult.data,
       pastJournalsResult.data || [],
       persistentAttachmentsResult.data || [],
-      ephemeralAttachmentsResult.data || []
+      ephemeralAttachmentsResult.data || [],
+      googleTokensResult.data?.[0] || null
     );
 
     const loadTime = performance.now() - startTime;
@@ -101,6 +104,7 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
       pastJournals: pastJournalsResult.data?.length || 0,
       persistentAttachments: persistentAttachmentsResult.data?.length || 0,
       ephemeralAttachments: ephemeralAttachmentsResult.data?.length || 0,
+      googleConnection: googleTokensResult.data?.[0] ? 'connected' : 'not connected',
       contextSize: call1Context.length
     });
 
@@ -118,7 +122,8 @@ function buildCall1Context(
   persona: any, 
   pastJournals: any[], 
   persistentAttachments: any[], 
-  ephemeralAttachments: any[]
+  ephemeralAttachments: any[],
+  googleTokens: any
 ): string {
   let context = '';
   
@@ -141,7 +146,35 @@ function buildCall1Context(
     context += `**Description:** ${persona.description}\n\n`;
   }
 
-  // 4. Past Journals Full Table (entire table)
+  // 4. Google Workspace Integration Status
+  if (googleTokens && new Date(googleTokens.expires_at) > new Date()) {
+    const scopes = googleTokens.scope?.split(' ') || [];
+    context += `## GOOGLE WORKSPACE INTEGRATION\n`;
+    context += `**Status:** CONNECTED ✅\n`;
+    context += `**Connected Account:** ${googleTokens.user_email}\n`;
+    context += `**Available Services:**\n`;
+    
+    if (scopes.includes('https://www.googleapis.com/auth/gmail.send')) {
+      context += `- 📧 **Gmail**: Can send emails on behalf of the user\n`;
+    }
+    if (scopes.includes('https://www.googleapis.com/auth/documents')) {
+      context += `- 📄 **Google Docs**: Can create and edit documents\n`;
+    }
+    if (scopes.includes('https://www.googleapis.com/auth/presentations')) {
+      context += `- 📊 **Google Slides**: Can create presentations\n`;
+    }
+    if (scopes.includes('https://www.googleapis.com/auth/drive.file')) {
+      context += `- 📁 **Google Drive**: Can save files to drive\n`;
+    }
+    
+    context += `\n**IMPORTANT:** When the user asks you to send emails, create documents, or make presentations, you CAN and SHOULD do this directly using the available Google services. Simply respond naturally as if you're performing the action (e.g., "I'll send that email for you right now" or "I'm creating that document now"), and the system will automatically handle the Google service calls based on your response.\n\n`;
+  } else {
+    context += `## GOOGLE WORKSPACE INTEGRATION\n`;
+    context += `**Status:** NOT CONNECTED ❌\n`;
+    context += `The user needs to connect their Google account to enable email sending, document creation, and presentation features.\n\n`;
+  }
+
+  // 5. Past Journals Full Table (entire table)
   if (pastJournals.length > 0) {
     context += `## PAST JOURNALS\n`;
     pastJournals.forEach(journal => {
@@ -155,7 +188,7 @@ function buildCall1Context(
     });
   }
 
-  // 5. Persistent Attachments Table (entire table)
+  // 6. Persistent Attachments Table (entire table)
   if (persistentAttachments.length > 0) {
     context += `## PERSISTENT ATTACHMENTS\n`;
     const categories = [...new Set(persistentAttachments.map(a => a.category))];
@@ -170,7 +203,7 @@ function buildCall1Context(
     });
   }
 
-  // 6. Ephemeral Attachments (latest row only)
+  // 7. Ephemeral Attachments (latest row only)
   if (ephemeralAttachments.length > 0) {
     context += `## LATEST EPHEMERAL ATTACHMENT\n`;
     const attachment = ephemeralAttachments[0];
@@ -221,6 +254,164 @@ const callOpenAI = async (model: string, messages: ChatMessage[], stream: boolea
     return await response.json();
   }
 };
+
+// Google service detection and execution
+async function executeGoogleServices(personaResponse: string, userInput: string): Promise<void> {
+  try {
+    // Check if Google is connected
+    const { data: googleTokens } = await supabase
+      .from('google_tokens')
+      .select('user_email, scope, expires_at')
+      .limit(1);
+
+    if (!googleTokens || googleTokens.length === 0) {
+      console.log('❌ Google not connected, skipping service execution');
+      return;
+    }
+
+    const token = googleTokens[0];
+    if (new Date(token.expires_at) <= new Date()) {
+      console.log('❌ Google token expired, skipping service execution');
+      return;
+    }
+
+    const scopes = token.scope?.split(' ') || [];
+    const userEmail = token.user_email;
+
+    // Detect email sending intent
+    if (scopes.includes('https://www.googleapis.com/auth/gmail.send')) {
+      const emailMatch = personaResponse.match(/I(?:'ll|'m going to| will) send (?:that email|an email|the email)/i) ||
+                        personaResponse.match(/sending (?:that email|an email|the email)/i) ||
+                        personaResponse.match(/I(?:'ll|'m going to| will) email/i);
+      
+      if (emailMatch) {
+        console.log('📧 Email sending intent detected, executing Gmail service...');
+        
+        // Extract email details from context (simplified for now)
+        const emailData = {
+          to: extractEmailRecipient(userInput, personaResponse),
+          subject: extractEmailSubject(userInput, personaResponse),
+          body: extractEmailBody(userInput, personaResponse, userEmail)
+        };
+
+        if (emailData.to) {
+          try {
+            const { error } = await supabase.functions.invoke('google-gmail', {
+              body: {
+                ...emailData,
+                isHtml: true,
+                userEmail: userEmail,
+              },
+            });
+
+            if (error) {
+              console.error('❌ Gmail service error:', error);
+            } else {
+              console.log('✅ Email sent successfully via Gmail');
+            }
+          } catch (error) {
+            console.error('❌ Error calling Gmail service:', error);
+          }
+        }
+      }
+    }
+
+    // Detect document creation intent
+    if (scopes.includes('https://www.googleapis.com/auth/documents')) {
+      const docMatch = personaResponse.match(/I(?:'ll|'m going to| will) create (?:that document|a document|the document)/i) ||
+                      personaResponse.match(/creating (?:that document|a document|the document)/i);
+      
+      if (docMatch) {
+        console.log('📄 Document creation intent detected, executing Google Docs service...');
+        
+        const docData = {
+          title: extractDocumentTitle(userInput, personaResponse),
+          content: extractDocumentContent(userInput, personaResponse)
+        };
+
+        try {
+          const { error } = await supabase.functions.invoke('google-docs', {
+            body: {
+              ...docData,
+              userEmail: userEmail,
+            },
+          });
+
+          if (error) {
+            console.error('❌ Google Docs service error:', error);
+          } else {
+            console.log('✅ Document created successfully via Google Docs');
+          }
+        } catch (error) {
+          console.error('❌ Error calling Google Docs service:', error);
+        }
+      }
+    }
+
+  } catch (error) {
+    console.error('❌ Error in Google services execution:', error);
+  }
+}
+
+// Helper functions for extracting email details
+function extractEmailRecipient(userInput: string, personaResponse: string): string {
+  // Look for email addresses in user input
+  const emailRegex = /[\w.-]+@[\w.-]+\.\w+/g;
+  const emails = userInput.match(emailRegex);
+  if (emails && emails.length > 0) {
+    return emails[0];
+  }
+  
+  // Look for mentions of "my wife", "boss", etc. - for now return a placeholder
+  if (userInput.toLowerCase().includes('my wife')) {
+    return 'wife@example.com'; // This would need to be configured by user
+  }
+  
+  return '';
+}
+
+function extractEmailSubject(userInput: string, personaResponse: string): string {
+  // Look for explicit subject mentions
+  const subjectMatch = userInput.match(/subject:?\s*([^\n]+)/i);
+  if (subjectMatch) {
+    return subjectMatch[1].trim();
+  }
+  
+  // Generate a simple subject
+  return 'Message from Gunnar';
+}
+
+function extractEmailBody(userInput: string, personaResponse: string, fromEmail: string): string {
+  // For now, create a simple email body
+  return `Hi,
+
+This email was sent by your AI assistant.
+
+Original request: ${userInput}
+
+Best regards,
+Gunnar (AI Assistant)
+
+--
+Sent via aetherChat on behalf of ${fromEmail}`;
+}
+
+function extractDocumentTitle(userInput: string, personaResponse: string): string {
+  // Look for document title mentions
+  const titleMatch = userInput.match(/(?:document|doc|file) (?:titled|named|called) "([^"]+)"/i) ||
+                    userInput.match(/create (?:a )?(?:document|doc) (?:about|on|for) ([^\n.!?]+)/i);
+  
+  if (titleMatch) {
+    return titleMatch[1];
+  }
+  
+  return 'New Document';
+}
+
+function extractDocumentContent(userInput: string, personaResponse: string): string {
+  // For now, use the persona response as document content
+  return personaResponse;
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -301,6 +492,11 @@ serve(async (req) => {
               // TRIGGER CALL 2 automatically in background
               if (fullPersonaResponse.trim()) {
                 console.log('🚀 Triggering Call 2 - Artisan Cut Processing...');
+                
+                // Execute Google services based on persona response
+                executeGoogleServices(fullPersonaResponse, messages[messages.length - 1]?.content || '').catch(error => {
+                  console.error('❌ Google services execution failed:', error);
+                });
                 
                 // Background Call 2 - don't await, let it run silently
                 fetch('https://suncgglbheilkeimwuxt.supabase.co/functions/v1/artisan-cut-call2', {

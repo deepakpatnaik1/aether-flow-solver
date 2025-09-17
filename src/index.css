@@ -185,7 +185,7 @@
   }
 
   .message-list {
-    @apply p-6 space-y-3 max-w-4xl mx-auto;
+    @apply p-6 space-y-0 max-w-4xl mx-auto;
     /* Disable any animations that could cause flicker */
     animation: none !important;
     transition: none !important;

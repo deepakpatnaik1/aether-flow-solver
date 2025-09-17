@@ -50,10 +50,9 @@ const GoogleIntegration: React.FC = () => {
 
   const checkConnectionStatus = async () => {
     try {
+      // SECURITY FIX: Use secure function instead of direct table access
       const { data, error } = await supabase
-        .from('google_tokens')
-        .select('user_email, scope, expires_at')
-        .limit(1);
+        .rpc('get_google_connection_status');
 
       if (error) {
         console.error('Error checking Google connection:', error);
@@ -61,14 +60,16 @@ const GoogleIntegration: React.FC = () => {
       }
 
       if (data && data.length > 0) {
-        const tokenData = data[0];
-        const isExpired = new Date(tokenData.expires_at) < new Date();
+        const connection = data[0];
+        const isExpired = connection.expires_at ? new Date(connection.expires_at) < new Date() : false;
         
         setConnectionStatus({
-          isConnected: !isExpired,
-          userEmail: tokenData.user_email,
-          scopes: tokenData.scope?.split(' ') || [],
+          isConnected: connection.is_connected && !isExpired,
+          userEmail: connection.user_email,
+          scopes: connection.scope?.split(' ') || [],
         });
+      } else {
+        setConnectionStatus({ isConnected: false });
       }
     } catch (error) {
       console.error('Error checking connection status:', error);
@@ -119,10 +120,12 @@ const GoogleIntegration: React.FC = () => {
 
   const disconnectGoogle = async () => {
     try {
-      await supabase
-        .from('google_tokens')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+      // SECURITY FIX: Use secure function instead of direct table access
+      const { error } = await supabase.rpc('disconnect_google_account');
+
+      if (error) {
+        throw error;
+      }
 
       setConnectionStatus({ isConnected: false });
       

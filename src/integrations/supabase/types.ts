@@ -331,7 +331,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      disconnect_google_account: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      get_google_connection_status: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          expires_at: string
+          is_connected: boolean
+          scope: string
+          user_email: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

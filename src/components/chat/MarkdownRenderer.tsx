@@ -443,8 +443,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
           </p>
         );
       } else {
-        // Empty line - add spacing
-        elements.push(<div key={i} className="h-1.5" />);
+        // Empty line - no spacing
+        elements.push(<div key={i} className="h-0" />);
       }
     }
 

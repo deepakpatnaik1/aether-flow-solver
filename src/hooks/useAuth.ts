@@ -41,13 +41,20 @@ export const useAuth = () => {
 
   const signInWithGoogle = async () => {
     console.log('Starting Google OAuth flow...');
-    console.log('Redirect URL:', `${window.location.origin}/`);
+    
+    // Determine the correct redirect URL based on current location
+    const currentOrigin = window.location.origin;
+    const redirectUrl = currentOrigin.includes('id-preview--f29e4c08-30c0-496d-946c-bdd3be783b28.lovable.app') 
+      ? 'https://id-preview--f29e4c08-30c0-496d-946c-bdd3be783b28.lovable.app/'
+      : 'https://preview--aether-flow-solver.lovable.app/';
+    
+    console.log('Redirect URL:', redirectUrl);
     
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'https://preview--aether-flow-solver.lovable.app/',
+          redirectTo: redirectUrl,
         },
       });
       

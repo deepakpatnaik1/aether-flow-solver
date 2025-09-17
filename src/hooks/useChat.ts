@@ -29,7 +29,6 @@ export const useChat = () => {
 
   const loadSuperjournalFromSupabase = async () => {
     try {
-      console.log('📖 Loading superjournal from Supabase DB...');
       
       const { data: entries, error } = await supabase
         .from('superjournal_entries')
@@ -37,24 +36,17 @@ export const useChat = () => {
         .order('timestamp', { ascending: true });
 
       if (error) {
-        console.error('❌ Error loading superjournal:', error);
+        // Handle superjournal load error silently
         return;
       }
 
-      console.log(`✅ Loaded ${entries?.length || 0} entries from superjournal`);
       
       if (entries && entries.length > 0) {
-        console.log('🔍 First entry:', entries[0]);
         
         // Convert superjournal entries to messages format
         const superjournalMessages: Message[] = [];
         
         entries.forEach((entry, index) => {
-          console.log(`🔄 Processing entry ${index + 1}:`, {
-            id: entry.entry_id,
-            userContent: entry.user_message_content?.substring(0, 50),
-            aiContent: entry.ai_response_content?.substring(0, 50)
-          });
           
           // Add user message
           superjournalMessages.push({
@@ -82,28 +74,24 @@ export const useChat = () => {
           });
         });
         
-        console.log(`🎯 Created ${superjournalMessages.length} messages from ${entries.length} entries`);
         
         // Set messages from superjournal only if no messages exist yet
         setMessages(prev => {
           if (prev.length === 0) {
-            console.log('📥 Loading', superjournalMessages.length, 'messages from superjournal');
             return superjournalMessages;
           } else {
-            console.log('⚠️ Skipping superjournal load - messages already exist:', prev.length);
             return prev;
           }
         });
       }
       
     } catch (error) {
-      console.error('❌ Error loading superjournal:', error);
+      // Handle superjournal load error silently
     }
   };
 
   const loadJournalFromSupabase = async () => {
     try {
-      console.log('📖 Loading journal entries from Supabase DB...');
       
       const { data: entries, error } = await supabase
         .from('journal_entries')
@@ -111,11 +99,10 @@ export const useChat = () => {
         .order('timestamp', { ascending: true });
 
       if (error) {
-        console.error('❌ Error loading journal entries:', error);
+        // Handle journal load error silently
         return;
       }
 
-      console.log(`✅ Loaded ${entries?.length || 0} journal entries`);
       
       if (entries && entries.length > 0) {
         const journalEntries = entries.map(entry => ({
@@ -124,7 +111,6 @@ export const useChat = () => {
         }));
         
         setJournal(journalEntries);
-        console.log('📥 Loaded', journalEntries.length, 'journal entries');
       }
       
     } catch (error) {
@@ -136,27 +122,15 @@ export const useChat = () => {
     // NOTE: This function is now deprecated in favor of Call 2 (artisan-cut-extraction)
     // Journal entries are now populated by the artisan cut extraction process
     // This function is kept for backward compatibility but should not be used in normal flow
-    console.log('⚠️ saveToJournal called - should be handled by Call 2 instead');
     return true;
   };
 
   const saveToSuperjournal = async (userMessage: Message, aiMessage: Message, model: string, turnId?: string) => {
-    console.log('🚀 saveToSuperjournal called with:', {
-      userContent: userMessage.content.substring(0, 50),
-      aiContent: aiMessage.content.substring(0, 50),
-      model,
-      turnId
-    });
     
     try {
       const entryId = turnId || crypto.randomUUID();
       const timestamp = getBerlinTimeISO();
 
-      console.log('💾 About to save to superjournal DB:', {
-        id: entryId,
-        userContentLength: userMessage.content.length,
-        aiContentLength: aiMessage.content.length
-      });
       
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -175,11 +149,10 @@ export const useChat = () => {
         });
 
       if (error) {
-        console.error('❌ Failed to save to superjournal:', error);
+        // Handle superjournal save error silently
         return false;
       }
 
-      console.log('✅ Conversation turn saved to superjournal DB');
       
       // Trigger Call 2 (Artisan Cut Extraction) in background - don't await
       triggerArtisanCutExtraction(userMessage, aiMessage, model, entryId);
@@ -187,14 +160,13 @@ export const useChat = () => {
       return true;
       
     } catch (error) {
-      console.error('❌ Superjournal save error:', error);
+      // Handle superjournal save error silently
       return false;
     }
   };
 
   const triggerArtisanCutExtraction = async (userMessage: Message, aiMessage: Message, model: string, entryId: string) => {
     try {
-      console.log('🔍 Triggering Call 2 - Artisan Cut Extraction for:', entryId);
       
       const { error } = await supabase.functions.invoke('artisan-cut-extraction', {
         body: {
@@ -208,12 +180,11 @@ export const useChat = () => {
       });
 
       if (error) {
-        console.error('❌ Call 2 failed:', error);
+        // Handle Call 2 error silently
       } else {
-        console.log('✅ Call 2 triggered successfully for:', entryId);
       }
     } catch (error) {
-      console.error('❌ Error triggering Call 2:', error);
+      // Handle Call 2 trigger error silently
     }
   };
 

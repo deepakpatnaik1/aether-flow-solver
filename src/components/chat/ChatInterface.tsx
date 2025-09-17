@@ -158,7 +158,7 @@ const ChatInterface = () => {
       
       // If persona, boss, or journal files were uploaded, process them into database entries
       if (category === 'persona' || category === 'boss' || category === 'journal') {
-        console.log(`Processing ${category} files for database conversion...`);
+        // Process files for database conversion
         try {
           const functionName = category === 'journal' ? 'process-journal-upload' : 'process-persona-upload';
           const processResponse = await supabase.functions.invoke(functionName, {
@@ -166,24 +166,22 @@ const ChatInterface = () => {
           });
           
           if (processResponse.error) {
-            console.error(`Error processing ${category} files:`, processResponse.error);
+            // Handle processing error silently
           } else {
-            console.log(`✅ ${category} files processed successfully:`, processResponse.data);
+            // Files processed successfully
           }
         } catch (error) {
-          console.error(`Error invoking processing function for ${category}:`, error);
+          // Handle processing function error silently
         }
       }
     } catch (error) {
-      console.error('Upload failed:', error);
+      // Handle upload error silently
     }
   };
 
   const handleSendMessage = async () => {
-    console.log('🚀 handleSendMessage called, message:', message, 'isLoading:', isLoading);
     if (!message.trim() || isLoading) return;
 
-    console.log('✅ Proceeding with message send');
     const userMessage: Message = {
       id: Date.now().toString(),
       content: message,
@@ -195,12 +193,8 @@ const ChatInterface = () => {
 
     setMessage('');
     setUploadedFiles([]);
-    setMessages(prev => {
-      console.log('📝 Adding user message to existing messages:', prev.length);
-      return [...prev, userMessage];
-    });
+    setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
-    console.log('📝 User message added to UI, starting AI response...');
 
     // Create AI message placeholder for streaming
     const aiMessageId = crypto.randomUUID();
@@ -212,10 +206,7 @@ const ChatInterface = () => {
       isUser: false
     };
 
-    setMessages(prev => {
-      console.log('🤖 Adding AI placeholder to messages:', prev.length);
-      return [...prev, aiMessage];
-    });
+    setMessages(prev => [...prev, aiMessage]);
 
     try {
       // Format messages for OpenAI API
@@ -299,17 +290,13 @@ const ChatInterface = () => {
       
       try {
         const saved = await saveToSuperjournal(userMessage, finalAiMessage, selectedModel, receivedTurnId);
-        if (!saved) {
-          console.warn('⚠️ Failed to save conversation to superjournal');
-        } else {
-          console.log('✅ Successfully saved conversation turn');
-        }
+        // Handle save result silently
       } catch (saveError) {
-        console.error('💥 Error during save attempt:', saveError);
+        // Handle save error silently
       }
 
     } catch (error) {
-      console.error('Error:', error);
+      // Handle error silently
       const errorMessage: Message = {
         id: (Date.now() + 2).toString(),
         content: 'Sorry, I encountered an error while processing your request.',
@@ -328,9 +315,7 @@ const ChatInterface = () => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    console.log('🔵 handleKeyDown triggered, key:', e.key, 'shiftKey:', e.shiftKey);
     if (e.key === 'Enter' && !e.shiftKey) {
-      console.log('✅ Enter key detected - calling handleSendMessage');
       e.preventDefault();
       handleSendMessage();
     }
@@ -392,10 +377,7 @@ const ChatInterface = () => {
               />
               
                <Button 
-                onClick={() => {
-                  console.log('🔴 Send button clicked!');
-                  handleSendMessage();
-                }}
+                onClick={handleSendMessage}
                 disabled={!message.trim() || isLoading}
                 className="send-btn focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/10 hover:text-primary"
               >

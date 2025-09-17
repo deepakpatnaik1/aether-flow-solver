@@ -381,7 +381,7 @@ const ChatInterface = () => {
                 ))}
               </div>
             )}
-            <div className="flex items-center gap-2 ml-3">
+            <div className="flex items-center gap-2 ml-3 relative">
               <Input
                 ref={inputRef}
                 value={message}
@@ -415,7 +415,6 @@ const ChatInterface = () => {
               >
                 <Paperclip className="h-4 w-4" />
               </Button>
-              <div className="status-indicator" />
               <input
                 ref={fileInputRef}
                 type="file"
@@ -472,6 +471,7 @@ const ChatInterface = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+            <div className="status-indicator mr-3" />
           </div>
         </div>
       </div>

@@ -406,72 +406,74 @@ const ChatInterface = () => {
           
           {/* Model Selection Controls */}
           <div className="model-controls ml-[13px]">
-            <div className="model-selectors">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="attachment-btn"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Paperclip className="h-4 w-4" />
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files) {
-                    handleFileSelect(e.target.files);
-                  }
-                }}
-              />
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="model-selector">
-                    <ChevronDown className="h-3 w-3 mr-1" />
-                    {models.find(m => m.id === selectedModel)?.name || 'GPT-5'}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-background border" onCloseAutoFocus={(e) => e.preventDefault()}>
-                  {models.map((model) => (
-                    <DropdownMenuItem
-                      key={model.id}
-                      onClick={() => {
-                        setSelectedModel(model.id);
-                        // Focus input after model selection
-                        setTimeout(() => {
-                          inputRef.current?.focus();
-                        }, 0);
-                      }}
-                    >
-                      {model.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="model-selector">
-                    <ChevronDown className="h-3 w-3 mr-1" />
-                    {selectedPersona ? personas.find(p => p.id === selectedPersona)?.name : 'Persona'}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-background border" onCloseAutoFocus={(e) => e.preventDefault()}>
-                  {personas.map((persona) => (
-                    <DropdownMenuItem
-                      key={persona.id}
-                      onClick={() => handlePersonaSelect(persona.id)}
-                    >
-                      {persona.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <div className="model-selectors justify-between w-full">
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="attachment-btn"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      handleFileSelect(e.target.files);
+                    }
+                  }}
+                />
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="model-selector">
+                      <ChevronDown className="h-3 w-3 mr-1" />
+                      {models.find(m => m.id === selectedModel)?.name || 'GPT-5'}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-background border" onCloseAutoFocus={(e) => e.preventDefault()}>
+                    {models.map((model) => (
+                      <DropdownMenuItem
+                        key={model.id}
+                        onClick={() => {
+                          setSelectedModel(model.id);
+                          // Focus input after model selection
+                          setTimeout(() => {
+                            inputRef.current?.focus();
+                          }, 0);
+                        }}
+                      >
+                        {model.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="model-selector">
+                      <ChevronDown className="h-3 w-3 mr-1" />
+                      {selectedPersona ? personas.find(p => p.id === selectedPersona)?.name : 'Persona'}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-background border" onCloseAutoFocus={(e) => e.preventDefault()}>
+                    {personas.map((persona) => (
+                      <DropdownMenuItem
+                        key={persona.id}
+                        onClick={() => handlePersonaSelect(persona.id)}
+                      >
+                        {persona.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div className="status-indicator mr-10" />
             </div>
-            <div className="status-indicator mr-3" />
           </div>
         </div>
       </div>

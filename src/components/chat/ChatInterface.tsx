@@ -472,7 +472,7 @@ const ChatInterface = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              <div className="status-indicator mr-10" />
+              <div className="status-indicator mr-6" />
             </div>
           </div>
         </div>

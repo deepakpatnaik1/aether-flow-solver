@@ -40,13 +40,28 @@ export const useAuth = () => {
   }, []);
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/`,
-      },
-    });
-    return { error };
+    console.log('Starting Google OAuth flow...');
+    console.log('Redirect URL:', `${window.location.origin}/`);
+    
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+      
+      if (error) {
+        console.error('OAuth error:', error);
+      } else {
+        console.log('OAuth request successful');
+      }
+      
+      return { error };
+    } catch (err) {
+      console.error('OAuth exception:', err);
+      return { error: err };
+    }
   };
 
   const signOut = async () => {

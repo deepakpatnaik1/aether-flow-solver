@@ -25,6 +25,38 @@ export const useChat = () => {
   useEffect(() => {
     loadSuperjournalFromSupabase();
     loadJournalFromSupabase();
+    
+    // Add mock messages for testing when no auth (temporary)
+    setTimeout(() => {
+      setMessages(prev => {
+        if (prev.length === 0) {
+          return [
+            {
+              id: 'mock-1',
+              content: 'These institutes could provide valuable insights, data, and credibility for your consortium. Let me know if you need more information about any of them!',
+              persona: 'Boss',
+              timestamp: new Date(Date.now() - 60000),
+              isUser: true
+            },
+            {
+              id: 'mock-2', 
+              content: 'Gunnar, send a blank email to my wife.',
+              persona: 'Gunnar',
+              timestamp: new Date(Date.now() - 30000),
+              isUser: false
+            },
+            {
+              id: 'mock-3',
+              content: 'I can\'t send emails directly, but I can help you draft one. Here\'s a simple template you can use:',
+              persona: 'Gunnar', 
+              timestamp: new Date(Date.now() - 15000),
+              isUser: false
+            }
+          ];
+        }
+        return prev;
+      });
+    }, 1000);
   }, []);
 
   const loadSuperjournalFromSupabase = async () => {

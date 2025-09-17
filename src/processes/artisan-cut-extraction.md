@@ -51,7 +51,6 @@ Samara: attention as leverage - asymmetric guerrilla tactics over brute force ma
 
 ## Constraints
 
-- **Maximum 2 lines output**
 - **Minimal tokens** - concept level only
 - **Preserve persona distinctiveness**
 - **NO JSON structure**

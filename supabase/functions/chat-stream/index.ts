@@ -1,11 +1,17 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 const R2_ACCESS_KEY_ID = Deno.env.get('R2_ACCESS_KEY_ID');
 const R2_SECRET_ACCESS_KEY = Deno.env.get('R2_SECRET_ACCESS_KEY');
 const R2_ACCOUNT_ID = Deno.env.get('R2_ACCOUNT_ID');
 const R2_BUCKET_NAME = Deno.env.get('R2_BUCKET_NAME');
+
+// Initialize Supabase client for journal loading
+const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -87,32 +93,54 @@ async function signR2Request(method: string, url: string, headers: Record<string
   };
 }
 
-// Load journal content for system memory
+// Load journal content for system memory from Supabase
 async function loadJournalContent(): Promise<string> {
-  if (!R2_ACCESS_KEY_ID) return '';
-  
   try {
-    const journalKey = 'journal/journal.jsonl';
-    const r2Endpoint = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${journalKey}`;
-    
-    const emptyBodyHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
-    const getHeaders = await signR2Request('GET', r2Endpoint, {
-      'host': `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-      'x-amz-content-sha256': emptyBodyHash
-    });
+    const { data: entries, error } = await supabase
+      .from('journal_entries')
+      .select('entry_id, user_message_content, user_message_persona, ai_response_content, ai_response_persona, timestamp')
+      .order('timestamp', { ascending: true });
 
-    const response = await fetch(r2Endpoint, { method: 'GET', headers: getHeaders });
-    
-    if (response.ok) {
-      const content = await response.text();
-      console.log('📚 Loaded journal content for system memory:', content.length, 'chars');
-      return content;
+    if (error) {
+      console.log('📝 Error loading journal entries:', error);
+      return '';
     }
+
+    if (!entries || entries.length === 0) {
+      console.log('📝 No journal entries found');
+      return '';
+    }
+
+    // Prioritize full conversation entries over compressed artisan cuts
+    const entryGroups = new Map();
+    for (const entry of entries) {
+      const baseId = entry.entry_id.replace('-full', '').replace('-artisan', '');
+      if (!entryGroups.has(baseId)) {
+        entryGroups.set(baseId, []);
+      }
+      entryGroups.get(baseId).push(entry);
+    }
+
+    // For each turn, prefer full conversation over artisan cut
+    const selectedEntries = [];
+    for (const [baseId, groupEntries] of entryGroups) {
+      const fullEntry = groupEntries.find(e => e.entry_id.endsWith('-full'));
+      const selectedEntry = fullEntry || groupEntries[0];
+      selectedEntries.push(selectedEntry);
+    }
+
+    selectedEntries.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    const journalContent = selectedEntries
+      .map(entry => `${entry.user_message_persona}: ${entry.user_message_content}\n${entry.ai_response_persona}: ${entry.ai_response_content}`)
+      .join('\n\n');
+
+    console.log('📚 Loaded journal content for system memory:', selectedEntries.length, 'entries,', journalContent.length, 'chars');
+    return journalContent;
   } catch (error) {
-    console.log('📝 No journal found or error loading:', error);
+    console.log('📝 Error loading journal entries:', error);
+    return '';
   }
-  
-  return '';
 }
 
 // Load artisan cut instructions
@@ -244,6 +272,39 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (req.method === 'GET') {
+    // Debug endpoint to check journal loading AND system message construction
+    try {
+      const journalContent = await loadJournalContent();
+
+      // Test system message construction with Gunnar persona
+      const personaContext = PERSONAS['gunnar'];
+      const journalMemory = journalContent ? `\n\nCUMULATIVE STRATEGIC MEMORY:\n${journalContent}` : '';
+      const fullSystemMessage = personaContext + journalMemory;
+
+      return new Response(JSON.stringify({
+        step1_journalLength: journalContent.length,
+        step2_journalPreview: journalContent.substring(0, 300),
+        step3_personaContextLength: personaContext.length,
+        step4_journalMemoryLength: journalMemory.length,
+        step5_fullSystemMessageLength: fullSystemMessage.length,
+        step6_fullSystemMessagePreview: fullSystemMessage.substring(0, 500),
+        step7_systemMessageEndsWithMemory: fullSystemMessage.includes('Boss: capital of UK'),
+        supabaseConnected: !!supabase,
+        timestamp: new Date().toISOString()
+      }, null, 2), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      return new Response(JSON.stringify({
+        error: error.message,
+        stack: error.stack
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 });
   }
@@ -273,12 +334,20 @@ serve(async (req) => {
     const conversationTurnId = turnId || crypto.randomUUID();
     
     // Load cumulative journal content for system memory
+    console.log('🔍 About to load journal content...');
     const journalContent = await loadJournalContent();
-    
+    console.log('🔍 Journal content loaded, length:', journalContent.length);
+    console.log('🔍 Journal content preview:', journalContent.substring(0, 200));
+
     // Build enhanced system context with journal memory
     const personaContext = PERSONAS[persona as keyof typeof PERSONAS] || PERSONAS.gunnar;
     const journalMemory = journalContent ? `\n\nCUMULATIVE STRATEGIC MEMORY:\n${journalContent}` : '';
-    
+
+    console.log('🔍 System message parts:');
+    console.log('🔍 Persona context length:', personaContext.length);
+    console.log('🔍 Journal memory length:', journalMemory.length);
+    console.log('🔍 Full system message length:', (personaContext + journalMemory).length);
+
     const chatMessages: ChatMessage[] = [
       {
         role: 'system',
@@ -291,6 +360,12 @@ serve(async (req) => {
     const userMessage = messages[messages.length - 1]?.content || '';
 
     console.log('🚀 CALL 1: Starting streaming response with persona:', persona);
+    console.log('🔥 DEPLOYMENT CHECK: fix-call1-v4-clean-logs-16:45');
+    console.log('🔍 SENDING TO OPENAI:');
+    console.log('🔍 Total messages:', chatMessages.length);
+    console.log('🔍 System message length:', chatMessages[0].content.length);
+    console.log('🔍 System message preview:', chatMessages[0].content.substring(0, 300));
+    console.log('🔍 System message includes Boss:', chatMessages[0].content.includes('Boss:'));
     const streamingResponse = await callOpenAI(model, chatMessages, true);
 
     // Create a streaming response
@@ -329,8 +404,6 @@ serve(async (req) => {
             const lines = chunk.split('\n').filter(line => line.trim());
             totalChunks++;
 
-            console.log(`📦 Chunk ${totalChunks}: ${lines.length} lines`);
-
             for (const line of lines) {
               if (line.startsWith('data: ')) {
                 const data = line.slice(6);
@@ -342,13 +415,12 @@ serve(async (req) => {
                 try {
                   const parsed = JSON.parse(data);
                   const delta = parsed.choices?.[0]?.delta?.content;
-                  
+
                   if (delta) {
                     fullAIResponse += delta; // Accumulate for Call 2
-                    console.log(`📝 Sending delta: "${delta}"`);
-                    // Stream the delta to frontend
-                    const streamData = JSON.stringify({ 
-                      type: 'content_delta', 
+                    // Stream the delta to frontend (removed verbose logging)
+                    const streamData = JSON.stringify({
+                      type: 'content_delta',
                       delta: delta,
                       turnId: conversationTurnId
                     }) + '\n';

@@ -107,9 +107,69 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
         continue;
       }
 
+      // Handle standalone checkbox lists ([x] or [ ] without dash)
+      if (line.match(/^\[([ xX])\]/)) {
+        const match = line.match(/^\[([ xX])\]\s?(.*)$/);
+        if (match) {
+          const [, checkState, listContent] = match;
+          const isChecked = checkState === 'x' || checkState === 'X';
+          elements.push(
+            <div key={i} className="flex items-start gap-2 my-1">
+              <div className="mt-2 leading-none">
+                <div className={`h-4 w-4 rounded-sm border flex items-center justify-center ${
+                  isChecked
+                    ? 'bg-primary border-primary text-primary-foreground'
+                    : 'border-muted-foreground/30'
+                }`}>
+                  {isChecked && (
+                    <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="20,6 9,17 4,12" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+              <div className="flex-1 text-foreground">
+                {processInlineMarkdown(listContent)}
+              </div>
+            </div>
+          );
+        }
+        continue;
+      }
+
+      // Handle checkbox lists (- [ ] or - [x])
+      if (line.match(/^[-*+]\s\[([ xX])\]/)) {
+        const match = line.match(/^[-*+]\s\[([ xX])\]\s?(.*)$/);
+        if (match) {
+          const [, checkState, listContent] = match;
+          const isChecked = checkState === 'x' || checkState === 'X';
+          elements.push(
+            <div key={i} className="flex items-start gap-2 my-1">
+              <div className="mt-2 leading-none">
+                <div className={`h-4 w-4 rounded-sm border flex items-center justify-center ${
+                  isChecked
+                    ? 'bg-primary border-primary text-primary-foreground'
+                    : 'border-muted-foreground/30'
+                }`}>
+                  {isChecked && (
+                    <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="20,6 9,17 4,12" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+              <div className="flex-1 text-foreground">
+                {processInlineMarkdown(listContent)}
+              </div>
+            </div>
+          );
+        }
+        continue;
+      }
+
       // Handle unordered lists (-, *, +)
-      if (line.match(/^[\-\*\+]\s/)) {
-        const listContent = line.replace(/^[\-\*\+]\s/, '');
+      if (line.match(/^[-*+]\s/)) {
+        const listContent = line.replace(/^[-*+]\s/, '');
         elements.push(
           <div key={i} className="flex items-start gap-2 my-1">
             <span className="mt-2 leading-none" style={{ color: personaColor }}>•</span>
@@ -138,13 +198,44 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
         continue;
       }
 
+      // Handle indented checkbox sub-lists
+      if (line.match(/^\s{2,}[-*+]\s\[([ xX])\]/)) {
+        const trimmed = line.trim();
+        const match = trimmed.match(/^[-*+]\s\[([ xX])\]\s?(.*)$/);
+        if (match) {
+          const [, checkState, listContent] = match;
+          const isChecked = checkState === 'x' || checkState === 'X';
+          elements.push(
+            <div key={i} className="flex items-start gap-2 my-1 ml-6">
+              <div className="mt-2 leading-none">
+                <div className={`h-3.5 w-3.5 rounded-sm border flex items-center justify-center ${
+                  isChecked
+                    ? 'bg-primary border-primary text-primary-foreground'
+                    : 'border-muted-foreground/30'
+                }`}>
+                  {isChecked && (
+                    <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="20,6 9,17 4,12" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+              <div className="flex-1 text-foreground/90 text-sm">
+                {processInlineMarkdown(listContent)}
+              </div>
+            </div>
+          );
+        }
+        continue;
+      }
+
       // Handle indented sub-lists
-      if (line.match(/^\s{2,}[\-\*\+]\s/) || line.match(/^\s{2,}\d+\.\s/)) {
+      if (line.match(/^\s{2,}[-*+]\s/) || line.match(/^\s{2,}\d+\.\s/)) {
         const trimmed = line.trim();
         const isNumbered = trimmed.match(/^\d+\.\s/);
-        const listContent = isNumbered 
-          ? trimmed.replace(/^\d+\.\s/, '') 
-          : trimmed.replace(/^[\-\*\+]\s/, '');
+        const listContent = isNumbered
+          ? trimmed.replace(/^\d+\.\s/, '')
+          : trimmed.replace(/^[-*+]\s/, '');
         
         elements.push(
           <div key={i} className="flex items-start gap-2 my-1 ml-6">
@@ -203,7 +294,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
 
   const processInlineMarkdown = (text: string): JSX.Element | string => {
     // Handle inline code first (to avoid processing markdown inside code)
-    let parts = text.split(/(`[^`]*`)/);
+    const parts = text.split(/(`[^`]*`)/);
     const processed: (JSX.Element | string)[] = [];
 
     for (let i = 0; i < parts.length; i++) {

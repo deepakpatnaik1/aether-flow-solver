@@ -146,15 +146,12 @@ const ChatInterface = () => {
       setUploadedFiles(prev => [...prev, ...uploadResults]);
       setPendingFiles(null);
     } catch (error) {
-      console.error('Upload failed:', error);
+      // Handle upload error silently in production
     }
   };
 
   const handleSendMessage = async () => {
-    console.log('🚀 handleSendMessage called, message:', message, 'isLoading:', isLoading);
     if (!message.trim() || isLoading) return;
-
-    console.log('✅ Proceeding with message send');
     const userMessage: Message = {
       id: Date.now().toString(),
       content: message,
@@ -166,12 +163,8 @@ const ChatInterface = () => {
 
     setMessage('');
     setUploadedFiles([]);
-    setMessages(prev => {
-      console.log('📝 Adding user message to existing messages:', prev.length);
-      return [...prev, userMessage];
-    });
+    setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
-    console.log('📝 User message added to UI, starting AI response...');
 
     // Create AI message placeholder for streaming
     const aiMessageId = crypto.randomUUID();
@@ -183,10 +176,7 @@ const ChatInterface = () => {
       isUser: false
     };
 
-    setMessages(prev => {
-      console.log('🤖 Adding AI placeholder to messages:', prev.length);
-      return [...prev, aiMessage];
-    });
+    setMessages(prev => [...prev, aiMessage]);
 
     try {
       // Format messages for OpenAI API
@@ -195,11 +185,6 @@ const ChatInterface = () => {
         content: msg.content
       }));
       
-      console.log('🚀 About to call chat-stream with:', {
-        messagesCount: formattedMessages.length,
-        model: selectedModel,
-        persona: selectedPersona || 'gunnar'
-      });
       
       // Use direct fetch for streaming support
       const response = await fetch(`https://suncgglbheilkeimwuxt.supabase.co/functions/v1/chat-stream`, {
@@ -217,7 +202,6 @@ const ChatInterface = () => {
         }),
       });
 
-      console.log('📡 Fetch response received:', response.status, response.ok);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -233,20 +217,17 @@ const ChatInterface = () => {
       let buffer = ''; // Buffer for incomplete JSON chunks
       let receivedTurnId = ''; // Capture turnId from response
 
-      console.log('Starting streaming response...');
 
       try {
         while (true) {
           const { done, value } = await reader.read();
           if (done) {
-            console.log('✅ Stream complete');
             break;
           }
 
           // Decode chunk and add to buffer
           const chunk = decoder.decode(value, { stream: true });
           buffer += chunk;
-          console.log('📥 Received chunk:', chunk.length, 'bytes');
 
           // Split by newlines and process complete lines
           const lines = buffer.split('\n');
@@ -256,17 +237,14 @@ const ChatInterface = () => {
           for (const line of lines) {
             if (!line.trim()) continue;
             
-            console.log('🔍 Processing line:', line);
             try {
               const parsed = JSON.parse(line);
-              console.log('📊 Parsed data:', parsed);
               
               if (parsed.type === 'content_delta' && parsed.delta) {
                 streamingContent += parsed.delta;
                 if (parsed.turnId) {
                   receivedTurnId = parsed.turnId; // Capture turnId
                 }
-                console.log('🌊 STREAMING UPDATE:', `"${parsed.delta}"`, '| Total length:', streamingContent.length);
                 
                 // Update the AI message with streaming content
                 setMessages(prev => prev.map(msg => 
@@ -282,26 +260,22 @@ const ChatInterface = () => {
                 if (parsed.turnId) {
                   receivedTurnId = parsed.turnId; // Capture turnId from completion
                 }
-                console.log('🏁 Streaming complete, final content length:', streamingContent.length);
               } else if (parsed.type === 'error') {
                 throw new Error(parsed.error);
               }
             } catch (parseError) {
-              console.warn('⚠️ Error parsing line:', line, parseError);
+              // Skip malformed JSON in streaming response
             }
           }
         }
         
         // Process any remaining data in buffer
         if (buffer.trim()) {
-          console.log('Processing final buffer:', buffer);
           try {
             const parsed = JSON.parse(buffer);
-            if (parsed.type === 'complete') {
-              console.log('Final completion received');
-            }
+            // Handle final completion
           } catch (parseError) {
-            console.warn('Error parsing final buffer:', buffer, parseError);
+            // Skip malformed final buffer
           }
         }
       } finally {
@@ -314,26 +288,16 @@ const ChatInterface = () => {
         content: streamingContent
       };
       
-      console.log('🔄 About to save conversation turn...', { 
-        userContent: userMessage.content.substring(0, 50), 
-        aiContent: streamingContent.substring(0, 50), 
-        streamingContentLength: streamingContent.length,
-        model: selectedModel 
-      });
       
       try {
         const saved = await saveToSuperjournal(userMessage, finalAiMessage, selectedModel, receivedTurnId);
-        if (!saved) {
-          console.warn('⚠️ Failed to save conversation to superjournal');
-        } else {
-          console.log('✅ Successfully saved conversation turn with turnId:', receivedTurnId);
-        }
+        // Handle save result silently
       } catch (saveError) {
-        console.error('💥 Error during save attempt:', saveError);
+        // Handle save error silently
       }
 
     } catch (error) {
-      console.error('Error:', error);
+      // Handle error silently in production
       const errorMessage: Message = {
         id: (Date.now() + 2).toString(),
         content: 'Sorry, I encountered an error while processing your request.',
@@ -352,9 +316,7 @@ const ChatInterface = () => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    console.log('🔵 handleKeyDown triggered, key:', e.key, 'shiftKey:', e.shiftKey);
     if (e.key === 'Enter' && !e.shiftKey) {
-      console.log('✅ Enter key detected - calling handleSendMessage');
       e.preventDefault();
       handleSendMessage();
     }
@@ -410,11 +372,8 @@ const ChatInterface = () => {
                 className="chat-input flex-1"
               />
               
-               <Button 
-                onClick={() => {
-                  console.log('🔴 Send button clicked!');
-                  handleSendMessage();
-                }}
+               <Button
+                onClick={handleSendMessage}
                 disabled={!message.trim() || isLoading}
                 className="send-btn"
               >

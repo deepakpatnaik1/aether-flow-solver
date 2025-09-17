@@ -1,73 +1,147 @@
-# Welcome to your Lovable project
+# Aether Flow Solver
 
-## Project info
+**A sophisticated AI-powered strategic advisory system featuring multiple AI personas with persistent memory and real-time collaboration capabilities.**
 
-**URL**: https://lovable.dev/projects/f29e4c08-30c0-496d-946c-bdd3be783b28
+## 🎯 Project Overview
 
-## How can I edit this code?
+Aether Flow Solver is an advanced conversational AI platform designed for strategic decision-making and advisory consultation. The system features multiple specialized AI personas that maintain cumulative memory across conversations, enabling deep, contextual strategic guidance.
 
-There are several ways of editing your application.
+### Key Features
 
-**Use Lovable**
+- **Multi-Persona AI System**: Choose from specialized advisors (Gunnar, Samara, Kirby, Stefan)
+- **Persistent Memory**: Dual journal system maintains conversation history and strategic insights
+- **Real-time Streaming**: Live AI responses with delta updates
+- **File Upload Support**: Attach documents and files to conversations
+- **Google Authentication**: Secure login with Google OAuth
+- **Advanced Memory Management**: Compressed "artisan cuts" for efficient context retention
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/f29e4c08-30c0-496d-946c-bdd3be783b28) and start prompting.
+## 🛠️ Technology Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Frontend**: React 18, TypeScript, Vite
+- **UI Framework**: shadcn-ui, Tailwind CSS
+- **Backend**: Supabase Edge Functions (Deno)
+- **Database**: Supabase PostgreSQL
+- **Storage**: Cloudflare R2
+- **AI**: OpenAI GPT-5, GPT-4.1, O3
+- **Authentication**: Supabase Auth with Google OAuth
 
-**Use your preferred IDE**
+## 🚀 Getting Started
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Prerequisites
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Node.js 18+ and npm
+- Supabase account and project
+- OpenAI API key
+- Cloudflare R2 storage account
+- Google OAuth application
 
-Follow these steps:
+### Installation
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/deepakpatnaik1/aether-flow-solver.git
+   cd aether-flow-solver
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+3. **Environment Setup**
+   ```bash
+   cp .env.example .env
+   ```
+   Fill in your actual values in `.env`
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+4. **Supabase Setup**
+   - Deploy edge functions: `npx supabase functions deploy`
+   - Run migrations: `npx supabase db push`
+   - Configure environment variables in Supabase dashboard
+
+5. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+## 📋 Environment Variables
+
+See `.env.example` for required environment variables:
+
+- `VITE_SUPABASE_URL`: Your Supabase project URL
+- `VITE_SUPABASE_PUBLISHABLE_KEY`: Supabase publishable key
+- Edge Function variables (set in Supabase dashboard):
+  - `OPENAI_API_KEY`: OpenAI API key
+  - `R2_ACCESS_KEY_ID`: Cloudflare R2 access key
+  - `R2_SECRET_ACCESS_KEY`: Cloudflare R2 secret key
+  - `R2_ACCOUNT_ID`: Cloudflare R2 account ID
+  - `R2_BUCKET_NAME`: R2 bucket name
+
+## 🏗️ Architecture
+
+### Frontend Components
+- **ChatInterface**: Main conversation interface
+- **PersonaBadge**: AI persona selection and display
+- **MessageList**: Conversation history with streaming support
+- **FileUploadModal**: Document upload functionality
+
+### Backend Services
+- **chat-stream**: Streaming AI responses with OpenAI integration
+- **superjournal**: Full conversation storage in R2
+- **journal**: Compressed conversation summaries
+- **upload-file**: File handling and storage
+- **schema-discovery**: Database introspection
+
+### Data Flow
+1. User sends message through ChatInterface
+2. Message streams to chat-stream function
+3. AI response streams back in real-time
+4. Full conversation saved to superjournal (R2)
+5. Compressed summary created for future context
+
+## 🚀 Deployment
+
+### Production Build
+```bash
+npm run build
+npm run preview  # Test production build locally
 ```
 
-**Edit a file directly in GitHub**
+### Recommended Hosting
+- **Vercel** (recommended): Zero-config deployment
+- **Netlify**: Alternative with similar features
+- Both platforms offer free tiers with custom domain support
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Domain Configuration
+1. Deploy to hosting platform
+2. Configure custom domain
+3. Update OAuth redirect URLs in Google Console
+4. Update Supabase Auth settings with production domain
 
-**Use GitHub Codespaces**
+## 🔒 Security
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- Environment variables properly configured
+- Google OAuth for secure authentication
+- Supabase RLS policies for data protection
+- API keys secured in edge functions
+- Input validation and sanitization
 
-## What technologies are used for this project?
+## 📖 Usage
 
-This project is built with:
+1. **Authentication**: Login with Google account
+2. **Persona Selection**: Choose your AI advisor
+3. **Conversation**: Type messages and receive strategic guidance
+4. **File Upload**: Attach documents for context
+5. **Memory**: AI remembers previous conversations for continuity
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🤝 Contributing
 
-## How can I deploy this project?
+This project was developed in collaboration with Lovable AI and Claude Code.
 
-Simply open [Lovable](https://lovable.dev/projects/f29e4c08-30c0-496d-946c-bdd3be783b28) and click on Share -> Publish.
+## 📄 License
 
-## Can I connect a custom domain to my Lovable project?
+This project is private and proprietary.
 
-Yes, you can!
+---
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+**Live Demo**: [https://deepakpatnaik.com](https://deepakpatnaik.com) (coming soon)

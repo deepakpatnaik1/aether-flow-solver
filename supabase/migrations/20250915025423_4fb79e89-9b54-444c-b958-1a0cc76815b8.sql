@@ -31,10 +31,16 @@ CREATE TABLE public.file_attachments (
 -- Create journal entries table
 CREATE TABLE public.journal_entries (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  conversation_id UUID REFERENCES public.conversations(id) ON DELETE CASCADE,
-  persona TEXT NOT NULL,
-  content TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+  entry_id TEXT NOT NULL UNIQUE,
+  timestamp TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  user_message_content TEXT NOT NULL,
+  user_message_persona TEXT NOT NULL,
+  user_message_attachments JSONB NULL DEFAULT '[]'::jsonb,
+  ai_response_content TEXT NOT NULL,
+  ai_response_persona TEXT NOT NULL,
+  ai_response_model TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 
 -- Enable Row Level Security
@@ -83,8 +89,14 @@ CREATE TRIGGER update_conversations_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
+CREATE TRIGGER update_journal_entries_updated_at
+  BEFORE UPDATE ON public.journal_entries
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at_column();
+
 -- Create indexes for better performance
 CREATE INDEX idx_chat_messages_conversation_id ON public.chat_messages(conversation_id);
 CREATE INDEX idx_chat_messages_created_at ON public.chat_messages(created_at);
 CREATE INDEX idx_file_attachments_message_id ON public.file_attachments(message_id);
-CREATE INDEX idx_journal_entries_conversation_id ON public.journal_entries(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_journal_entries_entry_id ON public.journal_entries USING btree (entry_id);
+CREATE INDEX IF NOT EXISTS idx_journal_entries_timestamp ON public.journal_entries USING btree ("timestamp");

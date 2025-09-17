@@ -29,7 +29,6 @@ export const useChat = () => {
 
   const loadSuperjournalFromR2 = async () => {
     try {
-      console.log('📖 Loading superjournal from R2...');
       
       const response = await fetch(`${SUPABASE_URL}/functions/v1/superjournal?action=load`, {
         method: 'GET',
@@ -39,27 +38,15 @@ export const useChat = () => {
         },
       });
 
-      console.log('📡 Superjournal load response status:', response.status);
 
       if (response.ok) {
         const responseData = await response.json();
-        console.log('📊 Superjournal response:', responseData);
         const { entries } = responseData;
-        console.log(`✅ Loaded ${entries.length} entries from superjournal`);
-        
-        if (entries.length > 0) {
-          console.log('🔍 First entry:', entries[0]);
-        }
         
         // Convert superjournal entries to messages format
         const superjournalMessages: Message[] = [];
         
         entries.forEach((entry: any, index: number) => {
-          console.log(`🔄 Processing entry ${index + 1}:`, {
-            id: entry.id,
-            userContent: entry.userMessage?.content?.substring(0, 50),
-            aiContent: entry.aiResponse?.content?.substring(0, 50)
-          });
           
           // Add user message
           superjournalMessages.push({
@@ -81,36 +68,26 @@ export const useChat = () => {
           });
         });
         
-        console.log(`🎯 Created ${superjournalMessages.length} messages from ${entries.length} entries`);
         
         // Set messages from superjournal only if no messages exist yet
         setMessages(prev => {
           if (prev.length === 0) {
-            console.log('📥 Loading', superjournalMessages.length, 'messages from superjournal');
             return superjournalMessages;
           } else {
-            console.log('⚠️ Skipping superjournal load - messages already exist:', prev.length);
             return prev;
           }
         });
         
       } else {
-        const errorText = await response.text();
-        console.warn('⚠️ Failed to load superjournal:', response.status, errorText);
+        // Failed to load superjournal
       }
       
     } catch (error) {
-      console.error('❌ Error loading superjournal:', error);
+      // Handle superjournal load error silently
     }
   };
 
   const saveToSuperjournal = async (userMessage: Message, aiMessage: Message, model: string, turnId?: string) => {
-    console.log('🚀 saveToSuperjournal called with:', {
-      userContent: userMessage.content.substring(0, 50),
-      aiContent: aiMessage.content.substring(0, 50),
-      model,
-      turnId
-    });
     
     try {
       const journalEntry = {
@@ -128,11 +105,6 @@ export const useChat = () => {
         }
       };
 
-      console.log('💾 About to POST to superjournal with entry:', {
-        id: journalEntry.id,
-        userContentLength: journalEntry.userMessage.content.length,
-        aiContentLength: journalEntry.aiResponse.content.length
-      });
       
       const response = await fetch(`${SUPABASE_URL}/functions/v1/superjournal?action=append`, {
         method: 'POST',
@@ -144,19 +116,13 @@ export const useChat = () => {
         body: JSON.stringify(journalEntry),
       });
 
-      console.log('📡 Superjournal response status:', response.status);
 
       if (response.ok) {
-        const responseData = await response.json();
-        console.log('✅ Conversation turn saved to superjournal:', responseData);
         return true;
       } else {
-        const errorText = await response.text();
-        console.error('❌ Failed to save to superjournal:', response.status, errorText);
         return false;
       }
     } catch (error) {
-      console.error('❌ Superjournal save error:', error);
       return false;
     }
   };

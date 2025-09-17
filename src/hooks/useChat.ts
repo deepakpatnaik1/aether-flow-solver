@@ -158,11 +158,14 @@ export const useChat = () => {
         aiContentLength: aiMessage.content.length
       });
       
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { error } = await supabase
         .from('superjournal_entries')
         .insert({
           entry_id: entryId,
           timestamp: timestamp,
+          user_id: user?.id,
           user_message_content: userMessage.content,
           user_message_persona: userMessage.persona,
           user_message_attachments: userMessage.attachments || [],

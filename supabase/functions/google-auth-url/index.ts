@@ -21,7 +21,7 @@ serve(async (req) => {
       throw new Error('Google Client ID not configured');
     }
 
-    const redirectUri = new URL(req.url).origin;
+    const redirectUri = `${new URL(req.url).origin}/functions/v1/google-oauth`;
     console.log('Redirect URI:', redirectUri);
     
     const scopes = [

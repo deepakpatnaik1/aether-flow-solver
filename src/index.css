@@ -235,12 +235,14 @@
   .message-list {
     @apply p-4 space-y-1 max-w-4xl mx-auto;
     scroll-behavior: smooth;
+    /* Force rebuild - compact spacing active */
   }
 
   .message-container {
     @apply flex flex-col gap-1 rounded-lg p-3;
     @apply hover:bg-card/30 transition-colors duration-150;
     @apply relative;
+    /* Ultra-compact message containers */
   }
 
   .message-container::before {

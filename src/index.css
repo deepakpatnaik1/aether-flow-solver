@@ -137,7 +137,7 @@
 /* Professional Aether Chat Components */
 @layer components {
   .input-bar-container {
-    @apply px-6 py-4;
+    @apply px-4 py-3;
     background: var(--input-bar-background);
     backdrop-filter: var(--glass-blur);
     border-top: 1px solid var(--input-bar-border);
@@ -157,7 +157,7 @@
   }
 
   .input-bar-content {
-    @apply flex flex-col gap-3 max-w-4xl mx-auto;
+    @apply flex flex-col gap-2 max-w-4xl mx-auto;
   }
 
   .chat-input {
@@ -233,12 +233,12 @@
   }
 
   .message-list {
-    @apply p-6 space-y-2 max-w-4xl mx-auto;
+    @apply p-4 space-y-1 max-w-4xl mx-auto;
     scroll-behavior: smooth;
   }
 
   .message-container {
-    @apply flex flex-col gap-2 rounded-lg p-4;
+    @apply flex flex-col gap-1 rounded-lg p-3;
     @apply hover:bg-card/30 transition-colors duration-150;
     @apply relative;
   }
@@ -260,7 +260,7 @@
   }
 
   .persona-badge {
-    @apply inline-flex items-center py-1.5 px-3 rounded-full font-medium text-background;
+    @apply inline-flex items-center py-1 px-2.5 rounded font-medium text-background;
     @apply text-xs tracking-wide;
     font-family: 'Lexend', system-ui, sans-serif !important;
     font-weight: 500 !important;
@@ -269,7 +269,7 @@
   }
 
   .message-content {
-    @apply text-foreground leading-relaxed space-y-0 flex-1 ml-1;
+    @apply text-foreground leading-relaxed space-y-0 flex-1 ml-0.5;
     font-family: 'Lexend', system-ui, sans-serif !important;
   }
 

@@ -63,7 +63,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
     <div className="message-list">
       {messages.map((message) => (
         <div key={message.id} className="message-container group">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-1">
             <PersonaBadge persona={message.isUser ? 'Boss' : message.persona} />
             <div className="flex items-center gap-2">
               <Button

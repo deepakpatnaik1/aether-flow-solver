@@ -30,29 +30,18 @@ export const useChat = () => {
     setTimeout(() => {
       setMessages(prev => {
         if (prev.length === 0) {
-          return [
-            {
-              id: 'mock-1',
-              content: 'These institutes could provide valuable insights, data, and credibility for your consortium. Let me know if you need more information about any of them!',
-              persona: 'Boss',
-              timestamp: new Date(Date.now() - 60000),
-              isUser: true
-            },
-            {
-              id: 'mock-2', 
-              content: 'Gunnar, send a blank email to my wife.',
+          const testMessages = [];
+          // Add 50 "Type a message..." messages for alignment testing
+          for (let i = 0; i < 50; i++) {
+            testMessages.push({
+              id: `test-${i}`,
+              content: "Type a message...",
               persona: 'Gunnar',
-              timestamp: new Date(Date.now() - 30000),
+              timestamp: new Date(Date.now() - (50 - i) * 1000),
               isUser: false
-            },
-            {
-              id: 'mock-3',
-              content: 'I can\'t send emails directly, but I can help you draft one. Here\'s a simple template you can use:',
-              persona: 'Gunnar', 
-              timestamp: new Date(Date.now() - 15000),
-              isUser: false
-            }
-          ];
+            });
+          }
+          return testMessages;
         }
         return prev;
       });

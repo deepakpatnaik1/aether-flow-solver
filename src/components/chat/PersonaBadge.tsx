@@ -47,4 +47,5 @@ export const PersonaBadge: React.FC<PersonaBadgeProps> = ({ persona }) => {
       {getPersonaName(persona)}
     </div>
   );
+  // Force update for new dark palette colors
 };

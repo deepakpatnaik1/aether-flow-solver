@@ -67,9 +67,9 @@
     --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.15);
     --shadow-glow: 0 0 24px rgba(70, 130, 220, 0.2);
 
-    /* Enhanced Persona Colors - Beautiful Dark Palette */
-    --persona-boss: 215 25% 35%;     /* Deep Slate Blue */
-    --persona-gunnar: 185 65% 40%;   /* Rich Dark Teal */
+    /* TESTING DRAMATIC COLORS TO FORCE UPDATE */
+    --persona-boss: 280 100% 50%;    /* BRIGHT PURPLE TEST */
+    --persona-gunnar: 120 100% 40%;  /* BRIGHT GREEN TEST */
     --persona-samara: 280 50% 45%;   /* Deep Violet */
     --persona-kirby: 320 55% 40%;    /* Dark Rose */
     --persona-stefan: 155 45% 35%;   /* Deep Forest Green */

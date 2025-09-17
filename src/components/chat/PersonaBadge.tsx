@@ -5,6 +5,7 @@ interface PersonaBadgeProps {
 }
 
 export const PersonaBadge: React.FC<PersonaBadgeProps> = ({ persona }) => {
+  // VIBRANT DARK PALETTE UPDATE
   const getPersonaColor = (persona: string) => {
     switch (persona.toLowerCase()) {
       case 'boss':

@@ -21,6 +21,22 @@ serve(async (req) => {
   try {
     console.log('Upload function called');
     
+    // Get user from JWT token
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      throw new Error('Authorization header required');
+    }
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+    
+    if (authError || !user) {
+      throw new Error('Invalid or expired token');
+    }
+    
+    console.log('Authenticated user:', user.id);
+    
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const category = formData.get('category') as string || 'documents';
@@ -105,7 +121,8 @@ serve(async (req) => {
           original_name: file.name,
           public_url: publicUrl,
           file_size: file.size,
-          file_type: file.type || 'application/octet-stream'
+          file_type: file.type || 'application/octet-stream',
+          user_id: user.id
         });
       dbError = error;
     } else {
@@ -118,7 +135,8 @@ serve(async (req) => {
           public_url: publicUrl,
           file_size: file.size,
           file_type: file.type || 'application/octet-stream',
-          category: category
+          category: category,
+          user_id: user.id
         });
       dbError = error;
     }

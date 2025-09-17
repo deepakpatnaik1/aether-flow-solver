@@ -51,6 +51,7 @@ export type Database = {
           message_id: string | null
           original_name: string
           public_url: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -61,6 +62,7 @@ export type Database = {
           message_id?: string | null
           original_name: string
           public_url: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -71,6 +73,7 @@ export type Database = {
           message_id?: string | null
           original_name?: string
           public_url?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -196,6 +199,7 @@ export type Database = {
           original_name: string
           public_url: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           category: string
@@ -207,6 +211,7 @@ export type Database = {
           original_name: string
           public_url: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           category?: string
@@ -218,6 +223,7 @@ export type Database = {
           original_name?: string
           public_url?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }

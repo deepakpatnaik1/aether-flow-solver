@@ -405,7 +405,7 @@ const ChatInterface = () => {
           </div>
           
           {/* Model Selection Controls */}
-          <div className="model-controls">
+          <div className="model-controls ml-3">
             <div className="model-selectors">
               <Button
                 variant="ghost"

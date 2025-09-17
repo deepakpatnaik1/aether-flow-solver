@@ -21,6 +21,7 @@ export type Database = {
           id: string
           name: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -28,6 +29,7 @@ export type Database = {
           id?: string
           name: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -35,6 +37,7 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -114,6 +117,7 @@ export type Database = {
           id: string
           timestamp: string
           updated_at: string
+          user_id: string | null
           user_message_attachments: Json | null
           user_message_content: string
           user_message_persona: string
@@ -127,6 +131,7 @@ export type Database = {
           id?: string
           timestamp?: string
           updated_at?: string
+          user_id?: string | null
           user_message_attachments?: Json | null
           user_message_content: string
           user_message_persona: string
@@ -140,6 +145,7 @@ export type Database = {
           id?: string
           timestamp?: string
           updated_at?: string
+          user_id?: string | null
           user_message_attachments?: Json | null
           user_message_content?: string
           user_message_persona?: string
@@ -155,6 +161,7 @@ export type Database = {
           tags: string[] | null
           title: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           content: string
@@ -164,6 +171,7 @@ export type Database = {
           tags?: string[] | null
           title: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           content?: string
@@ -173,6 +181,7 @@ export type Database = {
           tags?: string[] | null
           title?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -219,6 +228,7 @@ export type Database = {
           id: string
           name: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -226,6 +236,7 @@ export type Database = {
           id?: string
           name: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -233,6 +244,7 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -243,6 +255,7 @@ export type Database = {
           id: string
           name: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           content: string
@@ -250,6 +263,7 @@ export type Database = {
           id?: string
           name: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           content?: string
@@ -257,6 +271,7 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -270,6 +285,7 @@ export type Database = {
           id: string
           timestamp: string
           updated_at: string
+          user_id: string | null
           user_message_attachments: Json | null
           user_message_content: string
           user_message_persona: string
@@ -283,6 +299,7 @@ export type Database = {
           id?: string
           timestamp?: string
           updated_at?: string
+          user_id?: string | null
           user_message_attachments?: Json | null
           user_message_content: string
           user_message_persona: string
@@ -296,6 +313,7 @@ export type Database = {
           id?: string
           timestamp?: string
           updated_at?: string
+          user_id?: string | null
           user_message_attachments?: Json | null
           user_message_content?: string
           user_message_persona?: string

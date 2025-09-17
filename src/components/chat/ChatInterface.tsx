@@ -388,7 +388,7 @@ const ChatInterface = () => {
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Type a message..."
-                className="chat-input flex-1"
+                className="chat-input flex-1 pl-4"
               />
               
                <Button 

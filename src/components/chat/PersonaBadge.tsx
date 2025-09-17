@@ -5,21 +5,21 @@ interface PersonaBadgeProps {
 }
 
 export const PersonaBadge: React.FC<PersonaBadgeProps> = ({ persona }) => {
-  // VIBRANT DARK PALETTE UPDATE
+  // DIRECT COLORS - NO CSS VARIABLES
   const getPersonaColor = (persona: string) => {
     switch (persona.toLowerCase()) {
       case 'boss':
-        return 'hsl(var(--persona-boss))';
+        return '#C53030'; // VIBRANT DARK RED - DIRECT
       case 'gunnar':
-        return 'hsl(var(--persona-gunnar))';
+        return '#0D9488'; // VIBRANT DARK CYAN - DIRECT
       case 'samara':
-        return 'hsl(var(--persona-samara))';
+        return '#9333EA'; // ELECTRIC DARK MAGENTA - DIRECT
       case 'kirby':
-        return 'hsl(var(--persona-kirby))';
+        return '#DB2777'; // VIBRANT DARK PINK - DIRECT
       case 'stefan':
-        return 'hsl(var(--persona-stefan))';
+        return '#059669'; // ELECTRIC DARK GREEN - DIRECT
       default:
-        return 'hsl(var(--muted))';
+        return '#6B7280'; // FALLBACK GRAY
     }
   };
 

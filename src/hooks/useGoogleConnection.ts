@@ -48,59 +48,6 @@ export const useGoogleConnection = () => {
     }
   };
 
-  const sendEmail = async (to: string, subject: string, body: string) => {
-    if (!status.isConnected || !status.userEmail) {
-      throw new Error('Google account not connected');
-    }
-
-    const { data, error } = await supabase.functions.invoke('google-gmail', {
-      body: {
-        to,
-        subject,
-        body,
-        isHtml: true,
-        userEmail: status.userEmail,
-      },
-    });
-
-    if (error) throw error;
-    return data;
-  };
-
-  const createDocument = async (title: string, content: string) => {
-    if (!status.isConnected || !status.userEmail) {
-      throw new Error('Google account not connected');
-    }
-
-    const { data, error } = await supabase.functions.invoke('google-docs', {
-      body: {
-        title,
-        content,
-        userEmail: status.userEmail,
-      },
-    });
-
-    if (error) throw error;
-    return data;
-  };
-
-  const createPresentation = async (title: string, slides: any[]) => {
-    if (!status.isConnected || !status.userEmail) {
-      throw new Error('Google account not connected');
-    }
-
-    const { data, error } = await supabase.functions.invoke('google-slides', {
-      body: {
-        title,
-        slides,
-        userEmail: status.userEmail,
-      },
-    });
-
-    if (error) throw error;
-    return data;
-  };
-
   useEffect(() => {
     checkConnection();
   }, []);
@@ -108,8 +55,5 @@ export const useGoogleConnection = () => {
   return {
     ...status,
     checkConnection,
-    sendEmail,
-    createDocument,
-    createPresentation,
   };
 };

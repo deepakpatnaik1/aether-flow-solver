@@ -8,7 +8,6 @@ import { MessageList } from './MessageList';
 import { PersonaBadge } from './PersonaBadge';
 import { FileUploadModal } from './FileUploadModal';
 import GoogleIntegration from './GoogleIntegration';
-import GoogleServiceActions from './GoogleServiceActions';
 import { supabase } from '@/integrations/supabase/client';
 import { useChat } from '@/hooks/useChat';
 import { useGoogleConnection } from '@/hooks/useGoogleConnection';
@@ -504,9 +503,6 @@ const ChatInterface = () => {
           </DialogHeader>
           <div className="space-y-6">
             <GoogleIntegration />
-            {isGoogleConnected && googleUserEmail && (
-              <GoogleServiceActions userEmail={googleUserEmail} />
-            )}
           </div>
         </DialogContent>
       </Dialog>

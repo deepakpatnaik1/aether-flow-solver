@@ -19,6 +19,7 @@ export const useAuth = () => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('🔄 Auth state change:', event, session ? 'session exists' : 'no session');
         setAuthState({
           user: session?.user ?? null,
           session,
@@ -72,8 +73,19 @@ export const useAuth = () => {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    return { error };
+    console.log('🚪 Starting sign out process...');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('❌ Sign out error:', error);
+      } else {
+        console.log('✅ Sign out successful');
+      }
+      return { error };
+    } catch (err) {
+      console.error('❌ Sign out exception:', err);
+      return { error: err };
+    }
   };
 
   return {

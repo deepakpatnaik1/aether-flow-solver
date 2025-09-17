@@ -124,7 +124,7 @@
 /* Aether Chat Interface Components */
 @layer components {
   .input-bar-container {
-    @apply px-6 py-4;
+    @apply px-6 py-2;
     background: var(--input-bar-background);
     backdrop-filter: var(--glass-blur);
     border-top: 2px solid;
@@ -133,7 +133,7 @@
   }
 
   .input-bar-content {
-    @apply flex flex-col gap-3 max-w-4xl mx-auto;
+    @apply flex flex-col gap-2 max-w-4xl mx-auto;
   }
 
   .chat-input {

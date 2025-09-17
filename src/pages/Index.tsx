@@ -8,7 +8,12 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !user) {
+    // Check if we're processing OAuth callback
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasOAuthParams = urlParams.has('code') || urlParams.has('access_token') || urlParams.has('error');
+    
+    // Only redirect if not loading, no user, AND we're not processing OAuth callback
+    if (!loading && !user && !hasOAuthParams) {
       navigate('/auth');
     }
   }, [user, loading, navigate]);

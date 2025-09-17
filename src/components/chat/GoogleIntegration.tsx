@@ -30,18 +30,21 @@ const GoogleIntegration: React.FC = () => {
         title: "Google Account Connected",
         description: "Your Google account has been successfully connected!",
       });
-      // Clean up URL parameters
-      window.history.replaceState({}, document.title, window.location.pathname);
-      // Recheck connection status after successful auth
-      setTimeout(() => checkConnectionStatus(), 1000);
+      // Clean up URL parameters after a delay to allow auth processing
+      setTimeout(() => {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        checkConnectionStatus();
+      }, 2000);
     } else if (authStatus === 'error') {
       toast({
         title: "Google Connection Failed",
         description: errorMessage || "Failed to connect Google account. Please try again.",
         variant: "destructive",
       });
-      // Clean up URL parameters
-      window.history.replaceState({}, document.title, window.location.pathname);
+      // Clean up URL parameters after a delay
+      setTimeout(() => {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }, 2000);
     }
   }, []);
 

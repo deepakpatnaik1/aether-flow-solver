@@ -4,8 +4,7 @@ import ChatInterface from "@/components/chat/ChatInterface";
 import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
-  // Temporarily disabled authentication check for testing
-  // const { user, loading } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -14,6 +13,27 @@ const Index = () => {
       navigate('/', { replace: true });
     }
   }, [navigate]);
+
+  // Redirect to auth if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth', { replace: true });
+    }
+  }, [user, loading, navigate]);
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated (will redirect)
+  if (!user) {
+    return null;
+  }
 
   return <ChatInterface />;
 };

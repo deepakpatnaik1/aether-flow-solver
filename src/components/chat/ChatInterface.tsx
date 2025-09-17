@@ -415,6 +415,7 @@ const ChatInterface = () => {
               >
                 <Paperclip className="h-4 w-4" />
               </Button>
+              <div className="status-indicator" />
               <input
                 ref={fileInputRef}
                 type="file"
@@ -426,16 +427,6 @@ const ChatInterface = () => {
                   }
                 }}
               />
-
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`attachment-btn ${isGoogleConnected ? 'text-green-600' : 'text-muted-foreground'}`}
-                onClick={() => setShowGoogleModal(true)}
-                title={isGoogleConnected ? 'Google Workspace Connected' : 'Connect Google Workspace'}
-              >
-                <Chrome className="h-4 w-4" />
-              </Button>
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -480,14 +471,7 @@ const ChatInterface = () => {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              
-              <Button variant="ghost" size="sm" className="model-selector">
-                <ChevronDown className="h-3 w-3 mr-1" />
-                User
-              </Button>
             </div>
-            
-            <div className="status-indicator" />
           </div>
         </div>
       </div>

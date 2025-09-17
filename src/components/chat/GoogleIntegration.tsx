@@ -233,13 +233,6 @@ const GoogleIntegration: React.FC = () => {
               </ul>
             </div>
 
-            <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-              <p className="text-sm text-amber-800">
-                <strong>Setup Required:</strong> You need to configure your Google OAuth credentials first. 
-                Please add your Google Client ID and Secret in the Supabase dashboard.
-              </p>
-            </div>
-
             <Button 
               onClick={initiateGoogleAuth} 
               disabled={isConnecting}

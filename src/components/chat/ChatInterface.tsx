@@ -388,7 +388,7 @@ const ChatInterface = () => {
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Type a message..."
-                className="chat-input flex-1"
+                className="chat-input flex-1 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
               />
               
                <Button 
@@ -397,7 +397,7 @@ const ChatInterface = () => {
                   handleSendMessage();
                 }}
                 disabled={!message.trim() || isLoading}
-                className="send-btn focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="send-btn focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/10 hover:text-primary"
               >
                 <Send className="h-4 w-4" />
               </Button>
@@ -411,7 +411,7 @@ const ChatInterface = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="attachment-btn"
+                  className="attachment-btn hover:bg-primary/10 hover:text-primary"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <Paperclip className="h-4 w-4" />
@@ -430,7 +430,7 @@ const ChatInterface = () => {
                 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="model-selector">
+                    <Button variant="ghost" size="sm" className="model-selector hover:bg-primary/5 hover:text-primary">
                       <ChevronDown className="h-3 w-3 mr-1" />
                       {models.find(m => m.id === selectedModel)?.name || 'GPT-5'}
                     </Button>
@@ -455,7 +455,7 @@ const ChatInterface = () => {
                 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="model-selector">
+                    <Button variant="ghost" size="sm" className="model-selector hover:bg-primary/5 hover:text-primary">
                       <ChevronDown className="h-3 w-3 mr-1" />
                       {selectedPersona ? personas.find(p => p.id === selectedPersona)?.name : 'Persona'}
                     </Button>

@@ -381,14 +381,14 @@ const ChatInterface = () => {
                 ))}
               </div>
             )}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 ml-4">
               <Input
                 ref={inputRef}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Type a message..."
-                className="chat-input flex-1 pl-4"
+                className="chat-input flex-1"
               />
               
                <Button 

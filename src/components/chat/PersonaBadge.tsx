@@ -11,13 +11,13 @@ export const PersonaBadge: React.FC<PersonaBadgeProps> = ({ persona }) => {
       case 'boss':
         return '#C53030'; // VIBRANT DARK RED - DIRECT
       case 'gunnar':
-        return '#0D9488'; // VIBRANT DARK CYAN - DIRECT
+        return '#3B4DE8'; // VIBRANT DARK BLUE - DISTINCT
       case 'samara':
-        return '#9333EA'; // ELECTRIC DARK MAGENTA - DIRECT
+        return '#9333EA'; // ELECTRIC DARK MAGENTA - DISTINCT
       case 'kirby':
-        return '#DB2777'; // VIBRANT DARK PINK - DIRECT
+        return '#D97706'; // VIBRANT DARK ORANGE - DISTINCT
       case 'stefan':
-        return '#059669'; // ELECTRIC DARK GREEN - DIRECT
+        return '#059669'; // ELECTRIC DARK GREEN - DISTINCT
       default:
         return '#6B7280'; // FALLBACK GRAY
     }

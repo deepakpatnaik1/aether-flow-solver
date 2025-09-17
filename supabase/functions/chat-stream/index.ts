@@ -167,7 +167,7 @@ function buildCall1Context(
       context += `- 📁 **Google Drive**: Can save files to drive\n`;
     }
     
-    context += `\n**IMPORTANT:** When the user asks you to send emails, create documents, or make presentations, you CAN and SHOULD do this directly using the available Google services. Simply respond naturally as if you're performing the action (e.g., "I'll send that email for you right now" or "I'm creating that document now"), and the system will automatically handle the Google service calls based on your response.\n\n`;
+    context += `\n**Note:** The user has connected their Google account with these permissions available.\n\n`;
   } else {
     context += `## GOOGLE WORKSPACE INTEGRATION\n`;
     context += `**Status:** NOT CONNECTED ❌\n`;

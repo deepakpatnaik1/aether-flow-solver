@@ -19,6 +19,30 @@ const GoogleIntegration: React.FC = () => {
 
   useEffect(() => {
     checkConnectionStatus();
+    
+    // Check for OAuth callback parameters in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const authStatus = urlParams.get('auth');
+    const errorMessage = urlParams.get('message');
+    
+    if (authStatus === 'success') {
+      toast({
+        title: "Google Account Connected",
+        description: "Your Google account has been successfully connected!",
+      });
+      // Clean up URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+      // Recheck connection status after successful auth
+      setTimeout(() => checkConnectionStatus(), 1000);
+    } else if (authStatus === 'error') {
+      toast({
+        title: "Google Connection Failed",
+        description: errorMessage || "Failed to connect Google account. Please try again.",
+        variant: "destructive",
+      });
+      // Clean up URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, []);
 
   const checkConnectionStatus = async () => {

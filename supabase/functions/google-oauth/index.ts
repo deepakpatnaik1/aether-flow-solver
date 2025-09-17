@@ -20,12 +20,25 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Google OAuth callback called with method:', req.method);
+    console.log('Request URL:', req.url);
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
-    const { code, state } = await req.json();
+    // Parse query parameters from URL
+    const url = new URL(req.url);
+    const code = url.searchParams.get('code');
+    const state = url.searchParams.get('state');
+    const error = url.searchParams.get('error');
+    
+    console.log('OAuth parameters:', { code: code ? 'present' : 'missing', state: state ? 'present' : 'missing', error });
+    
+    if (error) {
+      throw new Error(`OAuth error: ${error}`);
+    }
     
     if (!code) {
       throw new Error('Authorization code is required');
@@ -33,7 +46,9 @@ serve(async (req) => {
 
     const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
     const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
-    const redirectUri = `${new URL(req.url).origin}`;
+    const redirectUri = `https://suncgglbheilkeimwuxt.supabase.co/functions/v1/google-oauth`;
+    
+    console.log('Using redirect URI:', redirectUri);
 
     // Exchange authorization code for tokens
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -84,21 +99,29 @@ serve(async (req) => {
       throw new Error('Failed to store tokens');
     }
 
-    return new Response(JSON.stringify({
-      success: true,
-      user: userInfo,
-      scopes: tokens.scope.split(' '),
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    console.log('OAuth success, redirecting user back to app');
+    
+    // Redirect back to the app with success
+    const appUrl = 'https://f29e4c08-30c0-496d-946c-bdd3be783b28.lovableproject.com/?auth=success';
+    return new Response(null, {
+      status: 302,
+      headers: {
+        ...corsHeaders,
+        'Location': appUrl,
+      },
     });
 
   } catch (error) {
     console.error('Error in google-oauth function:', error);
-    return new Response(JSON.stringify({ 
-      error: error.message 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    
+    // Redirect back to the app with error
+    const appUrl = `https://f29e4c08-30c0-496d-946c-bdd3be783b28.lovableproject.com/?auth=error&message=${encodeURIComponent(error.message)}`;
+    return new Response(null, {
+      status: 302,
+      headers: {
+        ...corsHeaders,
+        'Location': appUrl,
+      },
     });
   }
 });

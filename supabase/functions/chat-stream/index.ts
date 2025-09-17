@@ -82,7 +82,7 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
       supabase.from('past_journals_full').select('*').order('created_at', { ascending: false }),
       supabase.from('persistent_attachments').select('*').order('created_at', { ascending: false }),
       supabase.from('ephemeral_attachments').select('*').order('created_at', { ascending: false }).limit(1),
-      supabase.from('google_tokens').select('user_email, scope, expires_at').limit(1)
+      supabase.rpc('get_google_connection_status')
     ]);
 
     // Build the complete Call 1 context package

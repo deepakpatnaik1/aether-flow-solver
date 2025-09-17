@@ -344,6 +344,25 @@ export type Database = {
           user_email: string
         }[]
       }
+      get_google_tokens_for_user: {
+        Args: { p_user_email: string }
+        Returns: {
+          access_token: string
+          expires_at: string
+          refresh_token: string
+          scope: string
+        }[]
+      }
+      store_google_tokens: {
+        Args: {
+          p_access_token: string
+          p_expires_at: string
+          p_refresh_token: string
+          p_scope: string
+          p_user_email: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

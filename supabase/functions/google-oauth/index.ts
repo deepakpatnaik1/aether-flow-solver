@@ -82,20 +82,17 @@ serve(async (req) => {
 
     const userInfo = await userInfoResponse.json();
 
-    // Store tokens in Supabase
-    const { error: dbError } = await supabaseClient
-      .from('google_tokens')
-      .upsert({
-        user_email: userInfo.email,
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
-        scope: tokens.scope,
-        updated_at: new Date().toISOString(),
-      });
+    // SECURITY FIX: Store tokens using secure function instead of direct table access
+    const storeResult = await supabaseClient.rpc('store_google_tokens', {
+      p_user_email: userInfo.email,
+      p_access_token: tokens.access_token,
+      p_refresh_token: tokens.refresh_token,
+      p_expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+      p_scope: tokens.scope
+    });
 
-    if (dbError) {
-      console.error('Database error:', dbError);
+    if (storeResult.error) {
+      console.error('Database error:', storeResult.error);
       throw new Error('Failed to store tokens');
     }
 

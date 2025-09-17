@@ -402,16 +402,20 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
         continue;
       }
 
-      // Handle indented sub-lists
-      if (line.match(/^\s{2,}[\-\*\+]\s/) || line.match(/^\s{2,}\d+\.\s/)) {
+      // Handle indented sub-lists (with proper spacing calculation)
+      if (line.match(/^\s+[\-\*\+•]\s/) || line.match(/^\s+\d+\.\s/)) {
+        const leadingSpaces = (line.match(/^(\s+)/) || ['', ''])[1];
+        const indentLevel = Math.floor(leadingSpaces.length / 2) + 1; // Calculate indent level
         const trimmed = line.trim();
         const isNumbered = trimmed.match(/^\d+\.\s/);
         const listContent = isNumbered 
           ? trimmed.replace(/^\d+\.\s/, '') 
-          : trimmed.replace(/^[\-\*\+]\s/, '');
+          : trimmed.replace(/^[\-\*\+•]\s/, '');
+        
+        const marginLeft = `${indentLevel * 24}px`; // 24px per indent level
         
         elements.push(
-          <div key={i} className="flex items-baseline gap-3 my-1 ml-10">
+          <div key={i} className="flex items-baseline gap-3 my-1" style={{ marginLeft }}>
             <span className="leading-none text-sm opacity-70 flex-shrink-0 font-bold text-foreground" style={{ lineHeight: '1.4', fontSize: '13px' }}>
               {isNumbered ? '◦' : '◦'}
             </span>

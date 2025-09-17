@@ -20,7 +20,15 @@ const Auth = () => {
     }
   }, [user, navigate]);
 
+  const isInIframe = window !== window.top;
+
   const handleGoogleSignIn = async () => {
+    // Check if we're in an iframe (Lovable preview)
+    if (isInIframe) {
+      toast.error('Please open this app in a new tab to sign in with Google');
+      return;
+    }
+
     try {
       console.log('Button clicked, initiating Google sign in...');
       const { error } = await signInWithGoogle();
@@ -54,10 +62,16 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {isInIframe && (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-800">
+              You're viewing this in preview mode. Click "Open in new tab" above to sign in with Google.
+            </div>
+          )}
           <Button 
             onClick={handleGoogleSignIn}
             className="w-full flex items-center justify-center gap-2"
             variant="outline"
+            disabled={isInIframe}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path

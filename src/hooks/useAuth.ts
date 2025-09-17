@@ -47,7 +47,7 @@ export const useAuth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: 'https://preview--aether-flow-solver.lovable.app/',
         },
       });
       

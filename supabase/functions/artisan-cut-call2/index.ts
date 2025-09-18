@@ -24,7 +24,7 @@ async function loadArtisanCutProcess(): Promise<string> {
   try {
     const { data, error } = await supabase.storage
       .from('processes')
-      .download('artisan-cut-extraction.md');
+      .download('artisan-cut-extraction.txt');
 
     if (error || !data) {
       console.log('ℹ️ No artisan cut process found');
@@ -140,14 +140,14 @@ serve(async (req) => {
       throw new Error('No content received from OpenAI');
     }
 
-    // Save to journal_entries table
+    // Save to journal_entries table (only the artisan cut essence)
     const { data: journalEntry, error: saveError } = await supabase
       .from('journal_entries')
       .insert({
         entry_id: entryId,
-        user_message_content: userInput,
+        user_message_content: processedContent.split('\n')[0]?.replace('Boss: ', '') || userInput, // Extract Boss essence
         user_message_persona: userPersona,
-        ai_response_content: processedContent,
+        ai_response_content: processedContent.split('\n').slice(1).join('\n') || processedContent, // Extract persona essence
         ai_response_persona: aiPersona,
         ai_response_model: model,
         user_message_attachments: []

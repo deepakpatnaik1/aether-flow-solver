@@ -75,7 +75,7 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
       ephemeralAttachmentsResult,
       journalEntriesResult
     ] = await Promise.all([
-      supabase.storage.from('processes').download('turn-protocol.md'),
+      supabase.storage.from('processes').download('turn-protocol.txt'),
       loadBossProfile(),
       loadPersonaProfile(personaName),
       supabase.storage.from('past-journals').download('Past Journals.txt').then(r => r.data ? r.data.text() : '').catch(() => ''),

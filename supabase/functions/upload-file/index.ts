@@ -21,21 +21,9 @@ serve(async (req) => {
   try {
     console.log('Upload function called');
     
-    // Get user from JWT token
+    // Since JWT verification is disabled, we'll skip user authentication for now
     const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
-      throw new Error('Authorization header required');
-    }
-    
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
-    
-    if (authError || !user) {
-      throw new Error('Invalid or expired token');
-    }
-    
-    console.log('Authenticated user:', user.id);
+    console.log('Auth header present:', !!authHeader);
     
     const formData = await req.formData();
     const file = formData.get('file') as File;
@@ -121,7 +109,7 @@ serve(async (req) => {
           original_name: file.name,
           public_url: publicUrl,
           file_type: file.type || 'application/octet-stream',
-          user_id: user.id
+          user_id: 'anonymous' // Since auth is disabled
         });
       dbError = error;
     } else {

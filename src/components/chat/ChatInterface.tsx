@@ -335,9 +335,9 @@ const ChatInterface = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Header with User Menu */}
-      <div className="flex justify-end items-center p-4 border-b border-border/30">
+    <div className="flex flex-col h-screen bg-background relative">
+      {/* Floating User Menu */}
+      <div className="absolute top-4 right-4 z-50">
         <UserMenu />
       </div>
 

@@ -267,7 +267,7 @@
   }
 
   .message-container {
-    @apply flex flex-col gap-1 rounded-lg p-3;
+    @apply flex flex-col gap-1 rounded-lg p-2;
     @apply hover:bg-card/30 transition-colors duration-150;
     @apply relative;
     /* Ultra-compact message containers */

@@ -14,30 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      boss: {
-        Row: {
-          created_at: string
-          description: string
-          id: string
-          name: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          description: string
-          id?: string
-          name: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          description?: string
-          id?: string
-          name?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       ephemeral_attachments: {
         Row: {
           file_name: string
@@ -160,54 +136,6 @@ export type Database = {
           id?: string
           original_name?: string
           public_url?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      personas: {
-        Row: {
-          created_at: string
-          description: string
-          id: string
-          name: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          description: string
-          id?: string
-          name: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          description?: string
-          id?: string
-          name?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      processes: {
-        Row: {
-          content: string
-          created_at: string
-          id: string
-          name: string
-          user_id: string | null
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          id?: string
-          name: string
-          user_id?: string | null
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: string
-          name?: string
           user_id?: string | null
         }
         Relationships: []

@@ -334,6 +334,30 @@ serve(async (req) => {
     });
   }
 
+  // Get user from JWT token
+  const authHeader = req.headers.get('authorization');
+  let userId = null;
+  
+  if (authHeader) {
+    try {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (user && !error) {
+        userId = user.id;
+        console.log('✅ Authenticated user:', userId);
+      }
+    } catch (error) {
+      console.error('❌ Auth error:', error);
+    }
+  }
+
+  if (!userId) {
+    return new Response(JSON.stringify({ error: 'Authentication required' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
   try {
     const requestStartTime = performance.now();
     const { messages, model = 'gpt-4o-mini', persona = 'gunnar', userMessage, turnId } = await req.json();
@@ -401,6 +425,7 @@ serve(async (req) => {
                 
                 const superjournalEntry = {
                   entry_id: streamTurnId,
+                  user_id: userId, // Add user ID for RLS
                   user_message_content: userMessage.content || 'No user input',
                   user_message_persona: 'Boss',
                   user_message_attachments: userMessage.attachments || [],
@@ -432,6 +457,7 @@ serve(async (req) => {
                   },
                   body: JSON.stringify({
                     entryId: streamTurnId,
+                    userId: userId, // Pass userId to Call 2
                     userInput: userMessage.content || 'No user input',
                     personaResponse: fullPersonaResponse,
                     userPersona: 'Boss',

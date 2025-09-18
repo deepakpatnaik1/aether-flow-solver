@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { getBerlinTimeISO, getBerlinTime } from '@/lib/timezone';
 
 interface Message {
@@ -19,23 +20,31 @@ interface Message {
 export const useChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [journal, setJournal] = useState<Array<{persona: string, content: string}>>([]);
+  const { user } = useAuth();
 
-  // Load superjournal and journal entries on startup
+  // Load superjournal and journal entries when user is authenticated
   useEffect(() => {
-    loadSuperjournalFromSupabase();
-    loadJournalFromSupabase();
-  }, []);
+    if (user) {
+      loadSuperjournalFromSupabase();
+      loadJournalFromSupabase();
+    } else {
+      // Clear data when user logs out
+      setMessages([]);
+      setJournal([]);
+    }
+  }, [user]);
 
   const loadSuperjournalFromSupabase = async () => {
+    if (!user) return;
+    
     try {
-      
       const { data: entries, error } = await supabase
         .from('superjournal_entries')
         .select('*')
         .order('timestamp', { ascending: true });
 
       if (error) {
-        // Handle superjournal load error silently
+        console.error('Error loading superjournal:', error);
         return;
       }
 
@@ -89,15 +98,16 @@ export const useChat = () => {
   };
 
   const loadJournalFromSupabase = async () => {
+    if (!user) return;
+    
     try {
-      
       const { data: entries, error } = await supabase
         .from('journal_entries')
         .select('*')
         .order('timestamp', { ascending: true });
 
       if (error) {
-        // Handle journal load error silently
+        console.error('Error loading journal:', error);
         return;
       }
 

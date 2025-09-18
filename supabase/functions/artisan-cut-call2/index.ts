@@ -94,6 +94,7 @@ serve(async (req) => {
     const requestStartTime = performance.now();
     const { 
       entryId,
+      userId, // Add userId parameter  
       userInput, 
       personaResponse,
       userPersona = 'Boss',
@@ -103,6 +104,7 @@ serve(async (req) => {
 
     console.log('🔍 Call 2 - Artisan Cut Processing:', {
       entryId,
+      userId,
       userPersona,
       aiPersona,
       userInputLength: userInput?.length || 0,
@@ -168,6 +170,7 @@ serve(async (req) => {
       .from('journal_entries')
       .insert({
         entry_id: entryId,
+        user_id: userId, // Add user ID for RLS
         user_message_content: bossEssence || processedContent,
         user_message_persona: userPersona,
         ai_response_content: personaEssence || processedContent,

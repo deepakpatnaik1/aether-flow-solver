@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface GoogleConnectionStatus {
   isConnected: boolean;
@@ -13,8 +14,14 @@ export const useGoogleConnection = () => {
     isConnected: false,
     isLoading: true,
   });
+  const { user } = useAuth();
 
   const checkConnection = async () => {
+    if (!user) {
+      setStatus({ isConnected: false, isLoading: false });
+      return;
+    }
+    
     try {
       setStatus(prev => ({ ...prev, isLoading: true }));
       
@@ -48,8 +55,12 @@ export const useGoogleConnection = () => {
   };
 
   useEffect(() => {
-    checkConnection();
-  }, []);
+    if (user) {
+      checkConnection();
+    } else {
+      setStatus({ isConnected: false, isLoading: false });
+    }
+  }, [user]);
 
   return {
     ...status,

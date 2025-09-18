@@ -134,33 +134,6 @@ export type Database = {
         }
         Relationships: []
       }
-      past_journals_full: {
-        Row: {
-          content: string
-          created_at: string
-          id: string
-          tags: string[] | null
-          title: string
-          user_id: string | null
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          id?: string
-          tags?: string[] | null
-          title: string
-          user_id?: string | null
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: string
-          tags?: string[] | null
-          title?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       persistent_attachments: {
         Row: {
           category: string

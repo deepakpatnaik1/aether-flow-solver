@@ -71,7 +71,7 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
       turnProtocolResult,
       bossResult,
       personaResult,
-      pastJournalsResult,
+      pastJournalsContent,
       persistentAttachmentsResult,
       ephemeralAttachmentsResult,
       googleTokensResult
@@ -79,7 +79,7 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
       supabase.from('processes').select('*').eq('name', 'turn-protocol').single(),
       supabase.from('boss').select('*').single(),
       supabase.from('personas').select('*').eq('name', personaName).single(),
-      supabase.from('past_journals_full').select('*'),
+      fetch(`https://suncgglbheilkeimwuxt.supabase.co/storage/v1/object/public/documents/past_journals_full.txt`).then(r => r.ok ? r.text() : '').catch(() => ''),
       supabase.from('persistent_attachments').select('*'),
       supabase.from('ephemeral_attachments').select('*').limit(1),
       supabase.rpc('get_google_connection_status')
@@ -90,7 +90,7 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
       turnProtocolResult.data,
       bossResult.data,
       personaResult.data,
-      pastJournalsResult.data || [],
+      pastJournalsContent || '',
       persistentAttachmentsResult.data || [],
       ephemeralAttachmentsResult.data || [],
       googleTokensResult.data?.[0] || null
@@ -120,7 +120,7 @@ function buildCall1Context(
   turnProtocol: any, 
   boss: any, 
   persona: any, 
-  pastJournals: any[], 
+  pastJournalsContent: string, 
   persistentAttachments: any[], 
   ephemeralAttachments: any[],
   googleTokens: any
@@ -174,16 +174,10 @@ function buildCall1Context(
     context += `The user needs to connect their Google account to enable email sending, document creation, and presentation features.\n\n`;
   }
 
-  // 5. Past Journals Full Table (entire table)
-  if (pastJournals.length > 0) {
+  // 5. Past Journals (consolidated content from file)
+  if (pastJournalsContent.trim()) {
     context += `## PAST JOURNALS\n`;
-    pastJournals.forEach(journal => {
-      context += `### ${journal.title}\n`;
-      if (journal.tags && journal.tags.length > 0) {
-        context += `**Tags:** ${journal.tags.join(', ')}\n`;
-      }
-      context += `**Content:**\n${journal.content}\n\n`;
-    });
+    context += `${pastJournalsContent}\n\n`;
   }
 
   // 6. Persistent Attachments Table (entire table)

@@ -76,6 +76,17 @@ const Auth = () => {
             </svg>
             Continue with Google
           </Button>
+          
+          {/* Development bypass - only show in Lovable preview */}
+          {window.location.hostname.includes('lovable.app') && (
+            <Button 
+              onClick={() => navigate('/')}
+              className="w-full"
+              variant="secondary"
+            >
+              Skip Auth (Development)
+            </Button>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -72,16 +72,14 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
       personaResult,
       pastJournalsContent,
       persistentAttachmentsResult,
-      ephemeralAttachmentsResult,
-      googleTokensResult
+      ephemeralAttachmentsResult
     ] = await Promise.all([
       supabase.storage.from('processes').download('turn-protocol.md'),
       loadBossProfile(),
       loadPersonaProfile(personaName),
       supabase.storage.from('past-journals').download('Past Journals.txt').then(r => r.data ? r.data.text() : '').catch(() => ''),
       supabase.storage.from('persistent-attachments').list(),
-      supabase.from('ephemeral_attachments').select('*').limit(1),
-      supabase.rpc('get_google_connection_status')
+      supabase.from('ephemeral_attachments').select('*').limit(1)
     ]);
 
     // Build the complete Call 1 context package
@@ -104,8 +102,7 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
       personaResult,
       pastJournalsContent || '',
       transformedPersistentAttachments,
-      ephemeralAttachmentsResult.data || [],
-      googleTokensResult.data?.[0] || null
+      ephemeralAttachmentsResult.data || []
     );
 
     const loadTime = performance.now() - startTime;
@@ -134,8 +131,7 @@ function buildCall1Context(
   personaContent: string, 
   pastJournalsContent: string, 
   persistentAttachments: any[], 
-  ephemeralAttachments: any[],
-  googleTokens: any
+  ephemeralAttachments: any[]
 ): string {
   let context = '';
   
@@ -155,38 +151,13 @@ function buildCall1Context(
     context += `## ACTIVE PERSONA\n\n${personaContent}\n\n`;
   }
 
-  // 4. Google Workspace Integration Status (only when connected)
-  if (googleTokens && new Date(googleTokens.expires_at) > new Date()) {
-    const scopes = googleTokens.scope?.split(' ') || [];
-    context += `## GOOGLE WORKSPACE INTEGRATION\n`;
-    context += `**Status:** CONNECTED ✅\n`;
-    context += `**Connected Account:** ${googleTokens.user_email}\n`;
-    context += `**Available Services:**\n`;
-    
-    if (scopes.includes('https://www.googleapis.com/auth/gmail.send')) {
-      context += `- 📧 **Gmail**: Can send emails on behalf of the user\n`;
-    }
-    if (scopes.includes('https://www.googleapis.com/auth/documents')) {
-      context += `- 📄 **Google Docs**: Can create and edit documents\n`;
-    }
-    if (scopes.includes('https://www.googleapis.com/auth/presentations')) {
-      context += `- 📊 **Google Slides**: Can create presentations\n`;
-    }
-    if (scopes.includes('https://www.googleapis.com/auth/drive.file')) {
-      context += `- 📁 **Google Drive**: Can save files to drive\n`;
-    }
-    
-    context += `\n**Note:** The user has connected their Google account with these permissions available.\n\n`;
-  }
-  // Note: No Google integration section sent when not connected to avoid LLM confusion
-
-  // 5. Past Journals (consolidated content from file)
+  // 4. Past Journals (consolidated content from file)
   if (pastJournalsContent.trim()) {
     context += `## PAST JOURNALS\n`;
     context += `${pastJournalsContent}\n\n`;
   }
 
-  // 6. Persistent Attachments Table (entire table)
+  // 5. Persistent Attachments Table (entire table)
   if (persistentAttachments.length > 0) {
     context += `## PERSISTENT ATTACHMENTS\n`;
     const categories = [...new Set(persistentAttachments.map(a => a.category))];
@@ -200,7 +171,7 @@ function buildCall1Context(
     });
   }
 
-  // 7. Ephemeral Attachments (latest row only)
+  // 6. Ephemeral Attachments (latest row only)
   if (ephemeralAttachments.length > 0) {
     context += `## LATEST EPHEMERAL ATTACHMENT\n`;
     const attachment = ephemeralAttachments[0];

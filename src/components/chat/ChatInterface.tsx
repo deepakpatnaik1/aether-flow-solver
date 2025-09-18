@@ -8,7 +8,7 @@ import { MessageList } from './MessageList';
 import { PersonaBadge } from './PersonaBadge';
 import { FileUploadModal } from './FileUploadModal';
 import GoogleIntegration from './GoogleIntegration';
-import UserProfile from './UserProfile';
+
 import { supabase } from '@/integrations/supabase/client';
 import { useChat } from '@/hooks/useChat';
 import { useGoogleConnection } from '@/hooks/useGoogleConnection';
@@ -335,10 +335,6 @@ const ChatInterface = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      {/* Minimal User Profile */}
-      <div className="absolute top-2 right-2 z-10">
-        <UserProfile />
-      </div>
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">

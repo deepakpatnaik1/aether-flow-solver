@@ -162,7 +162,7 @@
       transparent 100%
     );
     background-size: 200% 100%;
-    animation: streak-flow 180s ease-in-out infinite;
+    animation: streak-flow 600s ease-in-out infinite;
     opacity: 1;
   }
 

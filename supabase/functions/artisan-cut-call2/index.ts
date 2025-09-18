@@ -140,14 +140,37 @@ serve(async (req) => {
       throw new Error('No content received from OpenAI');
     }
 
-    // Save to journal_entries table (only the artisan cut essence)
+    // Parse the artisan cut essence - extract Boss and Persona parts
+    const lines = processedContent.trim().split('\n').filter(line => line.trim());
+    let bossEssence = '';
+    let personaEssence = '';
+    
+    for (const line of lines) {
+      if (line.startsWith('Boss: ')) {
+        bossEssence = line.replace('Boss: ', '').trim();
+      } else if (line.includes(': ')) {
+        // Extract persona essence (format: "PersonaName: content")
+        const colonIndex = line.indexOf(': ');
+        if (colonIndex > 0) {
+          personaEssence = line.substring(colonIndex + 2).trim();
+        }
+      }
+    }
+
+    // Fallback if parsing fails - use the full processed content
+    if (!bossEssence && !personaEssence) {
+      bossEssence = userInput;
+      personaEssence = processedContent;
+    }
+
+    // Save only the artisan cut essence to journal_entries table
     const { data: journalEntry, error: saveError } = await supabase
       .from('journal_entries')
       .insert({
         entry_id: entryId,
-        user_message_content: processedContent.split('\n')[0]?.replace('Boss: ', '') || userInput, // Extract Boss essence
+        user_message_content: bossEssence || processedContent,
         user_message_persona: userPersona,
-        ai_response_content: processedContent.split('\n').slice(1).join('\n') || processedContent, // Extract persona essence
+        ai_response_content: personaEssence || processedContent,
         ai_response_persona: aiPersona,
         ai_response_model: model,
         user_message_attachments: []

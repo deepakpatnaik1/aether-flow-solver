@@ -31,8 +31,32 @@ interface Message {
 const ChatInterface = () => {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
-  const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
+  
+  // Initialize from localStorage immediately to prevent flash and ensure persistence
+  const [selectedModel, setSelectedModel] = useState(() => {
+    const storedModel = localStorage.getItem('selectedModel');
+    const models = [
+      { id: 'gpt-4o-mini', name: 'GPT-4o Mini (Fast)' },
+      { id: 'gpt-4o', name: 'GPT-4o (Balanced)' },
+      { id: 'gpt-5-2025-08-07', name: 'GPT-5 (Most Capable)' },
+      { id: 'gpt-5-mini-2025-08-07', name: 'GPT-5 Mini' },
+      { id: 'gpt-4.1-2025-04-14', name: 'GPT-4.1' },
+      { id: 'o3-2025-04-16', name: 'O3 Reasoning' }
+    ];
+    return storedModel && models.some(m => m.id === storedModel) ? storedModel : 'gpt-4o-mini';
+  });
+  
+  const [selectedPersona, setSelectedPersona] = useState<string>(() => {
+    const storedPersona = localStorage.getItem('selectedPersona');
+    const personas = [
+      { id: 'gunnar', name: 'Gunnar' },
+      { id: 'samara', name: 'Samara' },
+      { id: 'kirby', name: 'Kirby' },
+      { id: 'stefan', name: 'Stefan' }
+    ];
+    return storedPersona && personas.some(p => p.id === storedPersona) ? storedPersona : 'gunnar';
+  });
+  
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -67,34 +91,13 @@ const ChatInterface = () => {
     { id: 'stefan', name: 'Stefan' }
   ];
 
-  // Load model from localStorage on mount
+  // Save to localStorage whenever values change
   useEffect(() => {
-    const storedModel = localStorage.getItem('selectedModel');
-    if (storedModel && models.some(m => m.id === storedModel)) {
-      setSelectedModel(storedModel);
-    }
-  }, []);
-
-  // Load persona from localStorage on mount
-  useEffect(() => {
-    const storedPersona = localStorage.getItem('selectedPersona');
-    if (storedPersona && personas.some(p => p.id === storedPersona)) {
-      setSelectedPersona(storedPersona);
-    }
-  }, []);
-
-  // Save model to localStorage whenever it changes
-  useEffect(() => {
-    if (selectedModel) {
-      localStorage.setItem('selectedModel', selectedModel);
-    }
+    localStorage.setItem('selectedModel', selectedModel);
   }, [selectedModel]);
 
-  // Save persona to localStorage whenever it changes
   useEffect(() => {
-    if (selectedPersona) {
-      localStorage.setItem('selectedPersona', selectedPersona);
-    }
+    localStorage.setItem('selectedPersona', selectedPersona);
   }, [selectedPersona]);
 
   // Focus management
@@ -200,7 +203,7 @@ const ChatInterface = () => {
     const aiMessage: Message = {
       id: aiMessageId,
       content: '', // Start empty for streaming
-      persona: selectedPersona || 'gunnar',
+      persona: selectedPersona,
       timestamp: getBerlinTime(),
       isUser: false
     };
@@ -225,7 +228,7 @@ const ChatInterface = () => {
         body: JSON.stringify({
           messages: formattedMessages,
           model: selectedModel,
-          persona: selectedPersona || 'gunnar',
+          persona: selectedPersona,
           userMessage: userMessage, // Send complete user message with attachments
           turnId: aiMessageId // Use consistent turn ID
         }),
@@ -289,7 +292,7 @@ const ChatInterface = () => {
       const errorMessage: Message = {
         id: (Date.now() + 2).toString(),
         content: 'Sorry, I encountered an error while processing your request.',
-        persona: selectedPersona || 'gunnar',
+        persona: selectedPersona,
         timestamp: getBerlinTime(),
         isUser: false
       };
@@ -424,7 +427,7 @@ const ChatInterface = () => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm" className="model-selector hover:bg-primary/5 hover:text-primary">
                       <ChevronDown className="h-3 w-3 mr-1" />
-                      {selectedPersona ? personas.find(p => p.id === selectedPersona)?.name : 'Persona'}
+                      {personas.find(p => p.id === selectedPersona)?.name || 'Gunnar'}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="bg-background border" onCloseAutoFocus={(e) => e.preventDefault()}>

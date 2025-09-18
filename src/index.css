@@ -152,8 +152,8 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: var(--gradient-primary);
-    opacity: 0.6;
+    background: hsl(var(--destructive));
+    opacity: 0.8;
   }
 
   .input-bar-content {

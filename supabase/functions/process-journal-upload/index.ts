@@ -99,25 +99,23 @@ Deno.serve(async (req) => {
 
 async function processJournalContent(supabase: any, fileName: string, content: string) {
   const title = extractTitle(fileName, content)
-  const entryType = determineEntryType(fileName, content)
   const tags = extractTags(fileName, content)
   
-  console.log(`Processing: ${fileName} -> ${title} (${entryType})`)
+  console.log(`Processing: ${fileName} -> ${title}`)
   
-  // Upsert knowledge entry (update if exists, insert if not)
+  // Upsert past journal entry (update if exists, insert if not)
   const { data, error } = await supabase
-    .from('knowledge_entries')
+    .from('past_journals_full')
     .upsert({ 
       title,
       content: content.trim(),
-      entry_type: entryType,
       tags,
-      source_file: fileName
+      user_id: null // No authentication needed
     })
     .select()
 
   if (error) {
-    console.error(`Error upserting knowledge entry for ${fileName}:`, error)
+    console.error(`Error upserting past journal entry for ${fileName}:`, error)
     return { 
       fileName, 
       status: 'error', 
@@ -125,12 +123,11 @@ async function processJournalContent(supabase: any, fileName: string, content: s
     }
   }
 
-  console.log(`✅ Knowledge entry processed: ${title}`)
+  console.log(`✅ Past journal entry processed: ${title}`)
   return { 
     fileName, 
     status: 'success', 
     title,
-    entryType,
     tags,
     data 
   }
@@ -177,29 +174,6 @@ function extractTitle(fileName: string, content: string): string {
   
   // Default to cleaned filename
   return baseName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-}
-
-function determineEntryType(fileName: string, content: string): string {
-  const lowerContent = content.toLowerCase()
-  const lowerFileName = fileName.toLowerCase()
-  
-  if (lowerContent.includes('sprint') || lowerContent.includes('milestone')) {
-    return 'planning'
-  }
-  if (lowerContent.includes('decision') || lowerContent.includes('committed to')) {
-    return 'decision'
-  }
-  if (lowerContent.includes('gunnar:') || lowerContent.includes('kirby:') || lowerContent.includes('boss:')) {
-    return 'conversation'
-  }
-  if (lowerContent.includes('experience') || lowerContent.includes('background') || lowerContent.includes('education')) {
-    return 'background'
-  }
-  if (lowerContent.includes('strategy') || lowerContent.includes('analysis')) {
-    return 'strategy'
-  }
-  
-  return 'journal'
 }
 
 function extractTags(fileName: string, content: string): string[] {

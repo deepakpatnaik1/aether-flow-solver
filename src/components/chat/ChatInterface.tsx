@@ -119,9 +119,13 @@ const ChatInterface = () => {
     const addressingMatch = message.match(/^(Gunnar|Samara|Kirby|Stefan),?\s*/i);
     if (addressingMatch) {
       const persona = addressingMatch[1].toLowerCase();
+      console.log('🎯 Persona detected in message:', persona);
       if (selectedPersona !== persona) {
+        console.log('🔄 Switching persona from', selectedPersona, 'to', persona);
         setSelectedPersona(persona);
       }
+    } else {
+      console.log('📝 No persona in message, keeping current:', selectedPersona);
     }
     // Keep current persona while typing - never auto-clear
   }, [message, selectedPersona]);
@@ -216,6 +220,8 @@ const ChatInterface = () => {
         role: msg.isUser ? 'user' as const : 'assistant' as const,
         content: msg.content
       }));
+      
+      console.log('🚀 Sending to backend - Model:', selectedModel, 'Persona:', selectedPersona);
       
       // Use direct fetch for streaming support
       const response = await fetch('https://suncgglbheilkeimwuxt.supabase.co/functions/v1/chat-stream', {

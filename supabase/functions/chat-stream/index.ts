@@ -72,14 +72,16 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
       personaResult,
       pastJournalsContent,
       persistentAttachmentsResult,
-      ephemeralAttachmentsResult
+      ephemeralAttachmentsResult,
+      journalEntriesResult
     ] = await Promise.all([
       supabase.storage.from('processes').download('turn-protocol.md'),
       loadBossProfile(),
       loadPersonaProfile(personaName),
       supabase.storage.from('past-journals').download('Past Journals.txt').then(r => r.data ? r.data.text() : '').catch(() => ''),
       supabase.storage.from('persistent-attachments').list(),
-      supabase.from('ephemeral_attachments').select('*').limit(1)
+      supabase.from('ephemeral_attachments').select('*').limit(1),
+      supabase.from('journal_entries').select('*').order('timestamp', { ascending: true })
     ]);
 
     // Build the complete Call 1 context package
@@ -102,7 +104,8 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
       personaResult,
       pastJournalsContent || '',
       transformedPersistentAttachments,
-      ephemeralAttachmentsResult.data || []
+      ephemeralAttachmentsResult.data || [],
+      journalEntriesResult.data || []
     );
 
     const loadTime = performance.now() - startTime;
@@ -131,7 +134,8 @@ function buildCall1Context(
   personaContent: string, 
   pastJournalsContent: string, 
   persistentAttachments: any[], 
-  ephemeralAttachments: any[]
+  ephemeralAttachments: any[],
+  journalEntries: any[]
 ): string {
   let context = '';
   
@@ -157,7 +161,27 @@ function buildCall1Context(
     context += `${pastJournalsContent}\n\n`;
   }
 
-  // 5. Persistent Attachments Table (entire table)
+  // 5. Journal Entries (chronological conversation history)
+  if (journalEntries.length > 0) {
+    context += `## JOURNAL ENTRIES (CONVERSATION HISTORY)\n`;
+    journalEntries.forEach(entry => {
+      const timestamp = new Date(entry.timestamp).toLocaleString('en-US', {
+        timeZone: 'Europe/Berlin',
+        year: 'numeric',
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      context += `\n**${timestamp}** | ${entry.user_message_persona} → ${entry.ai_response_persona}\n`;
+      context += `**User:** ${entry.user_message_content}\n`;
+      context += `**${entry.ai_response_persona}:** ${entry.ai_response_content}\n`;
+      context += `---\n`;
+    });
+    context += '\n';
+  }
+
+  // 6. Persistent Attachments Table (entire table)
   if (persistentAttachments.length > 0) {
     context += `## PERSISTENT ATTACHMENTS\n`;
     const categories = [...new Set(persistentAttachments.map(a => a.category))];
@@ -171,7 +195,7 @@ function buildCall1Context(
     });
   }
 
-  // 6. Ephemeral Attachments (latest row only)
+  // 7. Ephemeral Attachments (latest row only)
   if (ephemeralAttachments.length > 0) {
     context += `## LATEST EPHEMERAL ATTACHMENT\n`;
     const attachment = ephemeralAttachments[0];

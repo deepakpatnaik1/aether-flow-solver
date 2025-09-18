@@ -41,10 +41,15 @@ export const useAuth = () => {
   }, []);
 
   const signInWithGoogle = async () => {
-    console.log('Starting Google OAuth flow...');
+    console.log('🚀 Starting Google OAuth flow...');
     
     // Check if we're in an iframe (Lovable preview)
     const isInIframe = window !== window.top;
+    console.log('🔍 Environment check:', {
+      isInIframe,
+      hostname: window.location.hostname,
+      origin: window.location.origin
+    });
     
     // Determine the correct redirect URL based on current location
     const currentOrigin = window.location.origin;
@@ -52,13 +57,13 @@ export const useAuth = () => {
       ? 'https://id-preview--f29e4c08-30c0-496d-946c-bdd3be783b28.lovable.app/'
       : 'https://preview--aether-flow-solver.lovable.app/';
     
-    console.log('Redirect URL:', redirectUrl);
-    console.log('Is in iframe:', isInIframe);
+    console.log('🎯 Using redirect URL:', redirectUrl);
     
     if (isInIframe) {
-      // Use popup window for iframe authentication to avoid X-Frame-Options issues
+      console.log('📱 Using popup flow for iframe environment');
       return await signInWithPopup(redirectUrl);
     } else {
+      console.log('🌐 Using standard redirect flow for non-iframe environment');
       // Use standard redirect flow for non-iframe environments
       try {
         const { error } = await supabase.auth.signInWithOAuth({
@@ -69,14 +74,14 @@ export const useAuth = () => {
         });
         
         if (error) {
-          console.error('OAuth error:', error);
+          console.error('❌ OAuth error:', error);
         } else {
-          console.log('OAuth request successful');
+          console.log('✅ OAuth request successful');
         }
         
         return { error };
       } catch (err) {
-        console.error('OAuth exception:', err);
+        console.error('❌ OAuth exception:', err);
         return { error: err };
       }
     }
@@ -84,67 +89,93 @@ export const useAuth = () => {
 
   const signInWithPopup = async (redirectUrl: string) => {
     return new Promise<{ error: any }>((resolve) => {
-      console.log('🚀 Starting popup OAuth flow...');
+      console.log('🚀 Starting popup OAuth flow with redirect URL:', redirectUrl);
       
-      // Use the edge function to get the OAuth URL
-      supabase.functions.invoke('google-auth-url', {
-        body: { redirectTo: redirectUrl }
-      }).then(({ data, error }) => {
-        if (error || !data?.url) {
-          console.error('❌ Failed to get OAuth URL:', error);
-          resolve({ error: error || new Error('Failed to get OAuth URL') });
-          return;
-        }
+      try {
+        // Call the edge function to get the OAuth URL
+        console.log('📡 Calling google-auth-url edge function...');
+        
+        supabase.functions.invoke('google-auth-url', {
+          body: { redirectTo: redirectUrl }
+        }).then(({ data, error }) => {
+          console.log('📡 Edge function response:', { data, error });
+          
+          if (error) {
+            console.error('❌ Edge function error:', error);
+            resolve({ error });
+            return;
+          }
+          
+          if (!data?.url) {
+            console.error('❌ No OAuth URL received from edge function');
+            resolve({ error: new Error('Failed to get OAuth URL from server') });
+            return;
+          }
 
-        const authUrl = data.url;
-        console.log('🔗 Opening popup with URL:', authUrl);
+          const authUrl = data.url;
+          console.log('🔗 Opening popup with OAuth URL:', authUrl);
 
-        // Open popup window
-        const popup = window.open(
-          authUrl,
-          'google-oauth',
-          'width=500,height=600,scrollbars=yes,resizable=yes,left=' + 
-          (window.screen.width / 2 - 250) + ',top=' + (window.screen.height / 2 - 300)
-        );
+          // Calculate centered popup position
+          const popupWidth = 500;
+          const popupHeight = 600;
+          const left = (window.screen.width / 2) - (popupWidth / 2);
+          const top = (window.screen.height / 2) - (popupHeight / 2);
+          
+          // Open popup window
+          const popup = window.open(
+            authUrl,
+            'google-oauth',
+            `width=${popupWidth},height=${popupHeight},scrollbars=yes,resizable=yes,left=${left},top=${top}`
+          );
 
-        if (!popup) {
-          console.error('❌ Popup blocked');
-          resolve({ error: new Error('Popup blocked. Please allow popups for this site.') });
-          return;
-        }
+          if (!popup) {
+            console.error('❌ Popup blocked by browser');
+            resolve({ error: new Error('Popup blocked. Please allow popups for this site and try again.') });
+            return;
+          }
+          
+          console.log('✅ Popup opened successfully');
 
-        // Poll for popup to close and check for authentication
-        const checkClosed = setInterval(() => {
-          if (popup.closed) {
+          // Poll for popup to close and check for authentication
+          const checkClosed = setInterval(() => {
+            if (popup.closed) {
+              clearInterval(checkClosed);
+              console.log('🔄 Popup closed, checking authentication session...');
+              
+              // Small delay to ensure auth state has updated
+              setTimeout(() => {
+                supabase.auth.getSession().then(({ data: { session } }) => {
+                  if (session) {
+                    console.log('✅ Authentication successful! Session found.');
+                    resolve({ error: null });
+                  } else {
+                    console.log('❌ No session found after popup closed');
+                    resolve({ error: new Error('Authentication was cancelled or failed') });
+                  }
+                });
+              }, 1000);
+            }
+          }, 1000);
+
+          // Timeout after 5 minutes
+          setTimeout(() => {
+            if (!popup.closed) {
+              console.log('⏰ Popup timeout, closing popup');
+              popup.close();
+            }
             clearInterval(checkClosed);
-            console.log('🔄 Popup closed, checking session...');
-            
-            // Check if authentication was successful by getting the session
-            supabase.auth.getSession().then(({ data: { session } }) => {
-              if (session) {
-                console.log('✅ OAuth popup authentication successful');
-                resolve({ error: null });
-              } else {
-                console.log('❌ OAuth popup closed without authentication');
-                resolve({ error: new Error('Authentication cancelled or failed') });
-              }
-            });
-          }
-        }, 1000);
-
-        // Timeout after 5 minutes
-        setTimeout(() => {
-          if (!popup.closed) {
-            popup.close();
-          }
-          clearInterval(checkClosed);
-          console.log('⏰ OAuth popup timeout');
-          resolve({ error: new Error('Authentication timeout') });
-        }, 300000);
-      }).catch((err) => {
-        console.error('❌ Error invoking google-auth-url function:', err);
+            resolve({ error: new Error('Authentication timeout - please try again') });
+          }, 300000);
+          
+        }).catch((err) => {
+          console.error('❌ Error calling edge function:', err);
+          resolve({ error: new Error(`Failed to start authentication: ${err.message}`) });
+        });
+        
+      } catch (err) {
+        console.error('❌ Unexpected error in popup flow:', err);
         resolve({ error: err });
-      });
+      }
     });
   };
 

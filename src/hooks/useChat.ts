@@ -27,6 +27,45 @@ export const useChat = () => {
     loadJournalFromSupabase();
   }, []);
 
+  // Add sample messages for development mode when no user is authenticated
+  useEffect(() => {
+    const isDevelopment = window.location.hostname.includes('lovable.app');
+    
+    if (isDevelopment) {
+      // Check if user is authenticated
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (!user && messages.length === 0) {
+          // Add sample messages for development
+          const sampleMessages: Message[] = [
+            {
+              id: 'sample-1',
+              content: 'Welcome to your AI chat interface! This is a sample message for development.',
+              persona: 'gunnar',
+              timestamp: new Date(Date.now() - 60000), // 1 minute ago
+              isUser: false
+            },
+            {
+              id: 'sample-2', 
+              content: 'Hello! I can see the interface is working. Ready to start chatting!',
+              persona: 'Boss',
+              timestamp: new Date(Date.now() - 30000), // 30 seconds ago
+              isUser: true
+            },
+            {
+              id: 'sample-3',
+              content: 'Perfect! The development bypass is working correctly. You can now work on the app features without needing to authenticate.',
+              persona: 'samara', 
+              timestamp: new Date(),
+              isUser: false
+            }
+          ];
+          
+          setMessages(sampleMessages);
+        }
+      });
+    }
+  }, [messages.length]);
+
   const loadSuperjournalFromSupabase = async () => {
     try {
       

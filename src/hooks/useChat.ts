@@ -12,7 +12,6 @@ interface Message {
     fileName: string;
     publicUrl: string;
     originalName: string;
-    size: number;
     type: string;
   }[];
 }
@@ -59,7 +58,6 @@ export const useChat = () => {
               fileName: string;
               publicUrl: string;
               originalName: string;
-              size: number;
               type: string;
             }> : []
           });

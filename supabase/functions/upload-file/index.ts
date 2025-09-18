@@ -120,7 +120,6 @@ serve(async (req) => {
           file_name: sanitizedName,
           original_name: file.name,
           public_url: publicUrl,
-          file_size: file.size,
           file_type: file.type || 'application/octet-stream',
           user_id: user.id
         });
@@ -133,7 +132,6 @@ serve(async (req) => {
           file_name: sanitizedName,
           original_name: file.name,
           public_url: publicUrl,
-          file_size: file.size,
           file_type: file.type || 'application/octet-stream',
           category: category,
           user_id: user.id

@@ -79,9 +79,9 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
       supabase.from('processes').select('*').eq('name', 'turn-protocol').single(),
       supabase.from('boss').select('*').single(),
       supabase.from('personas').select('*').eq('name', personaName).single(),
-      supabase.from('past_journals_full').select('*').order('created_at', { ascending: false }),
-      supabase.from('persistent_attachments').select('*').order('created_at', { ascending: false }),
-      supabase.from('ephemeral_attachments').select('*').order('created_at', { ascending: false }).limit(1),
+      supabase.from('past_journals_full').select('*'),
+      supabase.from('persistent_attachments').select('*'),
+      supabase.from('ephemeral_attachments').select('*').limit(1),
       supabase.rpc('get_google_connection_status')
     ]);
 
@@ -179,8 +179,6 @@ function buildCall1Context(
     context += `## PAST JOURNALS\n`;
     pastJournals.forEach(journal => {
       context += `### ${journal.title}\n`;
-      context += `**Type:** ${journal.entry_type}\n`;
-      context += `**Created:** ${journal.created_at}\n`;
       if (journal.tags && journal.tags.length > 0) {
         context += `**Tags:** ${journal.tags.join(', ')}\n`;
       }
@@ -196,8 +194,7 @@ function buildCall1Context(
       const categoryFiles = persistentAttachments.filter(a => a.category === category);
       context += `### ${category.toUpperCase()}\n`;
       categoryFiles.forEach(file => {
-        context += `- **${file.original_name}** (${file.file_type}) - ${file.file_size} bytes\n`;
-        context += `  Created: ${file.created_at}\n`;
+        context += `- **${file.original_name}** (${file.file_type})\n`;
       });
       context += '\n';
     });
@@ -207,8 +204,7 @@ function buildCall1Context(
   if (ephemeralAttachments.length > 0) {
     context += `## LATEST EPHEMERAL ATTACHMENT\n`;
     const attachment = ephemeralAttachments[0];
-    context += `- **${attachment.original_name}** (${attachment.file_type}) - ${attachment.file_size} bytes\n`;
-    context += `  Created: ${attachment.created_at}\n`;
+    context += `- **${attachment.original_name}** (${attachment.file_type})\n`;
     if (attachment.message_id) {
       context += `  Message ID: ${attachment.message_id}\n`;
     }

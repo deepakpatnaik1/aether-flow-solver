@@ -20,7 +20,6 @@ export type Database = {
           description: string
           id: string
           name: string
-          updated_at: string
           user_id: string | null
         }
         Insert: {
@@ -28,7 +27,6 @@ export type Database = {
           description: string
           id?: string
           name: string
-          updated_at?: string
           user_id?: string | null
         }
         Update: {
@@ -36,16 +34,13 @@ export type Database = {
           description?: string
           id?: string
           name?: string
-          updated_at?: string
           user_id?: string | null
         }
         Relationships: []
       }
       ephemeral_attachments: {
         Row: {
-          created_at: string
           file_name: string
-          file_size: number
           file_type: string
           id: string
           message_id: string | null
@@ -54,9 +49,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          created_at?: string
           file_name: string
-          file_size: number
           file_type: string
           id?: string
           message_id?: string | null
@@ -65,9 +58,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          created_at?: string
           file_name?: string
-          file_size?: number
           file_type?: string
           id?: string
           message_id?: string | null
@@ -80,32 +71,26 @@ export type Database = {
       google_tokens: {
         Row: {
           access_token: string
-          created_at: string
           expires_at: string
           id: string
           refresh_token: string | null
           scope: string
-          updated_at: string
           user_email: string
         }
         Insert: {
           access_token: string
-          created_at?: string
           expires_at: string
           id?: string
           refresh_token?: string | null
           scope: string
-          updated_at?: string
           user_email: string
         }
         Update: {
           access_token?: string
-          created_at?: string
           expires_at?: string
           id?: string
           refresh_token?: string | null
           scope?: string
-          updated_at?: string
           user_email?: string
         }
         Relationships: []
@@ -115,11 +100,9 @@ export type Database = {
           ai_response_content: string
           ai_response_model: string
           ai_response_persona: string
-          created_at: string
           entry_id: string
           id: string
           timestamp: string
-          updated_at: string
           user_id: string | null
           user_message_attachments: Json | null
           user_message_content: string
@@ -129,11 +112,9 @@ export type Database = {
           ai_response_content: string
           ai_response_model: string
           ai_response_persona: string
-          created_at?: string
           entry_id: string
           id?: string
           timestamp?: string
-          updated_at?: string
           user_id?: string | null
           user_message_attachments?: Json | null
           user_message_content: string
@@ -143,11 +124,9 @@ export type Database = {
           ai_response_content?: string
           ai_response_model?: string
           ai_response_persona?: string
-          created_at?: string
           entry_id?: string
           id?: string
           timestamp?: string
-          updated_at?: string
           user_id?: string | null
           user_message_attachments?: Json | null
           user_message_content?: string
@@ -159,31 +138,25 @@ export type Database = {
         Row: {
           content: string
           created_at: string
-          entry_type: string
           id: string
           tags: string[] | null
           title: string
-          updated_at: string
           user_id: string | null
         }
         Insert: {
           content: string
           created_at?: string
-          entry_type?: string
           id?: string
           tags?: string[] | null
           title: string
-          updated_at?: string
           user_id?: string | null
         }
         Update: {
           content?: string
           created_at?: string
-          entry_type?: string
           id?: string
           tags?: string[] | null
           title?: string
-          updated_at?: string
           user_id?: string | null
         }
         Relationships: []
@@ -191,38 +164,29 @@ export type Database = {
       persistent_attachments: {
         Row: {
           category: string
-          created_at: string
           file_name: string
-          file_size: number
           file_type: string
           id: string
           original_name: string
           public_url: string
-          updated_at: string
           user_id: string | null
         }
         Insert: {
           category: string
-          created_at?: string
           file_name: string
-          file_size: number
           file_type: string
           id?: string
           original_name: string
           public_url: string
-          updated_at?: string
           user_id?: string | null
         }
         Update: {
           category?: string
-          created_at?: string
           file_name?: string
-          file_size?: number
           file_type?: string
           id?: string
           original_name?: string
           public_url?: string
-          updated_at?: string
           user_id?: string | null
         }
         Relationships: []
@@ -233,7 +197,6 @@ export type Database = {
           description: string
           id: string
           name: string
-          updated_at: string
           user_id: string | null
         }
         Insert: {
@@ -241,7 +204,6 @@ export type Database = {
           description: string
           id?: string
           name: string
-          updated_at?: string
           user_id?: string | null
         }
         Update: {
@@ -249,7 +211,6 @@ export type Database = {
           description?: string
           id?: string
           name?: string
-          updated_at?: string
           user_id?: string | null
         }
         Relationships: []
@@ -260,7 +221,6 @@ export type Database = {
           created_at: string
           id: string
           name: string
-          updated_at: string
           user_id: string | null
         }
         Insert: {
@@ -268,7 +228,6 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
-          updated_at?: string
           user_id?: string | null
         }
         Update: {
@@ -276,7 +235,6 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
-          updated_at?: string
           user_id?: string | null
         }
         Relationships: []
@@ -286,11 +244,9 @@ export type Database = {
           ai_response_content: string
           ai_response_model: string
           ai_response_persona: string
-          created_at: string
           entry_id: string
           id: string
           timestamp: string
-          updated_at: string
           user_id: string | null
           user_message_attachments: Json | null
           user_message_content: string
@@ -300,11 +256,9 @@ export type Database = {
           ai_response_content: string
           ai_response_model: string
           ai_response_persona: string
-          created_at?: string
           entry_id: string
           id?: string
           timestamp?: string
-          updated_at?: string
           user_id?: string | null
           user_message_attachments?: Json | null
           user_message_content: string
@@ -314,11 +268,9 @@ export type Database = {
           ai_response_content?: string
           ai_response_model?: string
           ai_response_persona?: string
-          created_at?: string
           entry_id?: string
           id?: string
           timestamp?: string
-          updated_at?: string
           user_id?: string | null
           user_message_attachments?: Json | null
           user_message_content?: string

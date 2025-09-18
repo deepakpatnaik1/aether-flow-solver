@@ -24,7 +24,6 @@ interface Message {
     fileName: string;
     publicUrl: string;
     originalName: string;
-    size: number;
     type: string;
   }[];
 }

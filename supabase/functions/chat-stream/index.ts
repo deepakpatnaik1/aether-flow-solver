@@ -88,8 +88,8 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
     const turnProtocolContent = turnProtocolResult.data ? await turnProtocolResult.data.text() : '';
     const call1Context = buildCall1Context(
       { content: turnProtocolContent },
-      { content: bossResult },
-      { content: personaResult },
+      bossResult,
+      personaResult,
       pastJournalsContent || '',
       persistentAttachmentsResult.data || [],
       ephemeralAttachmentsResult.data || [],
@@ -118,8 +118,8 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
 // Build complete Call 1 context package with all required data
 function buildCall1Context(
   turnProtocol: any, 
-  boss: any, 
-  persona: any, 
+  bossContent: string, 
+  personaContent: string, 
   pastJournalsContent: string, 
   persistentAttachments: any[], 
   ephemeralAttachments: any[],
@@ -128,22 +128,19 @@ function buildCall1Context(
   let context = '';
   
   // 1. Turn Protocol (comes first and includes everything in the list)
-  if (turnProtocol) {
+  if (turnProtocol && turnProtocol.content) {
     context += `# TURN PROTOCOL\n\n${turnProtocol.content}\n\n`;
     context += `This protocol governs how to use all the following context data:\n\n`;
   }
   
   // 2. Boss Profile
-  if (boss) {
-    context += `## BOSS PROFILE\n`;
-    context += `**Name:** ${boss.name}\n`;
-    context += `**Description:** ${boss.description}\n\n`;
+  if (bossContent) {
+    context += `## BOSS PROFILE\n\n${bossContent}\n\n`;
   }
 
   // 3. Active Persona Profile
-  if (persona) {
-    context += `## ACTIVE PERSONA: ${persona.name}\n`;
-    context += `**Description:** ${persona.description}\n\n`;
+  if (personaContent) {
+    context += `## ACTIVE PERSONA\n\n${personaContent}\n\n`;
   }
 
   // 4. Google Workspace Integration Status

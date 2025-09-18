@@ -388,7 +388,7 @@ serve(async (req) => {
 
           console.log('🌊 Starting streaming...');
           let fullPersonaResponse = ''; // Collect the complete response
-          let turnId = crypto.randomUUID(); // Generate unique turn ID
+          let streamTurnId = turnId || crypto.randomUUID(); // Use provided turnId or generate new one
 
           while (true) {
             const { done, value } = await reader.read();
@@ -400,7 +400,7 @@ serve(async (req) => {
                 console.log('💾 Writing to superjournal_entries immediately...');
                 
                 const superjournalEntry = {
-                  entry_id: turnId,
+                  entry_id: streamTurnId,
                   user_message_content: userMessage.content || 'No user input',
                   user_message_persona: 'Boss',
                   user_message_attachments: userMessage.attachments || [],
@@ -431,7 +431,7 @@ serve(async (req) => {
                     'Authorization': 'Bearer ' + SUPABASE_SERVICE_ROLE_KEY,
                   },
                   body: JSON.stringify({
-                    entryId: turnId,
+                    entryId: streamTurnId,
                     userInput: userMessage.content || 'No user input',
                     personaResponse: fullPersonaResponse,
                     userPersona: 'Boss',
@@ -465,7 +465,7 @@ serve(async (req) => {
                     controller.enqueue(encoder.encode(JSON.stringify({ 
                       type: 'content_delta', 
                       delta: delta,
-                      turnId: turnId
+                      turnId: streamTurnId
                     }) + '\n'));
                   }
                 } catch (parseError) {
@@ -478,7 +478,7 @@ serve(async (req) => {
           // Completion signal
           controller.enqueue(encoder.encode(JSON.stringify({
             type: 'complete',
-            turnId: turnId
+            turnId: streamTurnId
           }) + '\n'));
           
           controller.close();

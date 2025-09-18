@@ -151,7 +151,7 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
+    height: 1px;
     background: linear-gradient(90deg, 
       transparent 0%, 
       hsl(var(--destructive) / 0.2) 15%, 
@@ -162,7 +162,7 @@
       transparent 100%
     );
     background-size: 200% 100%;
-    animation: streak-flow 4s ease-in-out infinite;
+    animation: streak-flow 20s ease-in-out infinite;
     opacity: 1;
   }
 

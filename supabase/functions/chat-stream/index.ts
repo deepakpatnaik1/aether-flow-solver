@@ -86,25 +86,83 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
 
     // Build the complete Call 1 context package
     const turnProtocolContent = turnProtocolResult.data ? await turnProtocolResult.data.text() : '';
-    // Transform bucket files to match expected format
-    const transformedPersistentAttachments = (persistentAttachmentsResult.data || []).map(file => {
-      const pathParts = file.name.split('/');
-      const category = pathParts.length > 1 ? pathParts[0] : 'uncategorized';
-      const fileName = pathParts[pathParts.length - 1];
-      return {
-        category: category,
-        original_name: fileName,
-        file_type: file.metadata?.mimetype || 'application/octet-stream'
-      };
-    });
+    
+    // Load actual file contents for persistent attachments
+    const persistentAttachmentsWithContent = await Promise.all(
+      (persistentAttachmentsResult.data || []).map(async (file) => {
+        const pathParts = file.name.split('/');
+        const category = pathParts.length > 1 ? pathParts[0] : 'uncategorized';
+        const fileName = pathParts[pathParts.length - 1];
+        
+        try {
+          const downloadResult = await supabase.storage.from('persistent-attachments').download(file.name);
+          let content = '';
+          if (downloadResult.data) {
+            const mimeType = file.metadata?.mimetype || 'application/octet-stream';
+            if (mimeType.startsWith('text/') || mimeType === 'application/json' || mimeType === 'application/xml') {
+              content = await downloadResult.data.text();
+            } else {
+              content = `[Binary file - ${Math.round(downloadResult.data.size / 1024)}KB]`;
+            }
+          }
+          
+          return {
+            category: category,
+            original_name: fileName,
+            file_type: file.metadata?.mimetype || 'application/octet-stream',
+            content: content
+          };
+        } catch (error) {
+          console.error(`Failed to load persistent attachment ${file.name}:`, error);
+          return {
+            category: category,
+            original_name: fileName,
+            file_type: file.metadata?.mimetype || 'application/octet-stream',
+            content: '[Failed to load content]'
+          };
+        }
+      })
+    );
+
+    // Load actual file contents for ephemeral attachments
+    const ephemeralAttachmentsWithContent = await Promise.all(
+      (ephemeralAttachmentsResult.data || []).map(async (attachment) => {
+        try {
+          // Extract file name from public_url for download
+          const urlParts = attachment.public_url.split('/');
+          const fileName = urlParts[urlParts.length - 1];
+          
+          const downloadResult = await supabase.storage.from('ephemeral-attachments').download(fileName);
+          let content = '';
+          if (downloadResult.data) {
+            if (attachment.file_type.startsWith('text/') || attachment.file_type === 'application/json' || attachment.file_type === 'application/xml') {
+              content = await downloadResult.data.text();
+            } else {
+              content = `[Binary file - ${Math.round(downloadResult.data.size / 1024)}KB]`;
+            }
+          }
+          
+          return {
+            ...attachment,
+            content: content
+          };
+        } catch (error) {
+          console.error(`Failed to load ephemeral attachment ${attachment.original_name}:`, error);
+          return {
+            ...attachment,
+            content: '[Failed to load content]'
+          };
+        }
+      })
+    );
 
     const call1Context = buildCall1Context(
       { content: turnProtocolContent },
       bossResult,
       personaResult,
       pastJournalsContent || '',
-      transformedPersistentAttachments,
-      ephemeralAttachmentsResult.data || [],
+      persistentAttachmentsWithContent,
+      ephemeralAttachmentsWithContent,
       journalEntriesResult.data || []
     );
 
@@ -114,8 +172,8 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
       boss: bossResult ? 'loaded' : 'missing',
       persona: personaResult ? 'loaded' : 'missing',
       pastJournals: pastJournalsContent ? pastJournalsContent.length : 0,
-      persistentAttachments: persistentAttachmentsResult.data?.length || 0,
-      ephemeralAttachments: ephemeralAttachmentsResult.data?.length || 0,
+      persistentAttachments: persistentAttachmentsWithContent.length,
+      ephemeralAttachments: ephemeralAttachmentsWithContent.length,
       journalEntries: journalEntriesResult.data?.length || 0,
       contextSize: call1Context.length
     });
@@ -181,7 +239,7 @@ function buildCall1Context(
     context += '\n';
   }
 
-  // 6. Persistent Attachments Table (entire table)
+  // 6. Persistent Attachments Table (entire table with content)
   if (persistentAttachments.length > 0) {
     context += `## PERSISTENT ATTACHMENTS\n`;
     const categories = [...new Set(persistentAttachments.map(a => a.category))];
@@ -190,18 +248,28 @@ function buildCall1Context(
       context += `### ${category.toUpperCase()}\n`;
       categoryFiles.forEach(file => {
         context += `- **${file.original_name}** (${file.file_type})\n`;
+        if (file.content && file.content !== '[Failed to load content]') {
+          context += `\`\`\`\n${file.content}\n\`\`\`\n`;
+        } else {
+          context += `  ${file.content || 'Content not available'}\n`;
+        }
       });
       context += '\n';
     });
   }
 
-  // 7. Ephemeral Attachments (latest row only)
+  // 7. Ephemeral Attachments (latest row only with content)
   if (ephemeralAttachments.length > 0) {
     context += `## LATEST EPHEMERAL ATTACHMENT\n`;
     const attachment = ephemeralAttachments[0];
     context += `- **${attachment.original_name}** (${attachment.file_type})\n`;
     if (attachment.message_id) {
       context += `  Message ID: ${attachment.message_id}\n`;
+    }
+    if (attachment.content && attachment.content !== '[Failed to load content]') {
+      context += `\`\`\`\n${attachment.content}\n\`\`\`\n`;
+    } else {
+      context += `  ${attachment.content || 'Content not available'}\n`;
     }
     context += '\n';
   }

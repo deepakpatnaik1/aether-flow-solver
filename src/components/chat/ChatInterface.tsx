@@ -337,10 +337,7 @@ const ChatInterface = () => {
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header with User Menu */}
-      <div className="flex justify-between items-center p-4 border-b border-border/30">
-        <div className="flex items-center gap-2">
-          <h1 className="text-lg font-semibold">AI Assistant</h1>
-        </div>
+      <div className="flex justify-end items-center p-4 border-b border-border/30">
         <UserMenu />
       </div>
 

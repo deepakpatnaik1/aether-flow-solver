@@ -19,21 +19,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Load artisan cut process from processes table
+// Load artisan cut process from processes bucket
 async function loadArtisanCutProcess(): Promise<string> {
   try {
-    const { data: process, error } = await supabase
+    const { data, error } = await supabase.storage
       .from('processes')
-      .select('*')
-      .eq('name', 'artisan-cut-extraction')
-      .single();
+      .download('artisan-cut-extraction.md');
 
-    if (error || !process) {
+    if (error || !data) {
       console.log('ℹ️ No artisan cut process found');
       return 'Extract the essence of this conversation into a concise, strategic insight.';
     }
 
-    return process.content;
+    const content = await data.text();
+    return content || 'Extract the essence of this conversation into a concise, strategic insight.';
   } catch (error) {
     console.error('❌ Error loading artisan cut process:', error);
     return 'Extract the essence of this conversation into a concise, strategic insight.';

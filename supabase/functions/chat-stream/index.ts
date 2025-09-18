@@ -19,41 +19,40 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Load Boss profile from boss table
+// Load Boss profile from boss bucket
 async function loadBossProfile(): Promise<string> {
   try {
-    const { data: boss, error } = await supabase
+    const { data, error } = await supabase.storage
       .from('boss')
-      .select('name, description')
-      .single();
+      .download('Boss.txt');
 
     if (error) {
       console.log('ℹ️ No boss profile found');
       return '';
     }
 
-    return boss ? `# ${boss.name}\n\n${boss.description}` : '';
+    const text = await data.text();
+    return text;
   } catch (error) {
     console.error('❌ Error loading boss profile:', error);
     return '';
   }
 }
 
-// Load active persona profile from personas table
+// Load active persona profile from personas bucket
 async function loadPersonaProfile(personaName: string): Promise<string> {
   try {
-    const { data: persona, error } = await supabase
+    const { data, error } = await supabase.storage
       .from('personas')
-      .select('name, description')
-      .eq('name', personaName)
-      .single();
+      .download(`${personaName}.txt`);
 
     if (error) {
       console.log(`ℹ️ No persona profile found for ${personaName}`);
       return '';
     }
 
-    return persona ? `# ${persona.name}\n\n${persona.description}` : '';
+    const text = await data.text();
+    return text;
   } catch (error) {
     console.error('❌ Error loading persona profile:', error);
     return '';
@@ -76,20 +75,21 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
       ephemeralAttachmentsResult,
       googleTokensResult
     ] = await Promise.all([
-      supabase.from('processes').select('*').eq('name', 'turn-protocol').single(),
-      supabase.from('boss').select('*').single(),
-      supabase.from('personas').select('*').eq('name', personaName).single(),
-      fetch(`https://suncgglbheilkeimwuxt.supabase.co/storage/v1/object/public/documents/past_journals_full.txt`).then(r => r.ok ? r.text() : '').catch(() => ''),
+      supabase.storage.from('processes').download('turn-protocol.md'),
+      loadBossProfile(),
+      loadPersonaProfile(personaName),
+      supabase.storage.from('past-journals').download('Past Journals.txt').then(r => r.data ? r.data.text() : '').catch(() => ''),
       supabase.from('persistent_attachments').select('*'),
       supabase.from('ephemeral_attachments').select('*').limit(1),
       supabase.rpc('get_google_connection_status')
     ]);
 
     // Build the complete Call 1 context package
+    const turnProtocolContent = turnProtocolResult.data ? await turnProtocolResult.data.text() : '';
     const call1Context = buildCall1Context(
-      turnProtocolResult.data,
-      bossResult.data,
-      personaResult.data,
+      { content: turnProtocolContent },
+      { content: bossResult },
+      { content: personaResult },
       pastJournalsContent || '',
       persistentAttachmentsResult.data || [],
       ephemeralAttachmentsResult.data || [],
@@ -98,10 +98,10 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
 
     const loadTime = performance.now() - startTime;
     console.log('✅ Call 1 data package loaded in', Math.round(loadTime), 'ms:', {
-      turnProtocol: turnProtocolResult.data ? 'loaded' : 'missing',
-      boss: bossResult.data ? 'loaded' : 'missing',
-      persona: personaResult.data ? 'loaded' : 'missing',
-      pastJournals: pastJournalsResult.data?.length || 0,
+      turnProtocol: turnProtocolContent ? 'loaded' : 'missing',
+      boss: bossResult ? 'loaded' : 'missing',
+      persona: personaResult ? 'loaded' : 'missing',
+      pastJournals: pastJournalsContent ? pastJournalsContent.length : 0,
       persistentAttachments: persistentAttachmentsResult.data?.length || 0,
       ephemeralAttachments: ephemeralAttachmentsResult.data?.length || 0,
       googleConnection: googleTokensResult.data?.[0] ? 'connected' : 'not connected',

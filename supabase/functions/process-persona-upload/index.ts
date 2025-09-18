@@ -37,34 +37,14 @@ Deno.serve(async (req) => {
         console.log(`Content preview: ${content.substring(0, 100)}...`)
 
         if (category === 'boss' || uploadResult.fileName.toLowerCase().includes('boss')) {
-          // Process boss file
-          const name = extractNameFromContent(content) || 'Boss – Founder and CEO of Oovar'
-          
-          // Upsert boss (update if exists, insert if not)
-          const { data: bossData, error: bossError } = await supabase
-            .from('boss')
-            .upsert({ 
-              name,
-              description: content.trim()
-            })
-            .select()
-
-          if (bossError) {
-            console.error('Error upserting boss:', bossError)
-            results.push({ 
-              fileName: uploadResult.fileName, 
-              status: 'error', 
-              error: bossError.message 
-            })
-          } else {
-            console.log('✅ Boss profile processed successfully')
-            results.push({ 
-              fileName: uploadResult.fileName, 
-              status: 'success', 
-              type: 'boss',
-              data: bossData 
-            })
-          }
+          // Process boss file - now stored in storage bucket, no database upsert needed
+          console.log('✅ Boss profile processed and stored in boss bucket')
+          results.push({ 
+            fileName: uploadResult.fileName, 
+            status: 'success', 
+            type: 'boss',
+            location: 'boss bucket'
+          })
         } else {
           // Process persona file
           const personaName = extractPersonaName(uploadResult.fileName, content)
@@ -78,31 +58,15 @@ Deno.serve(async (req) => {
             continue
           }
 
-          // Upsert persona (update if exists, insert if not)
-          const { data: personaData, error: personaError } = await supabase
-            .from('personas')
-            .upsert({ 
-              name: personaName,
-              description: content.trim()
-            })
-            .select()
-
-          if (personaError) {
-            console.error(`Error upserting persona ${personaName}:`, personaError)
-            results.push({ 
-              fileName: uploadResult.fileName, 
-              status: 'error', 
-              error: personaError.message 
-            })
-          } else {
-            console.log(`✅ Persona ${personaName} processed successfully`)
-            results.push({ 
-              fileName: uploadResult.fileName, 
-              status: 'success', 
-              type: 'persona',
-              personaName,
-              data: personaData 
-            })
+          // Upsert persona - now stored in storage bucket, no database upsert needed
+          console.log(`✅ Persona ${personaName} processed and stored in personas bucket`)
+          results.push({ 
+            fileName: uploadResult.fileName, 
+            status: 'success', 
+            type: 'persona',
+            personaName,
+            location: 'personas bucket'
+          })
           }
         }
       } catch (error) {

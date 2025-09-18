@@ -289,9 +289,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
                     </thead>
                     <tbody>
                       {rows.map((row, rowIdx) => (
-                        <tr key={rowIdx} className="hover:bg-muted/20">
+                        <tr key={`row-${i}-${rowIdx}`} className="hover:bg-muted/20">
                           {row.map((cell, cellIdx) => (
-                            <td key={cellIdx} className="border border-border px-3 py-2 text-foreground">
+                            <td key={`cell-${i}-${rowIdx}-${cellIdx}`} className="border border-border px-3 py-2 text-foreground">
                               {processInlineMarkdown(cell)}
                             </td>
                           ))}
@@ -635,21 +635,21 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
       const highlightMatch = part.match(/__HIGHLIGHT_(\d+)__/);
 
       if (mathMatch) {
-        finalElements.push(elements.find(el => el.key === `${keyBase}-math-${mathMatch[1]}`) || part);
+        finalElements.push(elements.find(el => el.key === `${keyBase}-math-${mathMatch[1]}`) || <span key={`${keyBase}-text-${index}`}>{part}</span>);
       } else if (linkMatch) {
-        finalElements.push(elements.find(el => el.key === `${keyBase}-link-${linkMatch[1]}`) || part);
+        finalElements.push(elements.find(el => el.key === `${keyBase}-link-${linkMatch[1]}`) || <span key={`${keyBase}-text-${index}`}>{part}</span>);
       } else if (boldMatch) {
-        finalElements.push(elements.find(el => el.key === `${keyBase}-bold-${boldMatch[1]}`) || part);
+        finalElements.push(elements.find(el => el.key === `${keyBase}-bold-${boldMatch[1]}`) || <span key={`${keyBase}-text-${index}`}>{part}</span>);
       } else if (italicMatch) {
-        finalElements.push(elements.find(el => el.key === `${keyBase}-italic-${italicMatch[1]}`) || part);
+        finalElements.push(elements.find(el => el.key === `${keyBase}-italic-${italicMatch[1]}`) || <span key={`${keyBase}-text-${index}`}>{part}</span>);
       } else if (strikeMatch) {
-        finalElements.push(elements.find(el => el.key === `${keyBase}-strike-${strikeMatch[1]}`) || part);
+        finalElements.push(elements.find(el => el.key === `${keyBase}-strike-${strikeMatch[1]}`) || <span key={`${keyBase}-text-${index}`}>{part}</span>);
       } else if (kbdMatch) {
-        finalElements.push(elements.find(el => el.key === `${keyBase}-kbd-${kbdMatch[1]}`) || part);
+        finalElements.push(elements.find(el => el.key === `${keyBase}-kbd-${kbdMatch[1]}`) || <span key={`${keyBase}-text-${index}`}>{part}</span>);
       } else if (highlightMatch) {
-        finalElements.push(elements.find(el => el.key === `${keyBase}-highlight-${highlightMatch[1]}`) || part);
-      } else {
-        finalElements.push(part);
+        finalElements.push(elements.find(el => el.key === `${keyBase}-highlight-${highlightMatch[1]}`) || <span key={`${keyBase}-text-${index}`}>{part}</span>);
+      } else if (part) {
+        finalElements.push(<span key={`${keyBase}-text-${index}`}>{part}</span>);
       }
     });
 

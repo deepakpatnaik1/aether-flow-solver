@@ -21,10 +21,7 @@ serve(async (req) => {
   try {
     console.log('Upload function called');
     
-    // Since JWT verification is disabled, we'll skip user authentication for now
-    const authHeader = req.headers.get('authorization');
-    console.log('Auth header present:', !!authHeader);
-    
+    // Skip authentication since verify_jwt = false in config
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const category = formData.get('category') as string || 'documents';
@@ -109,7 +106,7 @@ serve(async (req) => {
           original_name: file.name,
           public_url: publicUrl,
           file_type: file.type || 'application/octet-stream',
-          user_id: 'anonymous' // Since auth is disabled
+          user_id: 'anonymous' // No authentication required
         });
       dbError = error;
     } else {

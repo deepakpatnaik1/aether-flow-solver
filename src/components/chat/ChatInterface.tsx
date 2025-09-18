@@ -346,7 +346,7 @@ const ChatInterface = () => {
             {uploadedFiles.length > 0 && (
               <div className="flex flex-wrap gap-2 p-2 bg-background/50 rounded border">
                 {uploadedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center gap-2 bg-background rounded px-3 py-1 text-sm border">
+                  <div key={index} className="flex items-center gap-2 bg-background rounded px-3 py-1 text-xxs border">
                     <span className="truncate max-w-32">{file.originalName}</span>
                     <Button
                       variant="ghost"

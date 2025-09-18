@@ -184,7 +184,7 @@ const GoogleIntegration: React.FC = () => {
                 <Mail className="h-5 w-5 text-blue-600" />
                 <div className="flex-1">
                   <p className="font-medium text-sm">Gmail</p>
-                  <p className="text-xs text-muted-foreground">Send emails</p>
+                  <p className="text-xxs text-muted-foreground">Send emails</p>
                 </div>
                 {getServiceStatus('https://www.googleapis.com/auth/gmail.send')}
               </div>
@@ -193,7 +193,7 @@ const GoogleIntegration: React.FC = () => {
                 <FileText className="h-5 w-5 text-blue-600" />
                 <div className="flex-1">
                   <p className="font-medium text-sm">Google Docs</p>
-                  <p className="text-xs text-muted-foreground">Create documents</p>
+                  <p className="text-xxs text-muted-foreground">Create documents</p>
                 </div>
                 {getServiceStatus('https://www.googleapis.com/auth/documents')}
               </div>
@@ -202,7 +202,7 @@ const GoogleIntegration: React.FC = () => {
                 <Presentation className="h-5 w-5 text-blue-600" />
                 <div className="flex-1">
                   <p className="font-medium text-sm">Google Slides</p>
-                  <p className="text-xs text-muted-foreground">Create presentations</p>
+                  <p className="text-xxs text-muted-foreground">Create presentations</p>
                 </div>
                 {getServiceStatus('https://www.googleapis.com/auth/presentations')}
               </div>

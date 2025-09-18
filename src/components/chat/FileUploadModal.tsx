@@ -84,7 +84,7 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
               }
             </p>
             {selectedCategory !== 'persona' && (
-              <code className="text-xs">
+              <code className="text-xxs">
                 {selectedCategoryData?.bucket}/
                 {files ? Array.from(files)[0]?.name : 'filename.ext'}
               </code>

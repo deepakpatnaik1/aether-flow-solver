@@ -77,7 +77,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
               >
                 <Copy className="h-3 w-3" />
               </Button>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xxs text-muted-foreground">
                 {format(message.timestamp, 'HH:mm')}
               </span>
             </div>
@@ -98,7 +98,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
                         href={attachment.publicUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm hover:underline flex items-center gap-1"
+                        className="text-xxs hover:underline flex items-center gap-1"
                       >
                         📎 {attachment.originalName}
                       </a>

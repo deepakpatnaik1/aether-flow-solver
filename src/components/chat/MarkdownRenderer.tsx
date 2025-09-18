@@ -183,7 +183,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
               <div key={i} className="my-3 rounded-lg bg-muted/50 border overflow-hidden group">
                 <div className="flex items-center justify-between">
                   {codeBlockLanguage && (
-                    <div className="px-3 py-1 bg-muted/70 text-xs text-muted-foreground border-b flex-1">
+                    <div className="px-3 py-1 bg-muted/70 text-xxs text-muted-foreground border-b flex-1">
                       {codeBlockLanguage}
                     </div>
                   )}
@@ -454,7 +454,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
         <div key="unclosed-code" className="my-3 rounded-lg bg-muted/50 border overflow-hidden group">
           <div className="flex items-center justify-between">
             {codeBlockLanguage && (
-              <div className="px-3 py-1 bg-muted/70 text-xs text-muted-foreground border-b flex-1">
+              <div className="px-3 py-1 bg-muted/70 text-xxs text-muted-foreground border-b flex-1">
                 {codeBlockLanguage}
               </div>
             )}
@@ -553,7 +553,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
     result = result.replace(/<kbd>([^<]+)<\/kbd>/g, (match, kbdText) => {
       const placeholder = `__KBD_${key}__`;
       elements.push(
-        <kbd key={`${keyBase}-kbd-${key}`} className="px-1.5 py-0.5 bg-muted/70 border border-border rounded text-xs font-mono">
+        <kbd key={`${keyBase}-kbd-${key}`} className="px-1.5 py-0.5 bg-muted/70 border border-border rounded text-xxs font-mono">
           {kbdText}
         </kbd>
       );

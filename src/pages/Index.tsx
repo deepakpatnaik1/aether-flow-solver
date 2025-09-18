@@ -14,9 +14,10 @@ const Index = () => {
     }
   }, [navigate]);
 
-  // Redirect to auth if not authenticated
+  // Redirect to auth if not authenticated (unless in development mode)
   useEffect(() => {
-    if (!loading && !user) {
+    const isDevelopment = window.location.hostname.includes('lovable.app');
+    if (!loading && !user && !isDevelopment) {
       navigate('/auth', { replace: true });
     }
   }, [user, loading, navigate]);
@@ -30,8 +31,9 @@ const Index = () => {
     );
   }
 
-  // Don't render if not authenticated (will redirect)
-  if (!user) {
+  // Don't render if not authenticated (unless in development mode)
+  const isDevelopment = window.location.hostname.includes('lovable.app');
+  if (!user && !isDevelopment) {
     return null;
   }
 

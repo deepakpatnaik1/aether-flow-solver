@@ -9,6 +9,12 @@ const Auth = () => {
   const { user, loading, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
 
+  // Check if we're in development (Lovable preview)
+  const isDevelopment = window.location.hostname.includes('lovable.app');
+  
+  console.log('Auth page - hostname:', window.location.hostname);
+  console.log('Auth page - isDevelopment:', isDevelopment);
+
   useEffect(() => {
     // Redirect to main page if already authenticated
     if (!loading && user) {
@@ -25,6 +31,11 @@ const Auth = () => {
     } catch (error) {
       toast.error('Sign in failed. Please try again.');
     }
+  };
+
+  const handleDevBypass = () => {
+    console.log('Development bypass clicked');
+    navigate('/', { replace: true });
   };
 
   // Show loading while checking auth
@@ -78,9 +89,9 @@ const Auth = () => {
           </Button>
           
           {/* Development bypass - only show in Lovable preview */}
-          {window.location.hostname.includes('lovable.app') && (
+          {isDevelopment && (
             <Button 
-              onClick={() => navigate('/')}
+              onClick={handleDevBypass}
               className="w-full"
               variant="secondary"
             >

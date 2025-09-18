@@ -7,6 +7,14 @@ const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
+  // Check if we're in development (Lovable preview)
+  const isDevelopment = window.location.hostname.includes('lovable.app');
+  
+  console.log('Index page - hostname:', window.location.hostname);
+  console.log('Index page - isDevelopment:', isDevelopment);
+  console.log('Index page - user:', user);
+  console.log('Index page - loading:', loading);
+
   useEffect(() => {
     // Force redirect to main page if we're on auth route
     if (window.location.pathname === '/auth') {
@@ -16,11 +24,11 @@ const Index = () => {
 
   // Redirect to auth if not authenticated (unless in development mode)
   useEffect(() => {
-    const isDevelopment = window.location.hostname.includes('lovable.app');
     if (!loading && !user && !isDevelopment) {
+      console.log('Redirecting to auth - not authenticated and not in development');
       navigate('/auth', { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, isDevelopment]);
 
   // Show loading while checking auth
   if (loading) {
@@ -32,7 +40,6 @@ const Index = () => {
   }
 
   // Don't render if not authenticated (unless in development mode)
-  const isDevelopment = window.location.hostname.includes('lovable.app');
   if (!user && !isDevelopment) {
     return null;
   }

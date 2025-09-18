@@ -16,6 +16,8 @@ export const useAuth = () => {
   });
 
   useEffect(() => {
+    console.log('🔧 Initializing auth hook...');
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -29,10 +31,19 @@ export const useAuth = () => {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    console.log('📡 Checking for existing session...');
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log('📡 Session check result:', { session: !!session, error });
       setAuthState({
         user: session?.user ?? null,
         session,
+        loading: false,
+      });
+    }).catch((err) => {
+      console.error('❌ Session check failed:', err);
+      setAuthState({
+        user: null,
+        session: null,
         loading: false,
       });
     });

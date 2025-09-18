@@ -116,7 +116,7 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
       pastJournals: pastJournalsContent ? pastJournalsContent.length : 0,
       persistentAttachments: persistentAttachmentsResult.data?.length || 0,
       ephemeralAttachments: ephemeralAttachmentsResult.data?.length || 0,
-      googleConnection: googleTokensResult.data?.[0] ? 'connected' : 'not connected',
+      journalEntries: journalEntriesResult.data?.length || 0,
       contextSize: call1Context.length
     });
 
@@ -324,8 +324,34 @@ serve(async (req) => {
             if (done) {
               console.log('✅ Stream complete!');
               
-              // TRIGGER CALL 2 automatically in background
+              // IMMEDIATE SUPERJOURNAL WRITE - NO DELAYS
               if (fullPersonaResponse.trim()) {
+                console.log('💾 Writing to superjournal_entries immediately...');
+                
+                const userMessage = messages[messages.length - 1];
+                const superjournalEntry = {
+                  entry_id: turnId,
+                  user_message_content: userMessage?.content || 'No user input',
+                  user_message_persona: 'Boss',
+                  user_message_attachments: userMessage?.attachments || [],
+                  ai_response_content: fullPersonaResponse,
+                  ai_response_persona: persona,
+                  ai_response_model: model
+                };
+
+                // Write to superjournal_entries immediately
+                supabase
+                  .from('superjournal_entries')
+                  .insert(superjournalEntry)
+                  .then(({ error }) => {
+                    if (error) {
+                      console.error('❌ Failed to write to superjournal:', error);
+                    } else {
+                      console.log('✅ Superjournal entry saved immediately');
+                    }
+                  });
+
+                // TRIGGER CALL 2 automatically in background
                 console.log('🚀 Triggering Call 2 - Artisan Cut Processing...');
                 
                 // Background Call 2 - don't await, let it run silently
@@ -337,7 +363,7 @@ serve(async (req) => {
                   },
                   body: JSON.stringify({
                     entryId: turnId,
-                    userInput: messages[messages.length - 1]?.content || 'No user input',
+                    userInput: userMessage?.content || 'No user input',
                     personaResponse: fullPersonaResponse,
                     userPersona: 'Boss',
                     aiPersona: persona,

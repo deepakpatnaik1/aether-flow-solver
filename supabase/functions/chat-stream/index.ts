@@ -155,7 +155,7 @@ function buildCall1Context(
     context += `## ACTIVE PERSONA\n\n${personaContent}\n\n`;
   }
 
-  // 4. Google Workspace Integration Status
+  // 4. Google Workspace Integration Status (only when connected)
   if (googleTokens && new Date(googleTokens.expires_at) > new Date()) {
     const scopes = googleTokens.scope?.split(' ') || [];
     context += `## GOOGLE WORKSPACE INTEGRATION\n`;
@@ -177,11 +177,8 @@ function buildCall1Context(
     }
     
     context += `\n**Note:** The user has connected their Google account with these permissions available.\n\n`;
-  } else {
-    context += `## GOOGLE WORKSPACE INTEGRATION\n`;
-    context += `**Status:** NOT CONNECTED ❌\n`;
-    context += `The user needs to connect their Google account to enable email sending, document creation, and presentation features.\n\n`;
   }
+  // Note: No Google integration section sent when not connected to avoid LLM confusion
 
   // 5. Past Journals (consolidated content from file)
   if (pastJournalsContent.trim()) {

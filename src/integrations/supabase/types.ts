@@ -110,36 +110,6 @@ export type Database = {
         }
         Relationships: []
       }
-      persistent_attachments: {
-        Row: {
-          category: string
-          file_name: string
-          file_type: string
-          id: string
-          original_name: string
-          public_url: string
-          user_id: string | null
-        }
-        Insert: {
-          category: string
-          file_name: string
-          file_type: string
-          id?: string
-          original_name: string
-          public_url: string
-          user_id?: string | null
-        }
-        Update: {
-          category?: string
-          file_name?: string
-          file_type?: string
-          id?: string
-          original_name?: string
-          public_url?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       superjournal_entries: {
         Row: {
           ai_response_content: string

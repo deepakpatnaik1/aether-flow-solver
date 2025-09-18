@@ -9,7 +9,7 @@ export const PersonaBadge: React.FC<PersonaBadgeProps> = ({ persona }) => {
   const getPersonaColor = (persona: string) => {
     switch (persona.toLowerCase()) {
       case 'boss':
-        return '#0EAD0E'; // VIBRANT DARK GREEN - DIRECT
+        return '#C53030'; // VIBRANT DARK RED - DIRECT
       case 'gunnar':
         return '#3B4DE8'; // VIBRANT DARK BLUE - DISTINCT
       case 'samara':

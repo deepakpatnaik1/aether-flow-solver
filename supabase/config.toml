@@ -12,16 +12,10 @@ verify_jwt = false
 [functions.journal]
 verify_jwt = false
 
-[functions.process-journal-upload]
-verify_jwt = false
-
 [functions.process-persona-upload]
 verify_jwt = false
 
 [functions.artisan-cut-extraction]
-verify_jwt = false
-
-[functions.artisan-cut-call2]
 verify_jwt = false
 
 [functions.google-auth-url]

@@ -67,12 +67,12 @@
     --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.15);
     --shadow-glow: 0 0 24px rgba(70, 130, 220, 0.2);
 
-    /* MUTED PROFESSIONAL PALETTE - SERIOUS TONES */
-    --persona-boss: 0 35% 50%;       /* Muted Red */
-    --persona-gunnar: 210 25% 45%;   /* Muted Blue-Gray */
-    --persona-samara: 280 20% 45%;   /* Muted Purple-Gray */
-    --persona-kirby: 30 30% 45%;     /* Muted Amber */
-    --persona-stefan: 150 20% 40%;   /* Muted Teal-Gray */
+    /* VIBRANT DARK PALETTE - DISTINCT COLORS */
+    --persona-boss: 0 85% 40%;       /* Vibrant Dark Red */
+    --persona-gunnar: 240 85% 40%;   /* Vibrant Dark Blue */
+    --persona-samara: 300 80% 40%;   /* Electric Dark Magenta */
+    --persona-kirby: 30 85% 45%;     /* Vibrant Dark Orange */  
+    --persona-stefan: 140 80% 35%;   /* Electric Dark Green */
 
     /* Gradient Tokens */
     --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(180 84% 55%));
@@ -127,7 +127,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -146,7 +146,7 @@
 /* Professional Aether Chat Components */
 @layer components {
   .input-bar-container {
-    @apply px-4 py-3;
+    @apply px-4 py-1.5;
     background: var(--input-bar-background);
     backdrop-filter: var(--glass-blur);
     border-top: 1px solid var(--input-bar-border);
@@ -185,15 +185,15 @@
   }
 
   .input-bar-content {
-    @apply flex flex-col gap-2 max-w-4xl mx-auto;
+    @apply flex flex-col gap-1.5 max-w-4xl mx-auto;
   }
 
   .chat-input {
     @apply bg-transparent border-0 text-foreground placeholder:text-muted-foreground;
     @apply focus-visible:ring-0 focus-visible:ring-offset-0;
     @apply transition-all duration-200;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif !important;
-    font-size: 12px !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+    font-size: 13px !important;
     font-weight: 400 !important;
     line-height: 1.5 !important;
     letter-spacing: -0.01em;
@@ -201,8 +201,8 @@
 
   .chat-input::placeholder {
     @apply text-muted-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif !important;
-    font-size: 12px !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+    font-size: 13px !important;
     font-weight: 400 !important;
     line-height: 1.5 !important;
   }
@@ -307,35 +307,31 @@
   }
 
   .persona-badge {
-    @apply inline-flex items-center;
+    @apply inline-flex items-center py-0.5 px-2 rounded font-medium text-white;
+    @apply tracking-wide;
     font-size: 11px !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif !important;
-    font-weight: 600 !important;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    background: transparent !important;
-    padding: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    opacity: 0.7;
+    font-family: 'Lexend', system-ui, sans-serif !important;
+    font-weight: 500 !important;
+    box-shadow: none;
+    border: none;
   }
 
   .message-content {
     @apply text-foreground leading-relaxed space-y-0 flex-1 ml-0.5;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
   }
 
   .message-header {
     @apply text-lg font-semibold text-foreground mb-2;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
     font-weight: 600 !important;
     letter-spacing: -0.02em;
   }
 
   .message-text {
     @apply text-foreground leading-relaxed mb-2;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif !important;
-    font-size: 14px !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+    font-size: 13px !important;
     font-weight: 400 !important;
     line-height: 1.6 !important;
     letter-spacing: -0.01em;
@@ -343,13 +339,13 @@
 
   .message-bullet {
     @apply text-foreground/90 ml-4 leading-relaxed mb-1;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif !important;
-    font-size: 14px !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+    font-size: 13px !important;
   }
 
   .message-sub-bullet {
     @apply text-foreground/80 ml-8 text-sm leading-relaxed mb-1;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
   }
 
   /* Professional Copy Button */
@@ -366,13 +362,13 @@
 
   .markdown-content table th {
     @apply bg-muted/70 font-semibold text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
     font-weight: 500 !important;
   }
 
   .markdown-content table td {
     @apply text-sm text-foreground/90;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
   }
 
   .markdown-content table tr:nth-child(even) {
@@ -393,7 +389,7 @@
   /* Professional Math Formulas */
   .katex {
     @apply text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
   }
 
   /* Professional Input Validation States */
@@ -432,7 +428,7 @@
     @apply transition-all duration-150 ease-out;
     @apply hover:shadow-lg hover:scale-[1.02] active:scale-[0.98];
     @apply focus:ring-2 focus:ring-primary/20 focus:outline-none;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
     font-weight: 500 !important;
   }
 
@@ -441,7 +437,7 @@
     @apply font-medium rounded-lg px-4 py-2;
     @apply transition-all duration-150 ease-out;
     @apply hover:shadow-md hover:scale-[1.02] active:scale-[0.98];
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
     font-weight: 500 !important;
   }
 
@@ -450,7 +446,7 @@
     @apply bg-card border border-border/50 text-card-foreground;
     @apply rounded-lg px-3 py-2 text-sm font-medium;
     @apply shadow-lg;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
   }
 
   /* Professional Status Badges */

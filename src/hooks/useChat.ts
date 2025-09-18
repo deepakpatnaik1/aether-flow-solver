@@ -124,64 +124,17 @@ export const useChat = () => {
   };
 
   const saveToSuperjournal = async (userMessage: Message, aiMessage: Message, model: string, turnId?: string) => {
-    
-    try {
-      const entryId = turnId || crypto.randomUUID();
-      const timestamp = getBerlinTimeISO();
-
-      
-      const { error } = await supabase
-        .from('superjournal_entries')
-        .insert({
-          entry_id: entryId,
-          timestamp: timestamp,
-          user_id: null, // No authentication needed
-          user_message_content: userMessage.content,
-          user_message_persona: userMessage.persona,
-          user_message_attachments: userMessage.attachments || [],
-          ai_response_content: aiMessage.content,
-          ai_response_persona: aiMessage.persona,
-          ai_response_model: model
-        });
-
-      if (error) {
-        // Handle superjournal save error silently
-        return false;
-      }
-
-      
-      // Trigger Call 2 (Artisan Cut Extraction) in background - don't await
-      triggerArtisanCutExtraction(userMessage, aiMessage, model, entryId);
-      
-      return true;
-      
-    } catch (error) {
-      // Handle superjournal save error silently
-      return false;
-    }
+    // DEPRECATED: Superjournal writes now handled entirely by backend edge function
+    // This function maintained for backward compatibility but does nothing
+    console.warn('⚠️ saveToSuperjournal is deprecated - backend handles all persistence');
+    return true;
   };
 
   const triggerArtisanCutExtraction = async (userMessage: Message, aiMessage: Message, model: string, entryId: string) => {
-    try {
-      
-      const { error } = await supabase.functions.invoke('artisan-cut-extraction', {
-        body: {
-          userQuestion: userMessage.content,
-          personaResponse: aiMessage.content,
-          entryId,
-          userPersona: userMessage.persona,
-          aiPersona: aiMessage.persona,
-          model
-        }
-      });
-
-      if (error) {
-        // Handle Call 2 error silently
-      } else {
-      }
-    } catch (error) {
-      // Handle Call 2 trigger error silently
-    }
+    // DEPRECATED: Artisan cut extraction now triggered by backend
+    // This function maintained for backward compatibility but does nothing
+    console.warn('⚠️ triggerArtisanCutExtraction is deprecated - backend handles Call 2');
+    return true;
   };
 
   return {

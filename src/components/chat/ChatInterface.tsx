@@ -226,7 +226,8 @@ const ChatInterface = () => {
           messages: formattedMessages,
           model: selectedModel,
           persona: selectedPersona || 'gunnar',
-          turnId: crypto.randomUUID()
+          userMessage: userMessage, // Send complete user message with attachments
+          turnId: aiMessageId // Use consistent turn ID
         }),
       });
 
@@ -281,18 +282,7 @@ const ChatInterface = () => {
         reader.releaseLock();
       }
 
-      // Save conversation turn to superjournal database
-      const finalAiMessage = {
-        ...aiMessage,
-        content: streamingContent
-      };
-      
-      try {
-        const saved = await saveToSuperjournal(userMessage, finalAiMessage, selectedModel, receivedTurnId);
-        // Handle save result silently
-      } catch (saveError) {
-        // Handle save error silently
-      }
+      // Backend now handles all superjournal writes - no frontend persistence needed
 
     } catch (error) {
       // Handle error silently

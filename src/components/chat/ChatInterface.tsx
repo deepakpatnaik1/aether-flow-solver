@@ -367,7 +367,7 @@ const ChatInterface = () => {
                 ))}
               </div>
             )}
-            <div className="flex items-center gap-1 relative">
+            <div className="flex items-center gap-1 ml-3 relative">
               <Input
                 ref={inputRef}
                 value={message}

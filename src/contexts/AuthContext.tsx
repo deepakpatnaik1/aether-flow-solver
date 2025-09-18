@@ -20,17 +20,11 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // TEMPORARY - Auth disabled for UI finesse work
-  // TODO: Re-enable before production!
-  const mockUser = { id: 'temp-user', email: 'ui-testing@temp' } as User;
-
-  const [user, setUser] = useState<User | null>(mockUser);
-  const [session, setSession] = useState<Session | null>({} as Session);
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Auth temporarily disabled for UI work
-    return;
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {

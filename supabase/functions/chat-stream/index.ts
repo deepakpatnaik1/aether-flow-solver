@@ -79,19 +79,31 @@ async function loadCall1DataPackage(personaName: string): Promise<string> {
       loadBossProfile(),
       loadPersonaProfile(personaName),
       supabase.storage.from('past-journals').download('Past Journals.txt').then(r => r.data ? r.data.text() : '').catch(() => ''),
-      supabase.from('persistent_attachments').select('*'),
+      supabase.storage.from('persistent-attachments').list(),
       supabase.from('ephemeral_attachments').select('*').limit(1),
       supabase.rpc('get_google_connection_status')
     ]);
 
     // Build the complete Call 1 context package
     const turnProtocolContent = turnProtocolResult.data ? await turnProtocolResult.data.text() : '';
+    // Transform bucket files to match expected format
+    const transformedPersistentAttachments = (persistentAttachmentsResult.data || []).map(file => {
+      const pathParts = file.name.split('/');
+      const category = pathParts.length > 1 ? pathParts[0] : 'uncategorized';
+      const fileName = pathParts[pathParts.length - 1];
+      return {
+        category: category,
+        original_name: fileName,
+        file_type: file.metadata?.mimetype || 'application/octet-stream'
+      };
+    });
+
     const call1Context = buildCall1Context(
       { content: turnProtocolContent },
       bossResult,
       personaResult,
       pastJournalsContent || '',
-      persistentAttachmentsResult.data || [],
+      transformedPersistentAttachments,
       ephemeralAttachmentsResult.data || [],
       googleTokensResult.data?.[0] || null
     );

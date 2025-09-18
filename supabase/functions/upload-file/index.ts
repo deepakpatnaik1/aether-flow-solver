@@ -125,18 +125,8 @@ serve(async (req) => {
         });
       dbError = error;
     } else {
-      // Persistent documents (boss, persona, processes, documents)
-      const { error } = await supabase
-        .from('persistent_attachments')
-        .insert({
-          file_name: sanitizedName,
-          original_name: file.name,
-          public_url: publicUrl,
-          file_type: file.type || 'application/octet-stream',
-          category: category,
-          user_id: user.id
-        });
-      dbError = error;
+      // Persistent documents (boss, persona, processes, documents) - no table needed, just bucket storage
+      dbError = null;
     }
 
     if (dbError) {

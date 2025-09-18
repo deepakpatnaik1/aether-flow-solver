@@ -349,7 +349,7 @@ const ChatInterface = () => {
       {/* Input Bar */}
       <div className="input-bar-container">
         <div className="input-bar-content">
-          <div className="flex flex-col gap-1 flex-1">
+          <div className={`flex flex-col flex-1 ${uploadedFiles.length > 0 ? 'gap-1' : ''}`}>
             {uploadedFiles.length > 0 && (
               <div className="flex flex-wrap gap-2 p-2 bg-background/50 rounded border">
                 {uploadedFiles.map((file, index) => (
@@ -388,7 +388,7 @@ const ChatInterface = () => {
           </div>
           
           {/* Model Selection Controls */}
-          <div className="model-controls ml-2">
+          <div className="model-controls">
             <div className="model-selectors justify-between w-full">
               <div className="flex items-center gap-1">
                 <Button

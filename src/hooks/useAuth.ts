@@ -106,13 +106,13 @@ export const useAuth = () => {
             return;
           }
           
-          if (!data?.url) {
+          if (!data?.authUrl) {
             console.error('❌ No OAuth URL received from edge function');
             resolve({ error: new Error('Failed to get OAuth URL from server') });
             return;
           }
 
-          const authUrl = data.url;
+          const authUrl = data.authUrl;
           console.log('🔗 Opening popup with OAuth URL:', authUrl);
 
           // Calculate centered popup position

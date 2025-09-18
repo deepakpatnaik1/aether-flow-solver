@@ -9,15 +9,15 @@ export const PersonaBadge: React.FC<PersonaBadgeProps> = ({ persona }) => {
   const getPersonaColor = (persona: string) => {
     switch (persona.toLowerCase()) {
       case 'boss':
-        return '#C53030'; // VIBRANT DARK RED - DIRECT
+        return '#A66B6B'; // MUTED RED - PROFESSIONAL
       case 'gunnar':
-        return '#3B4DE8'; // VIBRANT DARK BLUE - DISTINCT
+        return '#5A6B7D'; // MUTED BLUE-GRAY - PROFESSIONAL
       case 'samara':
-        return '#9333EA'; // ELECTRIC DARK MAGENTA - DISTINCT
+        return '#6E5F70'; // MUTED PURPLE-GRAY - PROFESSIONAL
       case 'kirby':
-        return '#D97706'; // VIBRANT DARK ORANGE - DISTINCT
+        return '#8A7558'; // MUTED AMBER - PROFESSIONAL
       case 'stefan':
-        return '#059669'; // ELECTRIC DARK GREEN - DISTINCT
+        return '#4F6661'; // MUTED TEAL-GRAY - PROFESSIONAL
       default:
         return '#6B7280'; // FALLBACK GRAY
     }
@@ -41,9 +41,9 @@ export const PersonaBadge: React.FC<PersonaBadgeProps> = ({ persona }) => {
   };
 
   return (
-    <div 
+    <div
       className="persona-badge"
-      style={{ backgroundColor: getPersonaColor(persona) }}
+      style={{ color: getPersonaColor(persona) }}
     >
       {getPersonaName(persona)}
     </div>

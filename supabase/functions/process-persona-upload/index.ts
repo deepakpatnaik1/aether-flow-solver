@@ -67,7 +67,6 @@ Deno.serve(async (req) => {
             personaName,
             location: 'personas bucket'
           })
-          }
         }
       } catch (error) {
         console.error(`Error processing file ${uploadResult.fileName}:`, error)
@@ -89,7 +88,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
-    )
+    );
 
   } catch (error) {
     console.error('Error in process-persona-upload:', error)
@@ -102,7 +101,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       }
-    )
+    );
   }
 })
 

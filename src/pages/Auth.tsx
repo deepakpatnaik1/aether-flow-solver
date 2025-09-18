@@ -35,6 +35,16 @@ const Auth = () => {
       return;
     }
 
+    // Restrict access to only the authorized email
+    if (email.toLowerCase() !== 'deepakpatnaik1@gmail.com') {
+      toast({
+        title: "Access Denied",
+        description: "This application is restricted to authorized users only.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const redirectUrl = `${window.location.origin}/`;
@@ -84,6 +94,16 @@ const Auth = () => {
       toast({
         title: "Error",
         description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Restrict access to only the authorized email
+    if (email.toLowerCase() !== 'deepakpatnaik1@gmail.com') {
+      toast({
+        title: "Access Denied",
+        description: "This application is restricted to authorized users only.",
         variant: "destructive",
       });
       return;

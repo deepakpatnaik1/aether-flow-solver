@@ -151,9 +151,15 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 1px;
-    background: hsl(var(--destructive));
-    opacity: 0.8;
+    height: 2px;
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      hsl(var(--destructive) / 0.3) 20%, 
+      hsl(var(--destructive)) 50%, 
+      hsl(var(--destructive) / 0.3) 80%, 
+      transparent 100%
+    );
+    opacity: 1;
   }
 
   .input-bar-content {

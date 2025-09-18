@@ -324,34 +324,8 @@ serve(async (req) => {
             if (done) {
               console.log('✅ Stream complete!');
               
-              // IMMEDIATE SUPERJOURNAL WRITE - NO DELAYS
+              // TRIGGER CALL 2 automatically in background
               if (fullPersonaResponse.trim()) {
-                console.log('💾 Writing to superjournal_entries immediately...');
-                
-                const userMessage = messages[messages.length - 1];
-                const superjournalEntry = {
-                  entry_id: turnId,
-                  user_message_content: userMessage?.content || 'No user input',
-                  user_message_persona: 'Boss',
-                  user_message_attachments: userMessage?.attachments || [],
-                  ai_response_content: fullPersonaResponse,
-                  ai_response_persona: persona,
-                  ai_response_model: model
-                };
-
-                // Write to superjournal_entries immediately
-                supabase
-                  .from('superjournal_entries')
-                  .insert(superjournalEntry)
-                  .then(({ error }) => {
-                    if (error) {
-                      console.error('❌ Failed to write to superjournal:', error);
-                    } else {
-                      console.log('✅ Superjournal entry saved immediately');
-                    }
-                  });
-
-                // TRIGGER CALL 2 automatically in background
                 console.log('🚀 Triggering Call 2 - Artisan Cut Processing...');
                 
                 // Background Call 2 - don't await, let it run silently

@@ -346,7 +346,14 @@ const ChatInterface = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background relative">
-      <UserMenu />
+      {/* MASSIVE TEST BANNER TO VERIFY CHANGES ARE WORKING */}
+      <div className="bg-red-500 text-white text-center p-4 text-xl font-bold">
+        🔴 CODE CHANGES WORKING - TIMESTAMP: {Date.now()}
+      </div>
+      
+      <div className="absolute top-4 right-4 z-50">
+        <UserMenu />
+      </div>
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">

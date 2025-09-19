@@ -29,6 +29,7 @@ interface Message {
 
 const ChatInterface = () => {
   const { user, loading: authLoading } = useAuth();
+  const { messages, journal, setMessages, setJournal, isDataLoading, saveToSuperjournal } = useChat(user?.id);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
@@ -63,15 +64,6 @@ const ChatInterface = () => {
   
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const {
-    messages,
-    journal,
-    setMessages,
-    setJournal,
-    isDataLoading,
-    saveToSuperjournal,
-  } = useChat();
 
   const models = [
     { id: 'gpt-4o-mini', name: 'GPT-4o Mini (Fast)' },

@@ -16,25 +16,37 @@ interface Message {
   }[];
 }
 
-export const useChat = () => {
+export const useChat = (userId?: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [journal, setJournal] = useState<Array<{persona: string, content: string}>>([]);
   const [isDataLoading, setIsDataLoading] = useState(false);
 
-  // Load all data on mount - no auth required
+  // Load data only when user is authenticated
   useEffect(() => {
-    console.log('Loading all public data');
-    loadSuperjournalFromSupabase();
-    loadJournalFromSupabase();
-  }, []);
+    if (userId) {
+      console.log('Loading data for authenticated user:', userId);
+      loadSuperjournalFromSupabase();
+      loadJournalFromSupabase();
+    } else {
+      console.log('No authenticated user, skipping data load');
+      setMessages([]);
+      setJournal([]);
+    }
+  }, [userId]);
 
   const loadSuperjournalFromSupabase = async () => {
+    if (!userId) {
+      console.log('No user ID, skipping superjournal load');
+      return;
+    }
+
     setIsDataLoading(true);
     
     try {
       const { data: entries, error } = await supabase
         .from('superjournal_entries')
         .select('*')
+        .eq('user_id', userId)
         .order('timestamp', { ascending: true });
 
       if (error) {
@@ -95,12 +107,16 @@ export const useChat = () => {
   };
 
   const loadJournalFromSupabase = async () => {
-    // No auth check - load all data
+    if (!userId) {
+      console.log('No user ID, skipping journal load');
+      return;
+    }
     
     try {
       const { data: entries, error } = await supabase
         .from('journal_entries')
         .select('*')
+        .eq('user_id', userId)
         .order('timestamp', { ascending: true });
 
       if (error) {

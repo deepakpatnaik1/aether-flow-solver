@@ -145,9 +145,11 @@ export type Database = {
           ai_response_content: string
           ai_response_model: string
           ai_response_persona: string
+          created_at: string
           entry_id: string
           id: string
           timestamp: string
+          updated_at: string
           user_id: string | null
           user_message_attachments: Json | null
           user_message_content: string
@@ -157,9 +159,11 @@ export type Database = {
           ai_response_content: string
           ai_response_model: string
           ai_response_persona: string
+          created_at?: string
           entry_id: string
           id?: string
           timestamp?: string
+          updated_at?: string
           user_id?: string | null
           user_message_attachments?: Json | null
           user_message_content: string
@@ -169,9 +173,11 @@ export type Database = {
           ai_response_content?: string
           ai_response_model?: string
           ai_response_persona?: string
+          created_at?: string
           entry_id?: string
           id?: string
           timestamp?: string
+          updated_at?: string
           user_id?: string | null
           user_message_attachments?: Json | null
           user_message_content?: string

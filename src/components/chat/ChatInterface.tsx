@@ -12,7 +12,7 @@ import GoogleIntegration from './GoogleIntegration';
 
 import { supabase } from '@/integrations/supabase/client';
 import { useChat } from '@/hooks/useChat';
-import { useGoogleConnection } from '@/hooks/useGoogleConnection';
+// Remove Google connection hook since auth was removed
 import { getBerlinTime } from '@/lib/timezone';
 
 interface Message {
@@ -75,7 +75,7 @@ const ChatInterface = () => {
     saveToSuperjournal,
   } = useChat();
 
-  const { isConnected: isGoogleConnected, userEmail: googleUserEmail } = useGoogleConnection();
+  // Google connection removed with auth
 
   const models = [
     { id: 'gpt-4o-mini', name: 'GPT-4o Mini (Fast)' },

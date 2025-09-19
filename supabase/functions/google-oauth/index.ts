@@ -67,8 +67,14 @@ serve(async (req) => {
 
     if (!tokenResponse.ok) {
       const error = await tokenResponse.text();
-      console.error('Token exchange failed:', error);
-      throw new Error('Failed to exchange authorization code for tokens');
+      console.error('Token exchange failed with status:', tokenResponse.status);
+      console.error('Google error response:', error);
+      console.error('Request details:', {
+        client_id: clientId?.substring(0, 20) + '...', // Log partial client ID for debugging
+        redirect_uri: redirectUri,
+        code_length: code?.length
+      });
+      throw new Error(`Google token exchange failed: ${error}`);
     }
 
     const tokens: GoogleTokenResponse = await tokenResponse.json();

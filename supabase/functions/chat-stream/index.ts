@@ -24,7 +24,7 @@ async function loadBossProfile(): Promise<string> {
   try {
     const { data, error } = await supabase.storage
       .from('boss')
-      .download('Boss.txt');
+      .download('Boss.txt'); // Changed from 'Boss.txt' to match storage
 
     if (error) {
       console.log('ℹ️ No boss profile found');
@@ -42,12 +42,15 @@ async function loadBossProfile(): Promise<string> {
 // Load active persona profile from personas bucket
 async function loadPersonaProfile(personaName: string): Promise<string> {
   try {
+    // Capitalize first letter to match stored file names (Samara.txt, Gunnar.txt, etc.)
+    const capitalizedPersona = personaName.charAt(0).toUpperCase() + personaName.slice(1).toLowerCase();
+    
     const { data, error } = await supabase.storage
       .from('personas')
-      .download(`${personaName}.txt`);
+      .download(`${capitalizedPersona}.txt`);
 
     if (error) {
-      console.log(`ℹ️ No persona profile found for ${personaName}`);
+      console.log(`ℹ️ No persona profile found for ${capitalizedPersona}`);
       return '';
     }
 

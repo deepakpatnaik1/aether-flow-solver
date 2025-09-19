@@ -99,7 +99,7 @@ serve(async (req) => {
     console.log('OAuth success, redirecting user back to app');
     
     // Redirect back to the app with success
-    const appUrl = 'https://f29e4c08-30c0-496d-946c-bdd3be783b28.lovableproject.com/?auth=success';
+    const appUrl = 'https://aether.deepakpatnaik.com/?auth=success';
     return new Response(null, {
       status: 302,
       headers: {
@@ -112,7 +112,7 @@ serve(async (req) => {
     console.error('Error in google-oauth function:', error);
     
     // Redirect back to the app with error
-    const appUrl = `https://f29e4c08-30c0-496d-946c-bdd3be783b28.lovableproject.com/?auth=error&message=${encodeURIComponent(error.message)}`;
+    const appUrl = `https://aether.deepakpatnaik.com/?auth=error&message=${encodeURIComponent(error.message)}`;
     return new Response(null, {
       status: 302,
       headers: {

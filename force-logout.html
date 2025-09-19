@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Force Logout</title>
+</head>
+<body>
+    <h1>Forcing Logout...</h1>
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        const supabase = createClient(
+            'https://suncgglbheilkeimwuxt.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA'
+        );
+
+        async function forceLogout() {
+            // Clear everything
+            localStorage.clear();
+            sessionStorage.clear();
+
+            // Sign out from Supabase
+            await supabase.auth.signOut();
+
+            console.log('✅ Forced logout complete');
+            document.body.innerHTML = '<h1>✅ Logged out! <a href="/">Go to app</a></h1>';
+        }
+
+        forceLogout();
+    </script>
+</body>
+</html>

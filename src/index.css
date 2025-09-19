@@ -262,16 +262,16 @@
   }
 
   .message-list {
-    @apply p-4 space-y-1 max-w-4xl mx-auto;
+    @apply p-4 space-y-2 max-w-4xl mx-auto; /* Increased spacing from space-y-1 */
     scroll-behavior: smooth;
-    /* Force rebuild - compact spacing active */
+    /* Improved spacing for better readability */
   }
 
   .message-container {
-    @apply flex flex-col gap-1 rounded-lg p-2;
+    @apply flex flex-col gap-1.5 rounded-lg p-3; /* Increased padding from p-2 */
     @apply hover:bg-card/30 transition-colors duration-150;
     @apply relative;
-    /* Ultra-compact message containers */
+    /* Enhanced spacing for better readability */
   }
 
   .message-container::before {
@@ -317,7 +317,7 @@
   }
 
   .message-content {
-    @apply text-foreground leading-relaxed space-y-0 flex-1 ml-0.5;
+    @apply text-foreground leading-relaxed space-y-1 flex-1 ml-0.5; /* Increased space-y from 0 to 1 */
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
   }
 
@@ -329,12 +329,90 @@
   }
 
   .message-text {
-    @apply text-foreground leading-relaxed mb-2;
+    @apply text-foreground leading-relaxed mb-3;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
-    font-size: 13px !important;
+    font-size: 14px !important; /* Increased from 13px */
     font-weight: 400 !important;
-    line-height: 1.6 !important;
+    line-height: 1.7 !important; /* Increased from 1.6 */
     letter-spacing: -0.01em;
+    color: hsl(var(--foreground) / 0.95); /* Improved contrast */
+  }
+
+  /* Enhanced heading styles for better hierarchy */
+  .message-content h1 {
+    @apply text-2xl font-bold text-foreground mt-6 mb-4;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.025em;
+    color: hsl(var(--foreground));
+    border-bottom: 2px solid hsl(var(--border));
+    padding-bottom: 0.5rem;
+  }
+
+  .message-content h2 {
+    @apply text-xl font-semibold text-foreground mt-5 mb-3;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.02em;
+    color: hsl(var(--foreground) / 0.95);
+  }
+
+  .message-content h3 {
+    @apply text-lg font-medium text-foreground mt-4 mb-2;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+    font-weight: 500 !important;
+    letter-spacing: -0.015em;
+    color: hsl(var(--foreground) / 0.9);
+  }
+
+  /* Enhanced emphasis styling */
+  .message-content strong {
+    @apply font-semibold;
+    font-weight: 600 !important;
+    color: hsl(var(--foreground));
+  }
+
+  .message-content em {
+    @apply italic;
+    font-style: italic;
+    color: hsl(var(--foreground) / 0.85);
+  }
+
+  /* Improved list styling */
+  .message-content ul li {
+    @apply mb-2;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+  }
+
+  .message-content ol li {
+    @apply mb-2;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+  }
+
+  /* Enhanced blockquote styling */
+  .message-content blockquote {
+    @apply border-l-4 pl-4 py-3 my-4 bg-muted/20 rounded-r-md;
+    font-style: italic;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+    color: hsl(var(--foreground) / 0.8);
+  }
+
+  /* Better paragraph spacing */
+  .message-content p {
+    @apply mb-3;
+    font-size: 14px !important;
+    line-height: 1.7 !important;
+  }
+
+  /* Enhanced code styling */
+  .message-content code:not(pre code) {
+    @apply bg-muted/40 text-foreground px-1.5 py-0.5 rounded text-sm font-mono;
+    font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace !important;
+    font-weight: 500;
+    color: hsl(var(--foreground) / 0.9);
   }
 
   .message-bullet {

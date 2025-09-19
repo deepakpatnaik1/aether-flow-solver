@@ -24,11 +24,13 @@ export const useChat = () => {
 
   // Load superjournal and journal entries when user is authenticated
   useEffect(() => {
-    if (user) {
+    if (user && user.id) {
+      console.log('Loading data for authenticated user:', user.email);
       loadSuperjournalFromSupabase();
       loadJournalFromSupabase();
     } else {
-      // Clear data when user logs out
+      console.log('No authenticated user, clearing data');
+      // Clear data when user logs out or is invalid
       setMessages([]);
       setJournal([]);
     }

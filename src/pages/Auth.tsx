@@ -172,7 +172,10 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Welcome</CardTitle>
+          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center">
+            <span className="text-2xl font-bold text-primary-foreground">A</span>
+          </div>
+          <CardTitle className="text-2xl font-bold">Welcome Back!</CardTitle>
           <CardDescription>Sign in to your account or create a new one</CardDescription>
         </CardHeader>
         <CardContent>
@@ -182,7 +185,7 @@ const Auth = () => {
               onClick={handleGoogleSignIn}
               disabled={loading}
               variant="outline"
-              className="w-full h-11 gap-3 border-border hover:bg-accent"
+              className="w-full h-12 gap-3 border-2 border-primary/30 hover:bg-primary/10 hover:border-primary/50 transition-all duration-200"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

@@ -8,11 +8,11 @@ import { MessageList } from './MessageList';
 import { PersonaBadge } from './PersonaBadge';
 import { FileUploadModal } from './FileUploadModal';
 import GoogleIntegration from './GoogleIntegration';
-// No auth needed - completely open access
-
+import UserMenu from '@/components/UserMenu';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useChat } from '@/hooks/useChat';
-// Remove Google connection hook since auth was removed
+import { useGoogleConnection } from '@/hooks/useGoogleConnection';
 import { getBerlinTime } from '@/lib/timezone';
 
 interface Message {
@@ -30,9 +30,9 @@ interface Message {
 }
 
 const ChatInterface = () => {
+  const { user, loading: authLoading } = useAuth();
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  // No auth - public access
   
   // Initialize from localStorage immediately to prevent flash and ensure persistence
   const [selectedModel, setSelectedModel] = useState(() => {
@@ -75,7 +75,7 @@ const ChatInterface = () => {
     saveToSuperjournal,
   } = useChat();
 
-  // Google connection removed with auth
+  const { isConnected: isGoogleConnected, checkConnection: checkGoogleConnection } = useGoogleConnection();
 
   const models = [
     { id: 'gpt-4o-mini', name: 'GPT-4o Mini (Fast)' },
@@ -225,32 +225,35 @@ const ChatInterface = () => {
       
       console.log('🚀 Sending to backend - Model:', selectedModel, 'Persona:', selectedPersona);
       
-      // Use direct fetch for streaming support with authentication
-      const response = await fetch('https://suncgglbheilkeimwuxt.supabase.co/functions/v1/chat-stream', {
+      // For Supabase functions, we need to handle streaming differently
+      // Since functions.invoke doesn't support streaming, we'll use fetch with auth headers
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const fetchResponse = await fetch('https://suncgglbheilkeimwuxt.supabase.co/functions/v1/chat-stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA`, 
+          'Authorization': `Bearer ${session?.access_token}`,
           'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA',
         },
         body: JSON.stringify({
           messages: formattedMessages,
           model: selectedModel,
           persona: selectedPersona,
-          userMessage: userMessage, // Send complete user message with attachments
-          turnId: aiMessageId // Use consistent turn ID
+          userMessage: userMessage,
+          turnId: aiMessageId
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!fetchResponse.ok) {
+        throw new Error(`HTTP error! status: ${fetchResponse.status}`);
       }
 
-      if (!response.body) {
+      if (!fetchResponse.body) {
         throw new Error('No response body available');
       }
 
-      const reader = response.body.getReader();
+      const reader = fetchResponse.body.getReader();
       const decoder = new TextDecoder();
       let streamingContent = '';
       let receivedTurnId = '';
@@ -333,9 +336,21 @@ const ChatInterface = () => {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen bg-background relative">
-      {/* No user menu - public access */}
+      {/* Header with User Menu */}
+      <div className="flex items-center justify-between p-4 border-b border-border">
+        <h1 className="text-xl font-semibold">Aether Chat</h1>
+        <UserMenu />
+      </div>
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">

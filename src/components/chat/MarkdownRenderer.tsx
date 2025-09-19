@@ -488,16 +488,11 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
       const part = parts[i];
       
       if (part.startsWith('`') && part.endsWith('`') && part.length > 1) {
-        // Inline code with enhanced styling
+        // Inline code with copy on click
         processed.push(
           <code 
             key={i} 
-            className="px-2 py-1 bg-muted/50 rounded-md text-sm font-mono border cursor-pointer hover:bg-muted/70 transition-colors"
-            style={{ 
-              color: 'hsl(var(--foreground) / 0.9)',
-              fontSize: '13px',
-              fontWeight: 500
-            }}
+            className="px-1.5 py-0.5 bg-gray-100 rounded text-sm font-mono text-gray-700 border cursor-pointer hover:bg-gray-200"
             onClick={() => copyToClipboard(part.slice(1, -1))}
             title="Click to copy"
           >
@@ -570,9 +565,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
     result = result.replace(/==([^=]+)==/g, (match, highlightText) => {
       const placeholder = `__HIGHLIGHT_${key}__`;
       elements.push(
-        <mark key={`${keyBase}-highlight-${key}`} 
-          className="bg-primary/20 text-foreground px-1.5 py-0.5 rounded-sm border border-primary/30"
-          style={{ backgroundColor: `hsl(var(--primary) / 0.15)` }}>
+        <mark key={`${keyBase}-highlight-${key}`} className="bg-yellow-200/30 px-1 rounded text-foreground">
           {highlightText}
         </mark>
       );
@@ -589,12 +582,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:opacity-80 underline font-medium transition-opacity"
-          style={{ 
-            color: personaColor,
-            textDecorationThickness: '2px',
-            textUnderlineOffset: '3px'
-          }}
+          className="hover:opacity-80 underline"
+          style={{ color: personaColor }}
         >
           {linkText}
         </a>
@@ -607,8 +596,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
     result = result.replace(/\*\*([^*]+)\*\*/g, (match, boldText) => {
       const placeholder = `__BOLD_${key}__`;
       elements.push(
-        <strong key={`${keyBase}-bold-${key}`} className="font-semibold text-foreground" 
-          style={{ fontWeight: 600, color: 'hsl(var(--foreground))' }}>
+        <strong key={`${keyBase}-bold-${key}`} className="font-semibold text-foreground">
           {boldText}
         </strong>
       );
@@ -620,8 +608,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, per
     result = result.replace(/\*([^*]+)\*/g, (match, italicText) => {
       const placeholder = `__ITALIC_${key}__`;
       elements.push(
-        <em key={`${keyBase}-italic-${key}`} className="italic" 
-          style={{ fontStyle: 'italic', color: 'hsl(var(--foreground) / 0.85)' }}>
+        <em key={`${keyBase}-italic-${key}`} className="italic text-foreground">
           {italicText}
         </em>
       );

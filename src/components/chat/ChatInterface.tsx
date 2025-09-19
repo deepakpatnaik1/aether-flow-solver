@@ -69,6 +69,7 @@ const ChatInterface = () => {
     journal,
     setMessages,
     setJournal,
+    isDataLoading,
     saveToSuperjournal,
   } = useChat();
 
@@ -331,10 +332,33 @@ const ChatInterface = () => {
     }
   };
 
-  if (authLoading) {
+  if (authLoading || isDataLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">
+            {authLoading ? 'Authenticating...' : 'Loading your messages...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4 p-8">
+          <div className="text-6xl mb-4">🔒</div>
+          <h2 className="text-2xl font-semibold text-foreground">Your Messages Are Protected</h2>
+          <p className="text-muted-foreground max-w-md">
+            Your chat history is safely stored and protected by authentication. 
+            Please log in to access your messages.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Don't worry - all your previous conversations are preserved and will load once you authenticate.
+          </p>
+        </div>
       </div>
     );
   }

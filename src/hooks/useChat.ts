@@ -19,6 +19,7 @@ interface Message {
 export const useChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [journal, setJournal] = useState<Array<{persona: string, content: string}>>([]);
+  const [isDataLoading, setIsDataLoading] = useState(false);
 
   // Load all data on mount - no auth required
   useEffect(() => {
@@ -28,7 +29,7 @@ export const useChat = () => {
   }, []);
 
   const loadSuperjournalFromSupabase = async () => {
-    // No auth check - load all data
+    setIsDataLoading(true);
     
     try {
       const { data: entries, error } = await supabase
@@ -38,6 +39,7 @@ export const useChat = () => {
 
       if (error) {
         console.error('Error loading superjournal:', error);
+        setIsDataLoading(false);
         return;
       }
 
@@ -87,6 +89,8 @@ export const useChat = () => {
       
     } catch (error) {
       // Handle superjournal load error silently
+    } finally {
+      setIsDataLoading(false);
     }
   };
 
@@ -145,6 +149,7 @@ export const useChat = () => {
     journal,
     setMessages,
     setJournal,
+    isDataLoading,
     saveToSuperjournal,
     saveToJournal,
   };

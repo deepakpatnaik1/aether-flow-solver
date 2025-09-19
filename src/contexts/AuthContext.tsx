@@ -40,16 +40,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Validate session is actually valid
         if (session) {
-          // Verify the session with Supabase
-          const { data: { user }, error } = await supabase.auth.getUser();
-          if (error || !user) {
-            console.error('Invalid session detected, clearing:', error);
-            await supabase.auth.signOut();
-            setSession(null);
-            setUser(null);
-          } else {
+          try {
+            // Verify the session with Supabase (with timeout)
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Validation timeout')), 5000)
+            );
+            const validationPromise = supabase.auth.getUser();
+
+            const { data: { user }, error } = await Promise.race([
+              validationPromise,
+              timeoutPromise
+            ]).catch(err => {
+              console.error('Session validation failed:', err);
+              return { data: { user: null }, error: err };
+            });
+
+            if (error || !user) {
+              console.error('Invalid session detected, clearing:', error);
+              await supabase.auth.signOut();
+              setSession(null);
+              setUser(null);
+            } else {
+              console.log('Session validated for user:', user.email);
+              setSession(session);
+              setUser(user);
+            }
+          } catch (err) {
+            console.error('Session validation error:', err);
+            // On validation error, just use the session as-is
             setSession(session);
-            setUser(user);
+            setUser(session.user);
           }
         } else {
           setSession(null);
@@ -68,16 +88,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (session) {
-        // Double-check session is valid
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-          console.error('Stored session is invalid, clearing');
-          await supabase.auth.signOut();
-          setSession(null);
-          setUser(null);
-        } else {
+        try {
+          // Double-check session is valid (with timeout)
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Initial validation timeout')), 5000)
+          );
+          const validationPromise = supabase.auth.getUser();
+
+          const { data: { user }, error: userError } = await Promise.race([
+            validationPromise,
+            timeoutPromise
+          ]).catch(err => {
+            console.error('Initial session validation failed:', err);
+            return { data: { user: null }, error: err };
+          });
+
+          if (userError || !user) {
+            console.error('Stored session is invalid, clearing');
+            await supabase.auth.signOut();
+            setSession(null);
+            setUser(null);
+          } else {
+            console.log('Initial session validated for user:', user.email);
+            setSession(session);
+            setUser(user);
+          }
+        } catch (err) {
+          console.error('Initial validation error:', err);
+          // On validation error, just use the session as-is
           setSession(session);
-          setUser(user);
+          setUser(session.user);
         }
       }
       setLoading(false);

@@ -94,27 +94,55 @@ const GoogleIntegration: React.FC = () => {
         throw error;
       }
 
-      console.log('Using Google Client ID:', data.clientId);
+      if (!data?.authUrl) {
+        throw new Error('No auth URL received from server');
+      }
+
       console.log('Auth URL:', data.authUrl);
       
-      // Open popup for OAuth
-      const popup = window.open(data.authUrl, 'google-auth', 'width=500,height=600');
+      // Open in a new tab instead of popup to avoid iframe blocking
+      const newTab = window.open(
+        data.authUrl, 
+        '_blank',
+        'noopener,noreferrer,width=600,height=700,scrollbars=yes,resizable=yes'
+      );
       
-      // Listen for the auth code
+      if (!newTab) {
+        throw new Error('Failed to open authentication window. Please allow popups and try again.');
+      }
+      
+      // Monitor the tab
       const checkClosed = setInterval(() => {
-        if (popup?.closed) {
-          clearInterval(checkClosed);
-          setIsConnecting(false);
-          checkConnectionStatus();
+        try {
+          if (newTab.closed) {
+            clearInterval(checkClosed);
+            setIsConnecting(false);
+            // Check connection status after a short delay to allow for processing
+            setTimeout(() => {
+              checkConnectionStatus();
+            }, 1500);
+          }
+        } catch (error) {
+          // Tab access might be blocked, that's okay
+          console.log('Tab monitoring error (expected):', error);
         }
       }, 1000);
+      
+      // Auto-cleanup after 5 minutes
+      setTimeout(() => {
+        clearInterval(checkClosed);
+        setIsConnecting(false);
+        if (!newTab.closed) {
+          newTab.close();
+        }
+      }, 300000); // 5 minutes
       
     } catch (error) {
       console.error('OAuth initiation error:', error);
       setIsConnecting(false);
       toast({
-        title: "OAuth Error",
-        description: error.message || "Failed to initiate Google OAuth. Please check your configuration.",
+        title: "Authentication Error",
+        description: error.message || "Failed to initiate Google OAuth. Please try again.",
         variant: "destructive",
       });
     }

@@ -8,8 +8,7 @@ import { MessageList } from './MessageList';
 import { PersonaBadge } from './PersonaBadge';
 import { FileUploadModal } from './FileUploadModal';
 import GoogleIntegration from './GoogleIntegration';
-import UserMenu from '@/components/UserMenu';
-import { useAuth } from '@/contexts/AuthContext';
+// No auth needed - completely open access
 
 import { supabase } from '@/integrations/supabase/client';
 import { useChat } from '@/hooks/useChat';
@@ -33,7 +32,7 @@ interface Message {
 const ChatInterface = () => {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { user, session } = useAuth();
+  // No auth - public access
   
   // Initialize from localStorage immediately to prevent flash and ensure persistence
   const [selectedModel, setSelectedModel] = useState(() => {
@@ -231,7 +230,7 @@ const ChatInterface = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA'}`, 
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA`, 
           'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA',
         },
         body: JSON.stringify({
@@ -336,10 +335,7 @@ const ChatInterface = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background relative">
-      {/* Floating User Menu */}
-      <div className="absolute top-4 right-4 z-50">
-        <UserMenu />
-      </div>
+      {/* No user menu - public access */}
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">

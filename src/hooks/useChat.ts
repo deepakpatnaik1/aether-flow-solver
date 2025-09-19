@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 import { getBerlinTimeISO, getBerlinTime } from '@/lib/timezone';
 
 interface Message {
@@ -20,24 +19,16 @@ interface Message {
 export const useChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [journal, setJournal] = useState<Array<{persona: string, content: string}>>([]);
-  const { user } = useAuth();
 
-  // Load superjournal and journal entries when user is authenticated
+  // Load all data on mount - no auth required
   useEffect(() => {
-    if (user && user.id) {
-      console.log('Loading data for authenticated user:', user.email);
-      loadSuperjournalFromSupabase();
-      loadJournalFromSupabase();
-    } else {
-      console.log('No authenticated user, clearing data');
-      // Clear data when user logs out or is invalid
-      setMessages([]);
-      setJournal([]);
-    }
-  }, [user]);
+    console.log('Loading all public data');
+    loadSuperjournalFromSupabase();
+    loadJournalFromSupabase();
+  }, []);
 
   const loadSuperjournalFromSupabase = async () => {
-    if (!user) return;
+    // No auth check - load all data
     
     try {
       const { data: entries, error } = await supabase
@@ -100,7 +91,7 @@ export const useChat = () => {
   };
 
   const loadJournalFromSupabase = async () => {
-    if (!user) return;
+    // No auth check - load all data
     
     try {
       const { data: entries, error } = await supabase

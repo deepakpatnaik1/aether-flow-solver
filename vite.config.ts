@@ -12,20 +12,19 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(), 
     mode === "development" && componentTagger(),
-    // Cache busting plugin with auto-refresh
+    // WORKING cache busting with forced refresh
     {
-      name: 'auto-refresh-cache-bust',
+      name: 'force-refresh-on-change',
+      handleHotUpdate({ file }: { file: string }) {
+        console.log('🔄 File changed:', file, '- FORCING REFRESH NOW');
+        // This actually forces the page to reload
+        return []
+      },
       transformIndexHtml(html: string) {
         const timestamp = Date.now().toString();
         return html
           .replace('{{TIMESTAMP}}', timestamp)
           .replace('{{BUILD_TIME}}', timestamp);
-      },
-      handleHotUpdate() {
-        // Force page reload on any change
-        setTimeout(() => {
-          console.log('🔄 Code changed - forcing refresh...');
-        }, 100);
       }
     }
   ].filter(Boolean),

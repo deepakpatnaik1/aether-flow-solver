@@ -17,12 +17,3 @@ verify_jwt = true
 
 [functions.artisan-cut-extraction]
 verify_jwt = true
-
-[functions.google-auth-url]
-verify_jwt = false
-
-[functions.google-oauth]
-verify_jwt = false
-
-[functions.google-slides]
-verify_jwt = true

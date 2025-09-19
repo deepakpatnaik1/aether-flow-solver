@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Paperclip, ChevronDown, Chrome } from 'lucide-react';
+import { Send, Paperclip, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -7,12 +7,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { MessageList } from './MessageList';
 import { PersonaBadge } from './PersonaBadge';
 import { FileUploadModal } from './FileUploadModal';
-import GoogleIntegration from './GoogleIntegration';
 import UserMenu from '@/components/UserMenu';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useChat } from '@/hooks/useChat';
-import { useGoogleConnection } from '@/hooks/useGoogleConnection';
 import { getBerlinTime } from '@/lib/timezone';
 
 interface Message {
@@ -62,7 +60,6 @@ const ChatInterface = () => {
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [showGoogleModal, setShowGoogleModal] = useState(false);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -74,8 +71,6 @@ const ChatInterface = () => {
     setJournal,
     saveToSuperjournal,
   } = useChat();
-
-  const { isConnected: isGoogleConnected, checkConnection: checkGoogleConnection } = useGoogleConnection();
 
   const models = [
     { id: 'gpt-4o-mini', name: 'GPT-4o Mini (Fast)' },
@@ -346,11 +341,6 @@ const ChatInterface = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background relative">
-      {/* MASSIVE TEST BANNER TO VERIFY CHANGES ARE WORKING */}
-      <div className="bg-red-500 text-white text-center p-4 text-xl font-bold">
-        🔴 CODE CHANGES WORKING - TIMESTAMP: {Date.now()}
-      </div>
-      
       <div className="absolute top-4 right-4 z-50">
         <UserMenu />
       </div>
@@ -412,15 +402,6 @@ const ChatInterface = () => {
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <Paperclip className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="attachment-btn hover:bg-primary/10 hover:text-primary"
-                  onClick={() => setShowGoogleModal(true)}
-                  title="Google Workspace Integration"
-                >
-                  <Chrome className="h-4 w-4" />
                 </Button>
                 <input
                   ref={fileInputRef}
@@ -490,20 +471,6 @@ const ChatInterface = () => {
         onUpload={handleFileUpload}
         files={pendingFiles}
       />
-
-      <Dialog open={showGoogleModal} onOpenChange={setShowGoogleModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Google Workspace Integration</DialogTitle>
-            <DialogDescription>
-              Connect your Google account and create emails, documents, and presentations
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-6">
-            <GoogleIntegration />
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

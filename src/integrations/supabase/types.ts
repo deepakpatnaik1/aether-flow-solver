@@ -44,33 +44,6 @@ export type Database = {
         }
         Relationships: []
       }
-      google_tokens: {
-        Row: {
-          access_token: string
-          expires_at: string
-          id: string
-          refresh_token: string | null
-          scope: string
-          user_email: string
-        }
-        Insert: {
-          access_token: string
-          expires_at: string
-          id?: string
-          refresh_token?: string | null
-          scope: string
-          user_email: string
-        }
-        Update: {
-          access_token?: string
-          expires_at?: string
-          id?: string
-          refresh_token?: string | null
-          scope?: string
-          user_email?: string
-        }
-        Relationships: []
-      }
       journal_entries: {
         Row: {
           ai_response_content: string
@@ -190,38 +163,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      disconnect_google_account: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      get_google_connection_status: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          expires_at: string
-          is_connected: boolean
-          scope: string
-          user_email: string
-        }[]
-      }
-      get_google_tokens_for_user: {
-        Args: { p_user_email: string }
-        Returns: {
-          access_token: string
-          expires_at: string
-          refresh_token: string
-          scope: string
-        }[]
-      }
-      store_google_tokens: {
-        Args: {
-          p_access_token: string
-          p_expires_at: string
-          p_refresh_token: string
-          p_scope: string
-          p_user_email: string
-        }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

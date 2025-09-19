@@ -346,11 +346,7 @@ const ChatInterface = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background relative">
-      {/* Header with User Menu */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <h1 className="text-xl font-semibold">Aether Chat</h1>
-        <UserMenu />
-      </div>
+      <UserMenu />
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">

@@ -395,6 +395,15 @@ const ChatInterface = () => {
                 >
                   <Paperclip className="h-4 w-4" />
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="attachment-btn hover:bg-primary/10 hover:text-primary"
+                  onClick={() => setShowGoogleModal(true)}
+                  title="Google Workspace Integration"
+                >
+                  <Chrome className="h-4 w-4" />
+                </Button>
                 <input
                   ref={fileInputRef}
                   type="file"

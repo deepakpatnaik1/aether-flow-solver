@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { GoogleSlidesDemo } from './GoogleSlidesDemo';
 import { Mail, FileText, Presentation, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
 
 interface GoogleConnectionStatus {
@@ -172,59 +174,77 @@ const GoogleIntegration: React.FC = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         {connectionStatus.isConnected ? (
-          <div className="space-y-4">
-            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-              <p className="text-sm text-green-800">
-                <strong>Connected as:</strong> {connectionStatus.userEmail}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center gap-3 p-3 rounded-lg border">
-                <Mail className="h-5 w-5 text-blue-600" />
-                <div className="flex-1">
-                  <p className="font-medium text-sm">Gmail</p>
-                  <p className="text-xxs text-muted-foreground">Send emails</p>
-                </div>
-                {getServiceStatus('https://www.googleapis.com/auth/gmail.send')}
+          <Tabs defaultValue="status" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="status">Connection Status</TabsTrigger>
+              <TabsTrigger value="slides">Google Slides</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="status" className="space-y-4">
+              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-sm text-green-800">
+                  <strong>Connected as:</strong> {connectionStatus.userEmail}
+                </p>
               </div>
 
-              <div className="flex items-center gap-3 p-3 rounded-lg border">
-                <FileText className="h-5 w-5 text-blue-600" />
-                <div className="flex-1">
-                  <p className="font-medium text-sm">Google Docs</p>
-                  <p className="text-xxs text-muted-foreground">Create documents</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex items-center gap-3 p-3 rounded-lg border">
+                  <Mail className="h-5 w-5 text-blue-600" />
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">Gmail</p>
+                    <p className="text-xxs text-muted-foreground">Send emails</p>
+                  </div>
+                  {getServiceStatus('https://www.googleapis.com/auth/gmail.send')}
                 </div>
-                {getServiceStatus('https://www.googleapis.com/auth/documents')}
+
+                <div className="flex items-center gap-3 p-3 rounded-lg border">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">Google Docs</p>
+                    <p className="text-xxs text-muted-foreground">Create documents</p>
+                  </div>
+                  {getServiceStatus('https://www.googleapis.com/auth/documents')}
+                </div>
+
+                <div className="flex items-center gap-3 p-3 rounded-lg border">
+                  <Presentation className="h-5 w-5 text-blue-600" />
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">Google Slides</p>
+                    <p className="text-xxs text-muted-foreground">Create presentations</p>
+                  </div>
+                  {getServiceStatus('https://www.googleapis.com/auth/presentations')}
+                </div>
               </div>
 
-              <div className="flex items-center gap-3 p-3 rounded-lg border">
-                <Presentation className="h-5 w-5 text-blue-600" />
-                <div className="flex-1">
-                  <p className="font-medium text-sm">Google Slides</p>
-                  <p className="text-xxs text-muted-foreground">Create presentations</p>
-                </div>
-                {getServiceStatus('https://www.googleapis.com/auth/presentations')}
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={disconnectGoogle}>
+                  Disconnect
+                </Button>
+                <Button variant="outline" asChild>
+                  <a 
+                    href="https://drive.google.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Open Google Drive
+                  </a>
+                </Button>
               </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={disconnectGoogle}>
-                Disconnect
-              </Button>
-              <Button variant="outline" asChild>
-                <a 
-                  href="https://drive.google.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Open Google Drive
-                </a>
-              </Button>
-            </div>
-          </div>
+            </TabsContent>
+            
+            <TabsContent value="slides">
+              {hasScope('https://www.googleapis.com/auth/presentations') ? (
+                <GoogleSlidesDemo />
+              ) : (
+                <div className="text-center p-8 text-muted-foreground">
+                  <Presentation className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Google Slides access not available. Please reconnect your Google account with proper permissions.</p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         ) : (
           <div className="space-y-4">
             <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">

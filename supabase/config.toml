@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.google-oauth]
 verify_jwt = false
+
+[functions.google-slides]
+verify_jwt = false

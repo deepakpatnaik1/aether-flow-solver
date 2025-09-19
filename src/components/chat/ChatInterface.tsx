@@ -28,7 +28,10 @@ interface Message {
 }
 
 const ChatInterface = () => {
+  console.log('🔍 ChatInterface rendering...');
+  
   const { user, loading: authLoading } = useAuth();
+  console.log('🔍 AuthContext:', { user: !!user, authLoading });
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   

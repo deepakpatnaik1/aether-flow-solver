@@ -274,38 +274,6 @@
     /* Ultra-compact message containers */
   }
 
-  .message-container::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: transparent;
-    transition: background-color 0.15s ease-out;
-    border-radius: 1px;
-  }
-
-  .message-container[data-persona="boss"]:hover::before {
-    background: hsl(var(--persona-boss) / 0.3);
-  }
-
-  .message-container[data-persona="gunnar"]:hover::before {
-    background: hsl(var(--persona-gunnar) / 0.3);
-  }
-
-  .message-container[data-persona="samara"]:hover::before {
-    background: hsl(var(--persona-samara) / 0.3);
-  }
-
-  .message-container[data-persona="kirby"]:hover::before {
-    background: hsl(var(--persona-kirby) / 0.3);
-  }
-
-  .message-container[data-persona="stefan"]:hover::before {
-    background: hsl(var(--persona-stefan) / 0.3);
-  }
-
   .persona-badge {
     @apply inline-flex items-center py-0.5 px-2 rounded font-medium text-white;
     @apply tracking-wide;

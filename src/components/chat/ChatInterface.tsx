@@ -8,7 +8,8 @@ import { MessageList } from './MessageList';
 import { PersonaBadge } from './PersonaBadge';
 import { FileUploadModal } from './FileUploadModal';
 import GoogleIntegration from './GoogleIntegration';
-// No auth needed - completely open access
+import UserMenu from '@/components/UserMenu';
+import { useAuth } from '@/contexts/AuthContext';
 
 import { supabase } from '@/integrations/supabase/client';
 import { useChat } from '@/hooks/useChat';
@@ -32,7 +33,7 @@ interface Message {
 const ChatInterface = () => {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  // No auth - public access
+  const { user, session } = useAuth();
   
   // Initialize from localStorage immediately to prevent flash and ensure persistence
   const [selectedModel, setSelectedModel] = useState(() => {
@@ -230,7 +231,7 @@ const ChatInterface = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA`, 
+          'Authorization': `Bearer ${session?.access_token || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA'}`, 
           'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA',
         },
         body: JSON.stringify({
@@ -335,7 +336,10 @@ const ChatInterface = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background relative">
-      {/* No user menu - public access */}
+      {/* Floating User Menu */}
+      <div className="absolute top-4 right-4 z-50">
+        <UserMenu />
+      </div>
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">
@@ -345,7 +349,7 @@ const ChatInterface = () => {
       {/* Input Bar */}
       <div className="input-bar-container">
         <div className="input-bar-content">
-          <div className={`flex flex-col flex-1 ${uploadedFiles.length > 0 ? 'gap-1' : ''}`}>
+          <div className="flex flex-col gap-1 flex-1">
             {uploadedFiles.length > 0 && (
               <div className="flex flex-wrap gap-2 p-2 bg-background/50 rounded border">
                 {uploadedFiles.map((file, index) => (
@@ -384,7 +388,7 @@ const ChatInterface = () => {
           </div>
           
           {/* Model Selection Controls */}
-          <div className="model-controls">
+          <div className="model-controls ml-2">
             <div className="model-selectors justify-between w-full">
               <div className="flex items-center gap-1">
                 <Button

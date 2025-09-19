@@ -1,22 +1,22 @@
 project_id = "suncgglbheilkeimwuxt"
 
 [functions.chat-stream]
-verify_jwt = false
+verify_jwt = true
 
 [functions.upload-file]
-verify_jwt = false
+verify_jwt = true
 
 [functions.superjournal]
-verify_jwt = false
+verify_jwt = true
 
 [functions.journal]
-verify_jwt = false
+verify_jwt = true
 
 [functions.process-persona-upload]
-verify_jwt = false
+verify_jwt = true
 
 [functions.artisan-cut-extraction]
-verify_jwt = false
+verify_jwt = true
 
 [functions.google-auth-url]
 verify_jwt = false
@@ -25,4 +25,4 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.google-slides]
-verify_jwt = false
+verify_jwt = true

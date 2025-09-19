@@ -23,6 +23,7 @@ export const useChat = (userId?: string) => {
 
   // Load data only when user is authenticated
   useEffect(() => {
+    console.log('📊 useChat effect - userId:', userId);
     if (userId) {
       console.log('Loading data for authenticated user:', userId);
       loadSuperjournalFromSupabase();

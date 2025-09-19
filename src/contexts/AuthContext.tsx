@@ -28,6 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // SIMPLIFIED - No validation, just accept whatever session exists
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('🔐 Auth event:', event, 'Session:', !!session, 'User:', session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -36,6 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Check for existing session - NO VALIDATION
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('🔐 Initial session check:', !!session, session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);

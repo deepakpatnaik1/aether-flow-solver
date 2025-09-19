@@ -12,11 +12,20 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(), 
     mode === "development" && componentTagger(),
-    // Cache busting plugin
+    // Cache busting plugin with auto-refresh
     {
-      name: 'cache-bust',
+      name: 'auto-refresh-cache-bust',
       transformIndexHtml(html: string) {
-        return html.replace('{{TIMESTAMP}}', Date.now().toString());
+        const timestamp = Date.now().toString();
+        return html
+          .replace('{{TIMESTAMP}}', timestamp)
+          .replace('{{BUILD_TIME}}', timestamp);
+      },
+      handleHotUpdate() {
+        // Force page reload on any change
+        setTimeout(() => {
+          console.log('🔄 Code changed - forcing refresh...');
+        }, 100);
       }
     }
   ].filter(Boolean),

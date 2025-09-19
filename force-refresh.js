@@ -1,20 +1,25 @@
 // Force complete cache clear and refresh
-console.log('🔄 Force refreshing application...');
+console.log('🔄 AUTO-REFRESHING: Clearing all caches...');
 
-// Clear all storage
+// Clear all storage immediately
 localStorage.clear();
 sessionStorage.clear();
 
-// Clear service worker cache if present
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(function(registrations) {
-    for(let registration of registrations) {
-      registration.unregister();
-    }
+// Clear all caches
+if ('caches' in window) {
+  caches.keys().then(cacheNames => {
+    cacheNames.forEach(cacheName => {
+      caches.delete(cacheName);
+    });
   });
 }
 
-// Force reload with cache bypass
-setTimeout(() => {
-  window.location.reload(true);
-}, 100);
+// Unregister service workers
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    registrations.forEach(registration => registration.unregister());
+  });
+}
+
+// Force immediate hard reload
+window.location.href = window.location.href + '?v=' + Date.now();

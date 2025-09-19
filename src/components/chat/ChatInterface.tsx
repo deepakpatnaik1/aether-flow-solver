@@ -341,11 +341,6 @@ const ChatInterface = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background relative">
-      {/* TEST ELEMENT TO CHECK IF RENDER IS WORKING */}
-      <div className="bg-red-500 text-white p-4 text-center">
-        RENDER TEST: {Date.now()}
-      </div>
-      
       <div className="absolute top-4 right-4 z-50">
         <UserMenu />
       </div>

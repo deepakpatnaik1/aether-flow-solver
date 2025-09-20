@@ -67,6 +67,14 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
     
+    // Get the authorized user ID (boss-only application)
+    const { data: user } = await supabase.auth.admin.listUsers();
+    const authorizedUser = user?.users?.find(u => u.email === 'deepakpatnaik1@gmail.com');
+    
+    if (!authorizedUser) {
+      throw new Error('Authorized user not found');
+    }
+    
     const { error: storageError } = await supabase
       .from('google_tokens')
       .insert({
@@ -74,7 +82,8 @@ serve(async (req) => {
         refresh_token: tokenData.refresh_token,
         expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
         token_type: tokenData.token_type,
-        scope: tokenData.scope
+        scope: tokenData.scope,
+        user_id: authorizedUser.id
       });
 
     if (storageError && storageError.code !== '42P01') { // Ignore table not found

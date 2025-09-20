@@ -64,9 +64,18 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
     
+    // Get the authorized user ID (boss-only application)
+    const { data: user } = await supabase.auth.admin.listUsers();
+    const authorizedUser = user?.users?.find(u => u.email === 'deepakpatnaik1@gmail.com');
+    
+    if (!authorizedUser) {
+      throw new Error('Authorized user not found');
+    }
+    
     const { data: tokens, error: tokenError } = await supabase
       .from('google_tokens')
       .select('*')
+      .eq('user_id', authorizedUser.id)
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
@@ -106,7 +115,8 @@ serve(async (req) => {
             access_token: accessToken,
             expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString()
           })
-          .eq('id', tokens.id);
+          .eq('id', tokens.id)
+          .eq('user_id', authorizedUser.id);
           
         console.log('✅ Token refreshed');
       } else {

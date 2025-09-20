@@ -512,21 +512,21 @@ serve(async (req) => {
                 }
               }
             }
+
+            // Completion signal
+            controller.enqueue(encoder.encode(JSON.stringify({
+              type: 'complete',
+              turnId: streamTurnId
+            }) + '\n'));
+            
+            controller.close();
+
           } finally {
             // Clean up abort listener
             if (req.signal) {
               req.signal.removeEventListener('abort', abortHandler);
             }
           }
-          }
-
-          // Completion signal
-          controller.enqueue(encoder.encode(JSON.stringify({
-            type: 'complete',
-            turnId: streamTurnId
-          }) + '\n'));
-          
-          controller.close();
 
         } catch (error) {
           console.error('Stream error:', error);

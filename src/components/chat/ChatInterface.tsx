@@ -253,7 +253,9 @@ const ChatInterface = () => {
 
   const extractGoogleSlidesUrls = (messageText: string): string[] => {
     const googleSlidesRegex = /https:\/\/docs\.google\.com\/presentation\/d\/[a-zA-Z0-9-_]+(?:\/[^?\s]*)?(?:\?[^#\s]*)?(?:#[^\s]*)?/g;
-    return messageText.match(googleSlidesRegex) || [];
+    const matches = messageText.match(googleSlidesRegex) || [];
+    console.log('🔍 Google Slides URL detection:', { messageText, matches });
+    return matches;
   };
 
   const handleSendMessage = async () => {
@@ -263,6 +265,7 @@ const ChatInterface = () => {
     
     // Check for Google Slides URLs and fetch them
     const googleSlidesUrls = extractGoogleSlidesUrls(messageToSend);
+    console.log('📋 Google Slides URLs detected:', googleSlidesUrls);
     if (googleSlidesUrls.length > 0) {
       try {
         for (const url of googleSlidesUrls) {

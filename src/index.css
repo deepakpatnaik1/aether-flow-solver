@@ -68,7 +68,7 @@
     --shadow-glow: 0 0 24px rgba(70, 130, 220, 0.2);
 
     /* VIBRANT DARK PALETTE - DISTINCT COLORS */
-    --persona-boss: 0 85% 40%;       /* Vibrant Dark Red */
+    --persona-boss: 0 0% 15%;        /* Professional Black */
     --persona-gunnar: 240 85% 40%;   /* Vibrant Dark Blue */
     --persona-samara: 300 80% 40%;   /* Electric Dark Magenta */
     --persona-kirby: 30 85% 45%;     /* Vibrant Dark Orange */  

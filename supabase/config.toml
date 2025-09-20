@@ -15,9 +15,6 @@ verify_jwt = true
 [functions.process-persona-upload]
 verify_jwt = true
 
-[functions.artisan-cut-extraction]
-verify_jwt = true
-
 [functions.artisan-cut-call2]
 verify_jwt = true
 

@@ -79,6 +79,14 @@ export const hardReload = () => {
     });
   }
 
-  // Force reload with cache bypass
-  window.location.reload();
+  // Force favicon refresh by adding a query parameter
+  const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+  if (link) {
+    link.href = 'data:,'; // Force empty favicon
+  }
+
+  // Hard reload with cache bypass
+  // Using location.href with a timestamp forces complete page reload
+  const timestamp = new Date().getTime();
+  window.location.href = window.location.origin + window.location.pathname + '?v=' + timestamp;
 };

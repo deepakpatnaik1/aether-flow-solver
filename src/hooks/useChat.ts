@@ -21,14 +21,14 @@ export const useChat = (userId?: string) => {
   const [journal, setJournal] = useState<Array<{persona: string, content: string}>>([]);
   const [isDataLoading, setIsDataLoading] = useState(false);
 
-  // Use email as consistent identifier for boss-only system
+  // For boss-only system, always use the email identifier regardless of auth.uid()
   const userIdentifier = 'deepakpatnaik1@gmail.com';
 
-  // Load data when user is authenticated
+  // Load data when user is authenticated (any valid userId means they're logged in)
   useEffect(() => {
     console.log('📊 useChat effect - userId:', userId);
     if (userId) {
-      console.log('Loading data for authenticated user with email identifier:', userIdentifier);
+      console.log('🎯 Loading data for boss with email identifier:', userIdentifier);
       loadSuperjournalFromSupabase();
       loadJournalFromSupabase();
     } else {
@@ -39,34 +39,31 @@ export const useChat = (userId?: string) => {
   }, [userId]);
 
   const loadSuperjournalFromSupabase = async () => {
-    if (!userId) {
-      console.log('No user ID, skipping superjournal load');
-      return;
-    }
-
+    console.log('🔍 Loading superjournal entries...');
     setIsDataLoading(true);
     
     try {
       const { data: entries, error } = await supabase
         .from('superjournal_entries')
         .select('*')
-        .eq('user_id', userIdentifier)  // Use email identifier
+        .eq('user_id', userIdentifier)
         .order('timestamp', { ascending: true });
 
+      console.log('📊 Superjournal query result:', { entries: entries?.length, error });
+
       if (error) {
-        console.error('Error loading superjournal:', error);
+        console.error('❌ Error loading superjournal:', error);
         setIsDataLoading(false);
         return;
       }
 
-      
       if (entries && entries.length > 0) {
+        console.log('✅ Found', entries.length, 'superjournal entries');
         
         // Convert superjournal entries to messages format
         const superjournalMessages: Message[] = [];
         
         entries.forEach((entry, index) => {
-          
           // Add user message
           superjournalMessages.push({
             id: entry.entry_id + '-user',
@@ -92,54 +89,48 @@ export const useChat = (userId?: string) => {
           });
         });
         
-        
-        // Set messages from superjournal only if no messages exist yet
-        setMessages(prev => {
-          if (prev.length === 0) {
-            return superjournalMessages;
-          } else {
-            return prev;
-          }
-        });
+        console.log('🎯 Setting', superjournalMessages.length, 'messages in state');
+        setMessages(superjournalMessages);
+      } else {
+        console.log('📭 No superjournal entries found');
       }
       
     } catch (error) {
-      // Handle superjournal load error silently
+      console.error('💥 Error in loadSuperjournalFromSupabase:', error);
     } finally {
       setIsDataLoading(false);
     }
   };
 
   const loadJournalFromSupabase = async () => {
-    if (!userId) {
-      console.log('No user ID, skipping journal load');
-      return;
-    }
+    console.log('🔍 Loading journal entries...');
     
     try {
       const { data: entries, error } = await supabase
         .from('journal_entries')
         .select('*')
-        .eq('user_id', userIdentifier)  // Use email identifier
+        .eq('user_id', userIdentifier)
         .order('timestamp', { ascending: true });
 
+      console.log('📊 Journal query result:', { entries: entries?.length, error });
+
       if (error) {
-        console.error('Error loading journal:', error);
+        console.error('❌ Error loading journal:', error);
         return;
       }
 
-      
       if (entries && entries.length > 0) {
         const journalEntries = entries.map(entry => ({
           persona: entry.ai_response_persona,
           content: entry.ai_response_content
         }));
         
+        console.log('✅ Setting', journalEntries.length, 'journal entries');
         setJournal(journalEntries);
       }
       
     } catch (error) {
-      console.error('❌ Error loading journal entries:', error);
+      console.error('💥 Error loading journal entries:', error);
     }
   };
 

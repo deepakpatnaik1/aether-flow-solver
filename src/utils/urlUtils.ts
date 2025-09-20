@@ -1,6 +1,6 @@
 // URL detection and processing utilities
 
-export const URL_REGEX = /https?:\/\/(?:www\.)?[-\w@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-\w()@:%_+.~#?&=]*)/g;
+export const URL_REGEX = /https?:\/\/(?:[-\w.])+(?:[:\d]+)?(?:\/(?:[\w._~!$&'()*+,;=:@]|%[\dA-F]{2})*)*(?:\?(?:[\w._~!$&'()*+,;=:@/?]|%[\dA-F]{2})*)?(?:#(?:[\w._~!$&'()*+,;=:@/?]|%[\dA-F]{2})*)?/gi;
 
 export interface ParsedUrl {
   id: string;

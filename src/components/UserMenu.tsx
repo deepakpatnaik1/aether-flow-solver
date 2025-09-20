@@ -40,11 +40,11 @@ const UserMenu = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-12 w-12 rounded-full p-0 hover:bg-accent border-4 border-red-500 bg-red-100">
+        <Button variant="ghost" className="relative h-12 w-12 rounded-full p-0 hover:bg-accent">
           <Avatar className="h-11 w-11">
             <AvatarImage src={user.user_metadata?.avatar_url} alt={displayName} />
-            <AvatarFallback className="bg-red-500 text-white font-bold text-lg">
-              TEST
+            <AvatarFallback className="bg-primary text-primary-foreground font-bold text-lg">
+              {userInitials}
             </AvatarFallback>
           </Avatar>
         </Button>

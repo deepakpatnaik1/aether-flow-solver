@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { MessageList } from './MessageList';
 import { PersonaBadge } from './PersonaBadge';
 import { FileUploadModal } from './FileUploadModal';
+import { AbortButton } from './AbortButton';
 import UserMenu from '@/components/UserMenu';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,6 +34,8 @@ const ChatInterface = () => {
   const { messages, journal, setMessages, setJournal, isDataLoading, saveToSuperjournal } = useChat(user?.id);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [currentTurnId, setCurrentTurnId] = useState<string | null>(null);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
   
   // Initialize from localStorage with true persistence - no defaults after first choice
   const [selectedModel, setSelectedModel] = useState(() => {
@@ -158,6 +161,39 @@ const ChatInterface = () => {
     }
   };
 
+  const handleAbort = async () => {
+    console.log('🛑 Aborting current message turn:', currentTurnId);
+    
+    // Cancel the fetch request
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
+    }
+    
+    // Clean up backend data if we have a turn ID
+    if (currentTurnId) {
+      try {
+        await supabase.functions.invoke('abort-message-turn', {
+          body: { entryId: currentTurnId }
+        });
+        
+        // Remove the partial messages from UI
+        setMessages(prev => prev.filter(msg => 
+          !msg.id.startsWith(currentTurnId) && msg.id !== currentTurnId
+        ));
+        
+        toast.success('Message aborted successfully');
+      } catch (error) {
+        console.error('❌ Error during abort cleanup:', error);
+        toast.error('Failed to clean up aborted message');
+      }
+    }
+    
+    // Reset states
+    setCurrentTurnId(null);
+    setIsLoading(false);
+  };
+
   const handleFileUpload = async (files: FileList, category: string, customPath?: string) => {
     const uploadPromises = Array.from(files).map(async (file) => {
       const formData = new FormData();
@@ -256,6 +292,7 @@ const ChatInterface = () => {
 
     // Create AI message placeholder for streaming
     const aiMessageId = crypto.randomUUID();
+    setCurrentTurnId(aiMessageId);
     const aiMessage: Message = {
       id: aiMessageId,
       content: '', // Start empty for streaming
@@ -279,6 +316,10 @@ const ChatInterface = () => {
       // Since functions.invoke doesn't support streaming, we'll use fetch with auth headers
       const { data: { session } } = await supabase.auth.getSession();
       
+      // Create abort controller for this request
+      const controller = new AbortController();
+      setAbortController(controller);
+      
       const fetchResponse = await fetch('https://suncgglbheilkeimwuxt.supabase.co/functions/v1/chat-stream', {
         method: 'POST',
         headers: {
@@ -286,6 +327,7 @@ const ChatInterface = () => {
           'Authorization': `Bearer ${session?.access_token}`,
           'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA',
         },
+        signal: controller.signal,
         body: JSON.stringify({
           messages: formattedMessages,
           model: selectedModel,
@@ -349,6 +391,11 @@ const ChatInterface = () => {
       // Backend now handles all superjournal writes - no frontend persistence needed
 
     } catch (error) {
+      // Check if error is due to abort
+      if (error.name === 'AbortError') {
+        console.log('🛑 Request was aborted by user');
+        return; // Don't show error message for user-initiated aborts
+      }
       // Handle error silently
       const errorMessage: Message = {
         id: (Date.now() + 2).toString(),
@@ -364,6 +411,8 @@ const ChatInterface = () => {
       ));
     } finally {
       setIsLoading(false);
+      setCurrentTurnId(null);
+      setAbortController(null);
     }
   };
 
@@ -466,6 +515,11 @@ const ChatInterface = () => {
               >
                 <Send className="h-4 w-4" />
               </Button>
+              
+              <AbortButton 
+                onAbort={handleAbort}
+                isVisible={isLoading}
+              />
             </div>
           </div>
           

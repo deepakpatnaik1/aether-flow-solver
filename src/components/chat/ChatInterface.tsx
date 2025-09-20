@@ -163,7 +163,9 @@ const ChatInterface = () => {
   };
 
   const handleAbort = async () => {
-    console.log('🛑 Aborting entire message turn - User:', currentUserMessageId, 'AI:', currentTurnId);
+    // Store the IDs we need to remove before clearing them
+    const userMsgId = currentUserMessageId;
+    const aiMsgId = currentTurnId;
     
     // Cancel the fetch request
     if (abortController) {
@@ -171,19 +173,15 @@ const ChatInterface = () => {
       setAbortController(null);
     }
     
-    // Remove both user and AI messages from UI immediately
-    // Keep messages that don't match either the user message ID or AI message ID
-    setMessages(prev => {
-      console.log('🔍 Current messages before filtering:', prev.map(m => ({ id: m.id, isUser: m.isUser, content: m.content.substring(0, 50) })));
-      console.log('🎯 Filtering out IDs:', { userMessage: currentUserMessageId, aiMessage: currentTurnId });
-      const filtered = prev.filter(msg => 
-        msg.id !== currentUserMessageId && msg.id !== currentTurnId
-      );
-      console.log('✅ Messages after filtering:', filtered.map(m => ({ id: m.id, isUser: m.isUser, content: m.content.substring(0, 50) })));
-      return filtered;
-    });
+    // Clear tracking state immediately
+    setCurrentUserMessageId(null);
+    setCurrentTurnId(null);
+    setIsLoading(false);
     
-    console.log('🗑️ Removing messages with IDs:', { userMessage: currentUserMessageId, aiMessage: currentTurnId });
+    // Remove both user and AI messages from UI
+    setMessages(prev => prev.filter(msg => 
+      msg.id !== userMsgId && msg.id !== aiMsgId
+    ));
     
     // Clean up backend data if we have a turn ID
     if (currentTurnId) {

@@ -91,7 +91,7 @@ serve(async (req) => {
     }
 
     // Redirect back to the app with success
-    const redirectUrl = `${Deno.env.get('VITE_APP_URL') || 'http://localhost:5173'}?oauth_success=true`;
+    const redirectUrl = `${Deno.env.get('APP_URL') || 'http://localhost:5173'}?oauth_success=true`;
     
     return new Response(null, {
       status: 302,
@@ -105,7 +105,7 @@ serve(async (req) => {
     console.error('❌ OAuth callback error:', error);
     
     // Redirect back to app with error
-    const redirectUrl = `${Deno.env.get('VITE_APP_URL') || 'http://localhost:5173'}?oauth_error=${encodeURIComponent(error.message)}`;
+    const redirectUrl = `${Deno.env.get('APP_URL') || 'http://localhost:5173'}?oauth_error=${encodeURIComponent(error.message)}`;
     
     return new Response(null, {
       status: 302,

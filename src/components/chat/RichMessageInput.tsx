@@ -143,28 +143,26 @@ export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputPro
     const pastedText = e.clipboardData.getData('text');
     console.log('🍃 Pasted text:', pastedText);
     
-    const currentValue = displayText;
-    const input = (ref as React.RefObject<HTMLInputElement>)?.current;
-    const cursorPos = input?.selectionStart || currentValue.length;
-    
     // Check if pasted text contains URLs
     const { urls, cleanText } = detectUrls(pastedText);
     console.log('🔍 Detected URLs:', urls.length, 'Clean text:', cleanText);
     
     if (urls.length > 0) {
-      // Insert only the clean text (without URLs) into input first
-      const newValue = currentValue.slice(0, cursorPos) + cleanText + currentValue.slice(cursorPos);
-      console.log('✨ Setting display text to:', newValue);
-      setDisplayText(newValue);
+      // IMMEDIATELY set the clean text (without URLs) - this is key!
+      console.log('✨ Setting clean text immediately:', cleanText);
+      setDisplayText(cleanText);
       
-      // Add URL pills immediately after setting clean text
+      // Also trigger onChange with clean text immediately
+      onChange(cleanText);
+      
+      // Add URL pills 
       setUrlPills(prev => {
         const updated = [...prev, ...urls];
         console.log('💊 Adding pills, total:', updated.length);
         return updated;
       });
       
-      // Start fetching content for URLs
+      // Start fetching content for URLs (async)
       urls.forEach(async (url) => {
         try {
           const result = await fetchUrlContent(url.url);
@@ -195,14 +193,12 @@ export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputPro
               : pill
           ));
           
-          // Update parent with new content
-          setTimeout(() => {
-            setUrlPills(currentPills => {
-              const fullMessage = reconstructMessage(newValue, currentPills);
-              onChange(fullMessage);
-              return currentPills;
-            });
-          }, 0);
+          // Update parent with reconstructed message
+          setUrlPills(currentPills => {
+            const fullMessage = reconstructMessage(cleanText, currentPills);
+            onChange(fullMessage);
+            return currentPills;
+          });
           
         } catch (error) {
           console.error('Error fetching URL content:', error);
@@ -217,16 +213,14 @@ export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputPro
           ));
         }
       });
-      
-      // Reconstruct message with clean text and new pills
-      const fullMessage = reconstructMessage(newValue, [...urlPills, ...urls]);
-      onChange(fullMessage);
     } else {
-      // No URLs, insert normally
+      // No URLs detected - paste normally
+      const currentValue = displayText;
+      const input = (ref as React.RefObject<HTMLInputElement>)?.current;
+      const cursorPos = input?.selectionStart || currentValue.length;
       const newValue = currentValue.slice(0, cursorPos) + pastedText + currentValue.slice(cursorPos);
       setDisplayText(newValue);
-      const fullMessage = reconstructMessage(newValue, urlPills);
-      onChange(fullMessage);
+      onChange(newValue);
     }
   };
 

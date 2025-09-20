@@ -124,9 +124,11 @@ export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputPro
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
+    console.log('📝 Input changed:', newValue);
     
     // Check if this input contains URLs
     if (URL_REGEX.test(newValue)) {
+      console.log('🔍 URL detected in input change, processing...');
       // Process URLs immediately - this will handle setting displayText to clean version
       processUrls(newValue);
     } else {
@@ -138,6 +140,7 @@ export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputPro
   };
 
   const handlePaste = async (e: React.ClipboardEvent<HTMLInputElement>) => {
+    console.log('📋 PASTE EVENT TRIGGERED!');
     e.preventDefault();
     
     const pastedText = e.clipboardData.getData('text');

@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useChat } from '@/hooks/useChat';
 import { getBerlinTime } from '@/lib/timezone';
+import { toast } from 'sonner';
 
 interface Message {
   id: string;
@@ -205,12 +206,43 @@ const ChatInterface = () => {
     }
   };
 
+  const extractGoogleSlidesUrls = (messageText: string): string[] => {
+    const googleSlidesRegex = /https:\/\/docs\.google\.com\/presentation\/d\/[a-zA-Z0-9-_]+(?:\/[^?\s]*)?(?:\?[^#\s]*)?(?:#[^\s]*)?/g;
+    return messageText.match(googleSlidesRegex) || [];
+  };
+
   const handleSendMessage = async () => {
     if (!message.trim() || isLoading) return;
 
+    const messageToSend = message.trim();
+    
+    // Check for Google Slides URLs and fetch them
+    const googleSlidesUrls = extractGoogleSlidesUrls(messageToSend);
+    if (googleSlidesUrls.length > 0) {
+      try {
+        for (const url of googleSlidesUrls) {
+          console.log('🎯 Fetching Google Slides:', url);
+          const response = await supabase.functions.invoke('google-slides-fetch', {
+            body: { presentationUrl: url }
+          });
+          
+          if (response.error) {
+            console.error('Google Slides fetch error:', response.error);
+            toast.error(`Failed to fetch Google Slides: ${response.error.message}`);
+          } else {
+            console.log('✅ Google Slides fetched:', response.data);
+            toast.success(`Google Slides "${response.data.title}" saved to persistent attachments`);
+          }
+        }
+      } catch (error) {
+        console.error('Google Slides integration error:', error);
+        toast.error('Failed to process Google Slides links');
+      }
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
-      content: message,
+      content: messageToSend,
       persona: 'Boss',
       timestamp: getBerlinTime(),
       isUser: true,

@@ -6,7 +6,7 @@ export const PersonaBadge: React.FC<PersonaBadgeProps> = ({ persona }) => {
   const getPersonaColor = (persona: string) => {
     switch (persona.toLowerCase()) {
       case 'boss':
-        return '#C53030'; 
+        return '#000000';
       case 'gunnar':
         return '#3B4DE8'; 
       case 'samara':

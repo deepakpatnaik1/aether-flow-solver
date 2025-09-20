@@ -252,9 +252,11 @@ const ChatInterface = () => {
   };
 
   const extractGoogleSlidesUrls = (messageText: string): string[] => {
+    console.log('🔍 Input message:', messageText);
     const googleSlidesRegex = /https:\/\/docs\.google\.com\/presentation\/d\/[a-zA-Z0-9-_]+(?:\/[^?\s]*)?(?:\?[^#\s]*)?(?:#[^\s]*)?/g;
     const matches = messageText.match(googleSlidesRegex) || [];
-    console.log('🔍 Google Slides URL detection:', { messageText, matches });
+    console.log('🔍 Regex pattern:', googleSlidesRegex.toString());
+    console.log('🔍 Found matches:', matches);
     return matches;
   };
 

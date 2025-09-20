@@ -8,6 +8,9 @@ export interface ParsedUrl {
   domain: string;
   favicon: string;
   displayText: string;
+  content?: string; // Store fetched content
+  isLoading?: boolean; // Track loading state
+  error?: string; // Track any fetch errors
 }
 
 export const parseUrl = (url: string): ParsedUrl => {
@@ -33,7 +36,8 @@ export const parseUrl = (url: string): ParsedUrl => {
       url,
       domain,
       favicon,
-      displayText
+      displayText,
+      isLoading: true // Start in loading state
     };
   } catch (error) {
     console.error('Error parsing URL:', error);
@@ -44,7 +48,31 @@ export const parseUrl = (url: string): ParsedUrl => {
       url,
       domain: domain.substring(0, 30),
       favicon: `https://www.google.com/s2/favicons?domain=${domain}&sz=16`,
-      displayText: domain.substring(0, 30)
+      displayText: domain.substring(0, 30),
+      isLoading: true
+    };
+  }
+};
+
+// Fetch URL content using Lovable's fetch website tool
+export const fetchUrlContent = async (url: string): Promise<{ content?: string; error?: string }> => {
+  try {
+    console.log('🌐 Fetching content for URL:', url);
+    
+    // Note: In a real implementation, you'd make an API call to a backend service
+    // that can fetch website content. For now, we'll simulate this.
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // For now, return a placeholder - this would be replaced with actual content fetching
+    return {
+      content: `[Website content from ${url} would be fetched here]`
+    };
+  } catch (error) {
+    console.error('Failed to fetch URL content:', error);
+    return {
+      error: 'Failed to fetch website content'
     };
   }
 };
@@ -73,23 +101,39 @@ export const detectUrls = (text: string): { urls: ParsedUrl[]; cleanText: string
 };
 
 export const reconstructMessage = (text: string, urlPills: ParsedUrl[]): string => {
-  // Since we no longer use placeholders, just append URLs to the text
   if (urlPills.length === 0) {
     return text;
   }
   
-  const urlString = urlPills.map(pill => pill.url).join(' ');
+  // Build content string from URL pills
+  const contentParts: string[] = [];
   
-  // If there's text and URLs, separate them with a space
-  if (text.trim() && urlString) {
-    return `${text.trim()} ${urlString}`;
+  urlPills.forEach(pill => {
+    if (pill.content) {
+      // Include the fetched content
+      contentParts.push(`\n\n--- Content from ${pill.url} ---\n${pill.content}\n--- End of content ---`);
+    } else if (pill.error) {
+      // Include URL with error note if fetch failed
+      contentParts.push(`\n\n${pill.url} (failed to fetch content: ${pill.error})`);
+    } else if (pill.isLoading) {
+      // Still loading, include just URL for now
+      contentParts.push(`\n\n${pill.url} (fetching content...)`);
+    } else {
+      // Fallback to just URL
+      contentParts.push(`\n\n${pill.url}`);
+    }
+  });
+  
+  const contentString = contentParts.join('');
+  
+  // Combine text and content
+  if (text.trim() && contentString) {
+    return `${text.trim()}${contentString}`;
   }
   
-  // If only URLs exist, return just the URLs
-  if (urlString) {
-    return urlString;
+  if (contentString) {
+    return contentString.trim();
   }
   
-  // If only text exists, return just the text
   return text;
 };

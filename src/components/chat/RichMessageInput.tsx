@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, KeyboardEvent, forwardRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { UrlPill } from './UrlPill';
-import { detectUrls, reconstructMessage, ParsedUrl, URL_REGEX } from '@/utils/urlUtils';
+import { detectUrls, reconstructMessage, ParsedUrl, URL_REGEX, fetchUrlContent } from '@/utils/urlUtils';
 
 interface RichMessageInputProps {
   value: string;
@@ -23,15 +23,55 @@ export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputPro
   const [urlPills, setUrlPills] = useState<ParsedUrl[]>([]);
   const [displayText, setDisplayText] = useState(value);
 
-  const processUrls = useCallback((text: string) => {
+  const processUrls = useCallback(async (text: string) => {
     const { urls, cleanText } = detectUrls(text);
     
     if (urls.length > 0) {
-      // Add new URL pills
+      // Add new URL pills (starting in loading state)
       setUrlPills(prev => [...prev, ...urls]);
       setDisplayText(cleanText);
       
-      // Reconstruct full message with URLs and notify parent
+      // Start fetching content for new URLs
+      urls.forEach(async (url) => {
+        try {
+          const result = await fetchUrlContent(url.url);
+          
+          // Update the specific URL pill with content or error
+          setUrlPills(prev => prev.map(pill => 
+            pill.id === url.id 
+              ? { 
+                  ...pill, 
+                  content: result.content, 
+                  error: result.error, 
+                  isLoading: false 
+                }
+              : pill
+          ));
+          
+          // Update parent with new content
+          setTimeout(() => {
+            setUrlPills(currentPills => {
+              const fullMessage = reconstructMessage(cleanText, currentPills);
+              onChange(fullMessage);
+              return currentPills;
+            });
+          }, 0);
+          
+        } catch (error) {
+          console.error('Error fetching URL content:', error);
+          setUrlPills(prev => prev.map(pill => 
+            pill.id === url.id 
+              ? { 
+                  ...pill, 
+                  error: 'Failed to fetch content', 
+                  isLoading: false 
+                }
+              : pill
+          ));
+        }
+      });
+      
+      // Reconstruct message with initial URL state
       const fullMessage = reconstructMessage(cleanText, [...urlPills, ...urls]);
       onChange(fullMessage);
     } else {

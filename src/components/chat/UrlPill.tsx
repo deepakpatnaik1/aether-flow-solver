@@ -1,5 +1,5 @@
 import React from 'react';
-import { X } from 'lucide-react';
+import { X, Loader2, Check, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ParsedUrl } from '@/utils/urlUtils';
 
@@ -9,8 +9,34 @@ interface UrlPillProps {
 }
 
 export const UrlPill: React.FC<UrlPillProps> = ({ url, onRemove }) => {
+  const getStatusIcon = () => {
+    if (url.isLoading) {
+      return <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />;
+    }
+    if (url.error) {
+      return <AlertCircle className="h-3 w-3 text-destructive" />;
+    }
+    if (url.content) {
+      return <Check className="h-3 w-3 text-green-500" />;
+    }
+    return null;
+  };
+
+  const getStatusText = () => {
+    if (url.isLoading) return "Fetching content...";
+    if (url.error) return `Error: ${url.error}`;
+    if (url.content) return "Content loaded";
+    return url.displayText;
+  };
+
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-1 mx-1 bg-secondary/50 border border-border rounded-md text-sm max-w-xs">
+    <span className={`inline-flex items-center gap-1 px-2 py-1 mx-1 border rounded-md text-sm max-w-xs ${
+      url.error 
+        ? 'bg-destructive/10 border-destructive/20' 
+        : url.content 
+          ? 'bg-green-50 border-green-200' 
+          : 'bg-secondary/50 border-border'
+    }`}>
       <img 
         src={url.favicon} 
         alt=""
@@ -23,6 +49,7 @@ export const UrlPill: React.FC<UrlPillProps> = ({ url, onRemove }) => {
       <span className="truncate flex-1 text-foreground/80">
         {url.displayText}
       </span>
+      {getStatusIcon()}
       <Button
         type="button"
         variant="ghost"
@@ -30,6 +57,7 @@ export const UrlPill: React.FC<UrlPillProps> = ({ url, onRemove }) => {
         className="h-4 w-4 p-0 hover:bg-destructive/20 flex-shrink-0"
         onClick={() => onRemove(url.id)}
         aria-label={`Remove ${url.domain}`}
+        title={getStatusText()}
       >
         <X className="h-3 w-3" />
       </Button>

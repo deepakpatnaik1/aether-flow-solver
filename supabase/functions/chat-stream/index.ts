@@ -424,7 +424,7 @@ serve(async (req) => {
                 
                 const superjournalEntry = {
                   entry_id: streamTurnId,
-                  user_id: null, // No user ID needed for public access
+                  user_id: 'deepakpatnaik1@gmail.com', // Use boss email for consistency
                   user_message_content: userMessage.content || 'No user input',
                   user_message_persona: 'Boss',
                   user_message_attachments: userMessage.attachments || [],
@@ -456,7 +456,7 @@ serve(async (req) => {
                   },
                   body: JSON.stringify({
                     entryId: streamTurnId,
-                    userId: null, // No userId needed for public access
+                    userId: 'deepakpatnaik1@gmail.com', // Use boss email for consistency
                     userInput: userMessage.content || 'No user input',
                     personaResponse: fullPersonaResponse,
                     userPersona: 'Boss',

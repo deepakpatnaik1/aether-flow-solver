@@ -62,19 +62,34 @@ export const detectUrls = (text: string): { urls: ParsedUrl[]; cleanText: string
   matches.forEach(match => {
     const parsedUrl = parseUrl(match);
     urls.push(parsedUrl);
-    // Replace URL in text with placeholder that we can track
-    cleanText = cleanText.replace(match, `__URL_${parsedUrl.id}__`);
+    // Remove URL completely from text (don't replace with placeholder)
+    cleanText = cleanText.replace(match, '');
   });
+  
+  // Clean up extra spaces that might be left behind
+  cleanText = cleanText.replace(/\s+/g, ' ').trim();
   
   return { urls, cleanText };
 };
 
 export const reconstructMessage = (text: string, urlPills: ParsedUrl[]): string => {
-  let reconstructed = text;
+  // Since we no longer use placeholders, just append URLs to the text
+  if (urlPills.length === 0) {
+    return text;
+  }
   
-  urlPills.forEach(pill => {
-    reconstructed = reconstructed.replace(`__URL_${pill.id}__`, pill.url);
-  });
+  const urlString = urlPills.map(pill => pill.url).join(' ');
   
-  return reconstructed;
+  // If there's text and URLs, separate them with a space
+  if (text.trim() && urlString) {
+    return `${text.trim()} ${urlString}`;
+  }
+  
+  // If only URLs exist, return just the URLs
+  if (urlString) {
+    return urlString;
+  }
+  
+  // If only text exists, return just the text
+  return text;
 };

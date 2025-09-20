@@ -16,7 +16,8 @@ const queryClient = new QueryClient();
 
 const App = () => {
   useEffect(() => {
-    enforceProductionDomain();
+    // Temporarily disabled to debug 404 issue
+    // enforceProductionDomain();
 
     const versionChanged = checkVersion();
     if (versionChanged) {

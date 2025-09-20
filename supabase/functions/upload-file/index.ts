@@ -4,9 +4,11 @@ import { createClient } from 'https:
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+const ALLOWED_DOMAIN = 'https://aether.deepakpatnaik.com';
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': ALLOWED_DOMAIN,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Credentials': 'true'
 };
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -14,6 +16,20 @@ serve(async (req) => {
   }
   try {
     console.log('Upload function called');
+
+    // Domain validation - ONLY aether.deepakpatnaik.com allowed
+    const origin = req.headers.get('origin');
+    const referer = req.headers.get('referer');
+
+    if (!origin?.includes('aether.deepakpatnaik.com') && !referer?.includes('aether.deepakpatnaik.com')) {
+      console.log('❌ Domain validation failed for upload:', { origin, referer });
+      return new Response(JSON.stringify({
+        error: 'Access denied. Uploads only allowed from aether.deepakpatnaik.com'
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     // Boss-only authentication check
     const authHeader = req.headers.get('authorization');

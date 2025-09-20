@@ -14,9 +14,11 @@ interface ChatMessage {
   content: string;
 }
 
+const ALLOWED_DOMAIN = 'https://aether.deepakpatnaik.com';
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': ALLOWED_DOMAIN,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Credentials': 'true'
 };
 
 // Load Boss profile from boss bucket
@@ -329,17 +331,55 @@ serve(async (req) => {
     return new Response('Method not allowed', { status: 405 });
   }
 
+  // Domain validation - ONLY aether.deepakpatnaik.com allowed
+  const origin = req.headers.get('origin');
+  const referer = req.headers.get('referer');
+
+  const allowedDomain = 'aether.deepakpatnaik.com';
+  const isValidOrigin = origin?.includes(allowedDomain);
+  const isValidReferer = referer?.includes(allowedDomain);
+
+  if (!isValidOrigin && !isValidReferer) {
+    console.log('❌ Domain validation failed:', { origin, referer });
+    return new Response(JSON.stringify({
+      error: 'Access denied. This API is only accessible from aether.deepakpatnaik.com'
+    }), {
+      status: 403,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
   if (!OPENAI_API_KEY) {
     console.error('OpenAI API key not configured');
-    return new Response(JSON.stringify({ error: 'OpenAI API key not configured' }), { 
+    return new Response(JSON.stringify({ error: 'OpenAI API key not configured' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 
-  // No authentication needed - public access
-  const userId = null; // Set to null for public access
-  console.log('✅ Public access mode - no authentication required');
+  // Boss-only authentication check
+  const authHeader = req.headers.get('authorization');
+  let userId = null;
+
+  if (authHeader) {
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+
+    if (user && !error) {
+      // Boss-only access: Only allow deepakpatnaik1@gmail.com
+      if (user.email !== 'deepakpatnaik1@gmail.com') {
+        console.log('❌ Unauthorized user attempted access:', user.email);
+        return new Response(JSON.stringify({ error: 'Access denied. Boss-only.' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      userId = user.id;
+      console.log('✅ Authenticated Boss for chat-stream:', user.email);
+    }
+  }
+
+  console.log('✅ Domain validated and Boss authenticated');
 
   try {
     const requestStartTime = performance.now();

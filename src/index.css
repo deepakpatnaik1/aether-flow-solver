@@ -438,29 +438,4 @@
     @apply bg-warning/10 text-warning border border-warning/20;
   }
 
-  /* PERSONA BADGE STYLES - SPEAKER BOX COLORS */
-  .persona-badge-boss {
-    background: hsl(var(--persona-boss)) !important;
-    color: white !important;
-  }
-
-  .persona-badge-gunnar {
-    background: hsl(var(--persona-gunnar)) !important;
-    color: white !important;
-  }
-
-  .persona-badge-samara {
-    background: hsl(var(--persona-samara)) !important;
-    color: white !important;
-  }
-
-  .persona-badge-kirby {
-    background: hsl(var(--persona-kirby)) !important;
-    color: white !important;
-  }
-
-  .persona-badge-stefan {
-    background: hsl(var(--persona-stefan)) !important;
-    color: white !important;
-  }
 }

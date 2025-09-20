@@ -20,25 +20,28 @@ export const PersonaBadge: React.FC<PersonaBadgeProps> = ({ persona }) => {
     }
   };
 
-  const getPersonaClass = (persona: string) => {
+  const getPersonaStyle = (persona: string) => {
     switch (persona.toLowerCase()) {
       case 'boss':
-        return 'persona-badge persona-badge-boss';
+        return { backgroundColor: '#2d2d2d', color: 'white' }; // Professional Black
       case 'gunnar':
-        return 'persona-badge persona-badge-gunnar';
+        return { backgroundColor: '#1e40af', color: 'white' }; // Blue
       case 'samara':
-        return 'persona-badge persona-badge-samara';
+        return { backgroundColor: '#7c2d92', color: 'white' }; // Magenta
       case 'kirby':
-        return 'persona-badge persona-badge-kirby';
+        return { backgroundColor: '#d97706', color: 'white' }; // Orange
       case 'stefan':
-        return 'persona-badge persona-badge-stefan';
+        return { backgroundColor: '#059669', color: 'white' }; // Green
       default:
-        return 'persona-badge';
+        return { backgroundColor: '#4f46e5', color: 'white' }; // Default primary
     }
   };
 
   return (
-    <div className={getPersonaClass(persona)}>
+    <div 
+      className="persona-badge" 
+      style={getPersonaStyle(persona)}
+    >
       {getPersonaName(persona)}
     </div>
   );

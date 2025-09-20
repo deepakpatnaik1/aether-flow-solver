@@ -172,9 +172,12 @@ const ChatInterface = () => {
     }
     
     // Remove both user and AI messages from UI immediately
+    // Keep messages that don't match either the user message ID or AI message ID
     setMessages(prev => prev.filter(msg => 
       msg.id !== currentUserMessageId && msg.id !== currentTurnId
     ));
+    
+    console.log('🗑️ Removing messages with IDs:', { userMessage: currentUserMessageId, aiMessage: currentTurnId });
     
     // Clean up backend data if we have a turn ID
     if (currentTurnId) {
@@ -288,6 +291,8 @@ const ChatInterface = () => {
       attachments: uploadedFiles.length > 0 ? uploadedFiles : undefined,
     };
 
+    console.log('📤 Creating user message with ID:', userMessageId);
+
     setMessage('');
     setUploadedFiles([]);
     setMessages(prev => [...prev, userMessage]);
@@ -295,8 +300,12 @@ const ChatInterface = () => {
 
     // Create AI message placeholder for streaming
     const aiMessageId = crypto.randomUUID();
+    console.log('🤖 Creating AI message with ID:', aiMessageId);
+    
+    // Set tracking IDs BEFORE adding AI message
     setCurrentTurnId(aiMessageId);
     setCurrentUserMessageId(userMessageId);
+    
     const aiMessage: Message = {
       id: aiMessageId,
       content: '', // Start empty for streaming

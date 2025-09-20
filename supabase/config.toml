@@ -26,3 +26,12 @@ verify_jwt = true
 
 [functions.google-slides-fetch]
 verify_jwt = true
+
+[functions.google-oauth-init]
+verify_jwt = true
+
+[functions.google-oauth-callback]
+verify_jwt = false
+
+[functions.google-slides-oauth]
+verify_jwt = true

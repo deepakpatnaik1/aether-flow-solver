@@ -23,7 +23,7 @@ export const PersonaBadge: React.FC<PersonaBadgeProps> = ({ persona }) => {
   const getPersonaStyle = (persona: string) => {
     switch (persona.toLowerCase()) {
       case 'boss':
-        return { backgroundColor: '#2d2d2d', color: 'white' }; // Professional Black
+        return { backgroundColor: '#eab308', color: 'white' }; // Yellow
       case 'gunnar':
         return { backgroundColor: '#1e40af', color: 'white' }; // Blue
       case 'samara':

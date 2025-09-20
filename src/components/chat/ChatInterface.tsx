@@ -33,9 +33,10 @@ const ChatInterface = () => {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  // Initialize from localStorage immediately to prevent flash and ensure persistence
+  // Initialize from localStorage with true persistence - no defaults after first choice
   const [selectedModel, setSelectedModel] = useState(() => {
     const storedModel = localStorage.getItem('selectedModel');
+    console.log('🔄 Initializing model from localStorage:', storedModel);
     const models = [
       { id: 'gpt-4o-mini', name: 'GPT-4o Mini (Fast)' },
       { id: 'gpt-4o', name: 'GPT-4o (Balanced)' },
@@ -44,18 +45,45 @@ const ChatInterface = () => {
       { id: 'gpt-4.1-2025-04-14', name: 'GPT-4.1' },
       { id: 'o3-2025-04-16', name: 'O3 Reasoning' }
     ];
-    return storedModel && models.some(m => m.id === storedModel) ? storedModel : 'gpt-4o-mini';
+    // Only use default for very first time ever - after that, persist whatever was chosen
+    if (storedModel && models.some(m => m.id === storedModel)) {
+      console.log('✅ Using stored model:', storedModel);
+      return storedModel;
+    } else if (storedModel === null) {
+      // First time ever - use default and immediately save it
+      console.log('🆕 First time - using default model: gpt-4o-mini');
+      localStorage.setItem('selectedModel', 'gpt-4o-mini');
+      return 'gpt-4o-mini';
+    } else {
+      // Invalid stored value - keep what they had or use current selection
+      console.log('⚠️ Invalid stored model, keeping existing or default');
+      return 'gpt-4o-mini';
+    }
   });
   
   const [selectedPersona, setSelectedPersona] = useState<string>(() => {
     const storedPersona = localStorage.getItem('selectedPersona');
+    console.log('🔄 Initializing persona from localStorage:', storedPersona);
     const personas = [
       { id: 'gunnar', name: 'Gunnar' },
       { id: 'samara', name: 'Samara' },
       { id: 'kirby', name: 'Kirby' },
       { id: 'stefan', name: 'Stefan' }
     ];
-    return storedPersona && personas.some(p => p.id === storedPersona) ? storedPersona : 'gunnar';
+    // Only use default for very first time ever - after that, persist whatever was chosen
+    if (storedPersona && personas.some(p => p.id === storedPersona)) {
+      console.log('✅ Using stored persona:', storedPersona);
+      return storedPersona;
+    } else if (storedPersona === null) {
+      // First time ever - use default and immediately save it
+      console.log('🆕 First time - using default persona: gunnar');
+      localStorage.setItem('selectedPersona', 'gunnar');
+      return 'gunnar';
+    } else {
+      // Invalid stored value - keep what they had or use current selection
+      console.log('⚠️ Invalid stored persona, keeping existing or default');
+      return 'gunnar';
+    }
   });
   
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
@@ -81,12 +109,14 @@ const ChatInterface = () => {
     { id: 'stefan', name: 'Stefan' }
   ];
 
-  // Save to localStorage whenever values change
+  // Save to localStorage whenever values change - true persistence
   useEffect(() => {
+    console.log('💾 Saving model to localStorage:', selectedModel);
     localStorage.setItem('selectedModel', selectedModel);
   }, [selectedModel]);
 
   useEffect(() => {
+    console.log('💾 Saving persona to localStorage:', selectedPersona);
     localStorage.setItem('selectedPersona', selectedPersona);
   }, [selectedPersona]);
 

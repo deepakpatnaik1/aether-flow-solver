@@ -280,7 +280,7 @@ function buildCall1Context(
   return context;
 }
 
-const callOpenAI = async (model: string, messages: ChatMessage[], stream: boolean = false) => {
+const callOpenAI = async (model: string, messages: ChatMessage[], stream: boolean = false, signal?: AbortSignal) => {
   const requestBody: any = {
     model,
     messages,
@@ -297,6 +297,7 @@ const callOpenAI = async (model: string, messages: ChatMessage[], stream: boolea
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
+    signal, // Pass through the abort signal
     headers: {
       'Authorization': `Bearer ${OPENAI_API_KEY}`,
       'Content-Type': 'application/json',
@@ -394,7 +395,7 @@ serve(async (req) => {
     const contextLoadTime = performance.now() - requestStartTime;
     console.log('✅ Context loaded in', Math.round(contextLoadTime), 'ms');
     
-    const streamingResponse = await callOpenAI(model, chatMessages, true);
+    const streamingResponse = await callOpenAI(model, chatMessages, true, req.signal);
 
     console.log('🏁 CALL 1 TOTAL TIME:', Math.round(performance.now() - requestStartTime), 'ms');
 
@@ -413,91 +414,110 @@ serve(async (req) => {
           let fullPersonaResponse = ''; // Collect the complete response
           let streamTurnId = turnId || crypto.randomUUID(); // Use provided turnId or generate new one
 
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) {
-              console.log('✅ Stream complete!');
-              
-              // WRITE TO SUPERJOURNAL IMMEDIATELY - BACKEND HANDLES ALL PERSISTENCE
-              if (fullPersonaResponse.trim() && userMessage) {
-                console.log('💾 Writing to superjournal_entries immediately...');
+          // Listen for abort signal
+          const abortHandler = () => {
+            console.log('🛑 Stream aborted by user');
+            reader.cancel();
+            controller.close();
+          };
+          
+          if (req.signal) {
+            req.signal.addEventListener('abort', abortHandler);
+          }
+
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) {
+                console.log('✅ Stream complete!');
                 
-                const superjournalEntry = {
-                  entry_id: streamTurnId,
-                  user_id: 'deepakpatnaik1@gmail.com', // Use boss email for consistency
-                  user_message_content: userMessage.content || 'No user input',
-                  user_message_persona: 'Boss',
-                  user_message_attachments: userMessage.attachments || [],
-                  ai_response_content: fullPersonaResponse,
-                  ai_response_persona: persona,
-                  ai_response_model: model
-                };
-
-                // Write to superjournal_entries immediately
-                supabase
-                  .from('superjournal_entries')
-                  .insert(superjournalEntry)
-                  .then(({ error }) => {
-                    if (error) {
-                      console.error('❌ Failed to write to superjournal:', error);
-                    } else {
-                      console.log('✅ Superjournal entry saved by backend');
-                    }
-                  });
-
-                // TRIGGER CALL 2 automatically in background
-                console.log('🚀 Triggering Call 2 - Artisan Cut Processing...');
-                
-                fetch('https://suncgglbheilkeimwuxt.supabase.co/functions/v1/artisan-cut-call2', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + SUPABASE_SERVICE_ROLE_KEY,
-                  },
-                  body: JSON.stringify({
-                    entryId: streamTurnId,
-                    userId: 'deepakpatnaik1@gmail.com', // Use boss email for consistency
-                    userInput: userMessage.content || 'No user input',
-                    personaResponse: fullPersonaResponse,
-                    userPersona: 'Boss',
-                    aiPersona: persona,
-                    model: model
-                  })
-                }).catch(error => {
-                  console.error('❌ Call 2 failed:', error);
-                });
-              }
-              
-              break;
-            }
-
-            const chunk = new TextDecoder().decode(value);
-            const lines = chunk.split('\n').filter(line => line.trim());
-
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6);
-                if (data === '[DONE]') continue;
-
-                try {
-                  const parsed = JSON.parse(data);
-                  const delta = parsed.choices?.[0]?.delta?.content;
+                // WRITE TO SUPERJOURNAL IMMEDIATELY - BACKEND HANDLES ALL PERSISTENCE
+                if (fullPersonaResponse.trim() && userMessage) {
+                  console.log('💾 Writing to superjournal_entries immediately...');
                   
-                  if (delta) {
-                    fullPersonaResponse += delta; // Accumulate complete response
+                  const superjournalEntry = {
+                    entry_id: streamTurnId,
+                    user_id: 'deepakpatnaik1@gmail.com', // Use boss email for consistency
+                    user_message_content: userMessage.content || 'No user input',
+                    user_message_persona: 'Boss',
+                    user_message_attachments: userMessage.attachments || [],
+                    ai_response_content: fullPersonaResponse,
+                    ai_response_persona: persona,
+                    ai_response_model: model
+                  };
+
+                  // Write to superjournal_entries immediately
+                  supabase
+                    .from('superjournal_entries')
+                    .insert(superjournalEntry)
+                    .then(({ error }) => {
+                      if (error) {
+                        console.error('❌ Failed to write to superjournal:', error);
+                      } else {
+                        console.log('✅ Superjournal entry saved by backend');
+                      }
+                    });
+
+                  // TRIGGER CALL 2 automatically in background
+                  console.log('🚀 Triggering Call 2 - Artisan Cut Processing...');
+                  
+                  fetch('https://suncgglbheilkeimwuxt.supabase.co/functions/v1/artisan-cut-call2', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': 'Bearer ' + SUPABASE_SERVICE_ROLE_KEY,
+                    },
+                    body: JSON.stringify({
+                      entryId: streamTurnId,
+                      userId: 'deepakpatnaik1@gmail.com', // Use boss email for consistency
+                      userInput: userMessage.content || 'No user input',
+                      personaResponse: fullPersonaResponse,
+                      userPersona: 'Boss',
+                      aiPersona: persona,
+                      model: model
+                    })
+                  }).catch(error => {
+                    console.error('❌ Call 2 failed:', error);
+                  });
+                }
+                
+                break;
+              }
+
+              const chunk = new TextDecoder().decode(value);
+              const lines = chunk.split('\n').filter(line => line.trim());
+
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  const data = line.slice(6);
+                  if (data === '[DONE]') continue;
+
+                  try {
+                    const parsed = JSON.parse(data);
+                    const delta = parsed.choices?.[0]?.delta?.content;
                     
-                    // Stream to UI immediately  
-                    controller.enqueue(encoder.encode(JSON.stringify({ 
-                      type: 'content_delta', 
-                      delta: delta,
-                      turnId: streamTurnId
-                    }) + '\n'));
+                    if (delta) {
+                      fullPersonaResponse += delta; // Accumulate complete response
+                      
+                      // Stream to UI immediately  
+                      controller.enqueue(encoder.encode(JSON.stringify({ 
+                        type: 'content_delta', 
+                        delta: delta,
+                        turnId: streamTurnId
+                      }) + '\n'));
+                    }
+                  } catch (parseError) {
+                    // Silent fail for speed
                   }
-                } catch (parseError) {
-                  // Silent fail for speed
                 }
               }
             }
+          } finally {
+            // Clean up abort listener
+            if (req.signal) {
+              req.signal.removeEventListener('abort', abortHandler);
+            }
+          }
           }
 
           // Completion signal

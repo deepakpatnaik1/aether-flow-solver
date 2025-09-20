@@ -76,17 +76,9 @@ serve(async (req) => {
       throw new Error('Failed to parse Google Slides URL');
     }
 
-    // Get Google API key from secrets
-    const googleApiKey = Deno.env.get('GOOGLE_API_KEY');
-    if (!googleApiKey) {
-      console.error('❌ Google API key not found in environment');
-      throw new Error('Google API key not configured');
-    }
-    console.log('✅ Google API key found');
-
-    // Fetch presentation from Google Slides API
-    const apiUrl = `https://slides.googleapis.com/v1/presentations/${presentationId}?key=${googleApiKey}`;
-    console.log('🌐 Making API call to:', apiUrl);
+    // Google Slides API requires OAuth2, not API keys
+    console.log('❌ Google Slides API requires OAuth2 authentication, not API keys');
+    throw new Error('Google Slides API requires OAuth2 authentication. Please share the presentation publicly or export as PDF and paste the content instead.');
     
     let response;
     let presentation: GoogleSlidesPresentation;

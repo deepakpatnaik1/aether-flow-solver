@@ -1,5 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
@@ -35,14 +35,22 @@ interface GoogleSlidesPresentation {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     console.log('🚀 Google Slides fetch function started');
-    const requestBody = await req.json();
-    console.log('📋 Request body:', requestBody);
+    
+    let requestBody;
+    try {
+      requestBody = await req.json();
+      console.log('📋 Request body received:', JSON.stringify(requestBody));
+    } catch (parseError) {
+      console.error('❌ Failed to parse request body:', parseError);
+      throw new Error('Invalid JSON in request body');
+    }
     
     const { presentationUrl } = requestBody;
     
@@ -54,14 +62,19 @@ serve(async (req) => {
     console.log('🔍 Processing URL:', presentationUrl);
     
     // Extract presentation ID from URL
-    const presentationIdMatch = presentationUrl.match(/\/presentation\/d\/([a-zA-Z0-9-_]+)/);
-    if (!presentationIdMatch) {
-      console.error('❌ Invalid URL format:', presentationUrl);
-      throw new Error('Invalid Google Slides URL format');
+    let presentationId;
+    try {
+      const presentationIdMatch = presentationUrl.match(/\/presentation\/d\/([a-zA-Z0-9-_]+)/);
+      if (!presentationIdMatch) {
+        console.error('❌ Invalid URL format:', presentationUrl);
+        throw new Error('Invalid Google Slides URL format');
+      }
+      presentationId = presentationIdMatch[1];
+      console.log('🎯 Extracted presentation ID:', presentationId);
+    } catch (regexError) {
+      console.error('❌ URL parsing error:', regexError);
+      throw new Error('Failed to parse Google Slides URL');
     }
-    
-    const presentationId = presentationIdMatch[1];
-    console.log('🎯 Extracted presentation ID:', presentationId);
 
     // Get Google API key from secrets
     const googleApiKey = Deno.env.get('GOOGLE_API_KEY');
@@ -75,21 +88,35 @@ serve(async (req) => {
     const apiUrl = `https://slides.googleapis.com/v1/presentations/${presentationId}?key=${googleApiKey}`;
     console.log('🌐 Making API call to:', apiUrl);
     
-    const response = await fetch(apiUrl);
-    console.log('📊 Google API response status:', response.status);
+    let response;
+    let presentation: GoogleSlidesPresentation;
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Google Slides API error:', response.status, errorText);
-      throw new Error(`Google Slides API error: ${response.status} - ${errorText}`);
+    try {
+      response = await fetch(apiUrl);
+      console.log('📊 Google API response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Google Slides API error:', response.status, errorText);
+        throw new Error(`Google Slides API error: ${response.status} - ${errorText}`);
+      }
+
+      presentation = await response.json();
+      console.log('📊 Fetched presentation:', presentation.title, 'with', presentation.slides?.length || 0, 'slides');
+    } catch (fetchError) {
+      console.error('❌ API fetch error:', fetchError);
+      throw new Error(`Failed to fetch from Google Slides API: ${fetchError.message}`);
     }
 
-    const presentation: GoogleSlidesPresentation = await response.json();
-    console.log('📊 Fetched presentation:', presentation.title, 'with', presentation.slides?.length || 0, 'slides');
-
     // Convert to markdown format
-    const markdown = convertPresentationToMarkdown(presentation, presentationUrl);
-    console.log('📝 Generated markdown length:', markdown.length);
+    let markdown;
+    try {
+      markdown = convertPresentationToMarkdown(presentation, presentationUrl);
+      console.log('📝 Generated markdown length:', markdown.length);
+    } catch (markdownError) {
+      console.error('❌ Markdown conversion error:', markdownError);
+      throw new Error(`Failed to convert presentation to markdown: ${markdownError.message}`);
+    }
 
     // Save to Supabase Storage
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -101,7 +128,13 @@ serve(async (req) => {
     }
     console.log('✅ Supabase configuration found');
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    let supabase;
+    try {
+      supabase = createClient(supabaseUrl, supabaseServiceKey);
+    } catch (clientError) {
+      console.error('❌ Supabase client creation error:', clientError);
+      throw new Error(`Failed to create Supabase client: ${clientError.message}`);
+    }
     
     // Create filename from title or use presentation ID
     const filename = `${sanitizeFilename(presentation.title || presentationId)}.md`;
@@ -109,15 +142,20 @@ serve(async (req) => {
     console.log('💾 Saving to storage path:', filePath);
     
     // Upload to persistent-attachments bucket
-    const { error: uploadError } = await supabase.storage
-      .from('persistent-attachments')
-      .upload(filePath, new Blob([markdown], { type: 'text/markdown' }), {
-        upsert: true
-      });
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('persistent-attachments')
+        .upload(filePath, new Blob([markdown], { type: 'text/markdown' }), {
+          upsert: true
+        });
 
-    if (uploadError) {
-      console.error('❌ Storage upload error:', uploadError);
-      throw new Error(`Failed to save presentation: ${uploadError.message}`);
+      if (uploadError) {
+        console.error('❌ Storage upload error:', uploadError);
+        throw new Error(`Failed to save presentation: ${uploadError.message}`);
+      }
+    } catch (storageError) {
+      console.error('❌ Storage operation error:', storageError);
+      throw new Error(`Storage operation failed: ${storageError.message}`);
     }
 
     console.log('✅ Successfully saved Google Slides presentation');
@@ -135,7 +173,8 @@ serve(async (req) => {
     console.error('❌ Google Slides fetch error:', error);
     console.error('❌ Error stack:', error.stack);
     return new Response(JSON.stringify({ 
-      error: error.message 
+      error: error.message,
+      stack: error.stack
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

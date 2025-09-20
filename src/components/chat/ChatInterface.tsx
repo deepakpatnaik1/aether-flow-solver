@@ -272,7 +272,7 @@ const ChatInterface = () => {
       try {
         for (const url of googleSlidesUrls) {
           console.log('🎯 Fetching Google Slides:', url);
-          const response = await supabase.functions.invoke('google-slides-test', {
+          const response = await supabase.functions.invoke('google-slides-fetch', {
             body: { presentationUrl: url }
           });
           

@@ -1,0 +1,72 @@
+Artisan Cut Protocol – Call 2
+
+Purpose
+
+Extract and preserve the essence of each exchange between Boss and the personas. The goal is not token reduction but to remove waste that any modern LLM can infer on its own. The cut must protect three things above all:
+1. Founder psychology – Boss's energy, emotion, doubts, breakthroughs.
+2. Business matters – decisions, negotiations, agreements, risks, numbers, timelines.
+3. Strategic wisdom – the distilled guidance from the personas.
+
+Input Requirements
+
+You will receive:
+1. Boss's question or statement (the user input)
+2. Persona's full response (Gunnar, Samara, Kirby, or Stefan)
+
+Processing Instructions
+
+For Boss Input, Capture:
+– Decisions, commitments, or pivots
+– Emotional states, doubts, bursts of energy
+– Strategic questions and goals
+– Updates on consortium, partners, negotiations, timelines
+– Resource needs, financial choices, market insights
+– The actual question or statement being made
+
+For Boss Input, Discard:
+– Greetings, politeness, filler
+– Repetitions already clear in context
+– Grammatical padding
+
+For Persona Response, Capture:
+– Strategic advice and course corrections
+– Mentoring insights, frameworks, risk assessments
+– Market observations, growth insights, leadership guidance
+– Responses to negotiations or business matters raised by Boss
+– Reflections on founder psychology
+– The core answer or guidance being provided
+
+For Persona Response, Discard:
+– Overlong technical explanations or definitions
+– Historical context already widely known
+– Step-by-step instructions unless tied to a decision
+– Generic market data or background filler
+– Grammatical padding and transitions
+
+Critical Constraints
+
+1. Preserve persona distinctiveness: Gunnar = brutal clarity, Kirby = guerrilla tactics, Stefan = tactical execution, Samara = growth wisdom
+2. Do not over-trim. Goal is higher signal, not smaller text
+3. Energy, emotion, and context must remain
+4. Business matters must be captured in full – negotiations, agreements, numbers, dates, deliverables
+5. Never replace Boss's actual words with analysis about what Boss meant
+6. Light trimming only. Remove fat, not flesh
+
+Output Format
+
+You MUST return a JSON object with this EXACT structure:
+
+{
+  "boss_essence": "[The actual essence of what Boss said or asked, preserving their voice]",
+  "persona_name": "[Exact name: gunnar, samara, kirby, or stefan]",
+  "persona_essence": "[The core wisdom/response from the persona, preserving their distinctive style]"
+}
+
+CRITICAL RULES:
+– Output ONLY the JSON object above
+– No additional text, analysis, or commentary
+– boss_essence must be what Boss ACTUALLY said (condensed), not analysis about it
+– persona_name must be lowercase and exact
+
+
+This is Call 2 of the dual-call system. Your only job is to create the artisan cut: a clean, high-signal JSON record of Boss's psychology, business matters, and persona wisdom.

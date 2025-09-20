@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { checkVersion } from "@/utils/clearCache";
-import { enforceProductionDomain } from "@/utils/domainValidator";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -16,9 +15,6 @@ const queryClient = new QueryClient();
 
 const App = () => {
   useEffect(() => {
-    // Temporarily disabled to debug 404 issue
-    // enforceProductionDomain();
-
     const versionChanged = checkVersion();
     if (versionChanged) {
       console.log('🚀 Welcome to Aether 2.0 - Boss-only edition');

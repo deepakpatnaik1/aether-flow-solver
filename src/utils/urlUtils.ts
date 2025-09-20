@@ -56,7 +56,7 @@ export const parseUrl = (url: string): ParsedUrl => {
 };
 
 // Fetch Google Slides content using the existing OAuth integration
-export const fetchUrlContent = async (url: string): Promise<{ content?: string; error?: string }> => {
+export const fetchUrlContent = async (url: string): Promise<{ content?: string; error?: string; autoAuth?: boolean }> => {
   try {
     console.log('🎯 Fetching Google Slides content for:', url);
     
@@ -82,7 +82,8 @@ export const fetchUrlContent = async (url: string): Promise<{ content?: string; 
       if (response.error.message?.includes('No valid Google OAuth tokens') || 
           response.error.message?.includes('re-authenticate')) {
         return {
-          error: 'Google authentication required'
+          error: 'Google authentication required',
+          autoAuth: true  // Flag to trigger automatic authentication
         };
       } else {
         return {

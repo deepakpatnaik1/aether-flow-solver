@@ -170,6 +170,62 @@ export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputPro
         try {
           const result = await fetchUrlContent(url.url);
           
+          // Handle special case: Google authentication required - auto-trigger OAuth
+          if (result.autoAuth) {
+            console.log('🔐 Auto-triggering Google OAuth flow...');
+            
+            // Show loading state while redirecting
+            setUrlPills(prev => prev.map(pill => 
+              pill.id === url.id 
+                ? { 
+                    ...pill, 
+                    error: 'Redirecting to Google...', 
+                    isLoading: true
+                  }
+                : pill
+            ));
+            
+            // Automatically start OAuth flow
+            try {
+              const { data, error } = await supabase.functions.invoke('google-oauth-init');
+              
+              if (error) {
+                console.error('OAuth init error:', error);
+                toast.error('Failed to initialize Google authentication');
+                setUrlPills(prev => prev.map(pill => 
+                  pill.id === url.id 
+                    ? { 
+                        ...pill, 
+                        error: 'Failed to start authentication', 
+                        isLoading: false
+                      }
+                    : pill
+                ));
+                return;
+              }
+              
+              if (data?.authUrl) {
+                console.log('🌐 Auto-redirecting to Google OAuth...');
+                toast.success('Redirecting to Google for authentication...');
+                window.location.href = data.authUrl;
+              }
+            } catch (error) {
+              console.error('OAuth flow error:', error);
+              toast.error('Failed to start Google authentication');
+              setUrlPills(prev => prev.map(pill => 
+                pill.id === url.id 
+                  ? { 
+                      ...pill, 
+                      error: 'Authentication failed', 
+                      isLoading: false
+                    }
+                  : pill
+              ));
+            }
+            return;
+          }
+          
+          // Handle other authentication required cases (fallback)
           if (result.error === 'Google authentication required') {
             setUrlPills(prev => prev.map(pill => 
               pill.id === url.id 
@@ -181,10 +237,12 @@ export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputPro
                   }
                 : pill
             ));
+            
             toast.error('Google authentication required for accessing slides');
             return;
           }
           
+          // Update the specific URL pill with content or error
           setUrlPills(prev => prev.map(pill => 
             pill.id === url.id 
               ? { 

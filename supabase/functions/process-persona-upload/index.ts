@@ -1,4 +1,4 @@
-import { createClient } from 'https:
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -88,9 +88,9 @@ Deno.serve(async (req) => {
   }
 })
 function extractPersonaName(fileName: string, content: string): string | null {
-  const fileBaseName = fileName.replace(/\.md$/i, '').replace(/^.*\
-  const knownPersonas = ['gunnar', 'kirby', 'samara', 'stefan']
-  const lowerFileName = fileBaseName.toLowerCase()
+  const fileBaseName = fileName.replace(/\.md$/i, '').replace(/^.*[\/\\]/, '');
+  const knownPersonas = ['gunnar', 'kirby', 'samara', 'stefan'];
+  const lowerFileName = fileBaseName.toLowerCase();
   for (const persona of knownPersonas) {
     if (lowerFileName.includes(persona)) {
       return persona.charAt(0).toUpperCase() + persona.slice(1)

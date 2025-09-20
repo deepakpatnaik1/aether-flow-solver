@@ -145,11 +145,81 @@ export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputPro
     const input = (ref as React.RefObject<HTMLInputElement>)?.current;
     const cursorPos = input?.selectionStart || currentValue.length;
     
-    // Insert pasted text at cursor position
-    const newValue = currentValue.slice(0, cursorPos) + pastedText + currentValue.slice(cursorPos);
+    // Check if pasted text contains URLs
+    const { urls, cleanText } = detectUrls(pastedText);
     
-    // Process URLs in the new text
-    processUrls(newValue);
+    if (urls.length > 0) {
+      // Add URL pills immediately
+      setUrlPills(prev => [...prev, ...urls]);
+      
+      // Insert only the clean text (without URLs) into input
+      const newValue = currentValue.slice(0, cursorPos) + cleanText + currentValue.slice(cursorPos);
+      setDisplayText(newValue);
+      
+      // Start fetching content for URLs
+      urls.forEach(async (url) => {
+        try {
+          const result = await fetchUrlContent(url.url);
+          
+          if (result.error === 'Google authentication required') {
+            setUrlPills(prev => prev.map(pill => 
+              pill.id === url.id 
+                ? { 
+                    ...pill, 
+                    error: result.error, 
+                    isLoading: false,
+                    requiresAuth: true
+                  }
+                : pill
+            ));
+            toast.error('Google authentication required for accessing slides');
+            return;
+          }
+          
+          setUrlPills(prev => prev.map(pill => 
+            pill.id === url.id 
+              ? { 
+                  ...pill, 
+                  content: result.content, 
+                  error: result.error, 
+                  isLoading: false 
+                }
+              : pill
+          ));
+          
+          // Update parent with new content
+          setTimeout(() => {
+            setUrlPills(currentPills => {
+              const fullMessage = reconstructMessage(newValue, currentPills);
+              onChange(fullMessage);
+              return currentPills;
+            });
+          }, 0);
+          
+        } catch (error) {
+          console.error('Error fetching URL content:', error);
+          setUrlPills(prev => prev.map(pill => 
+            pill.id === url.id 
+              ? { 
+                  ...pill, 
+                  error: 'Failed to fetch content', 
+                  isLoading: false 
+                }
+              : pill
+          ));
+        }
+      });
+      
+      // Reconstruct message with clean text and new pills
+      const fullMessage = reconstructMessage(newValue, [...urlPills, ...urls]);
+      onChange(fullMessage);
+    } else {
+      // No URLs, insert normally
+      const newValue = currentValue.slice(0, cursorPos) + pastedText + currentValue.slice(cursorPos);
+      setDisplayText(newValue);
+      const fullMessage = reconstructMessage(newValue, urlPills);
+      onChange(fullMessage);
+    }
   };
 
   const handleKeyDownInternal = (e: KeyboardEvent<HTMLInputElement>) => {

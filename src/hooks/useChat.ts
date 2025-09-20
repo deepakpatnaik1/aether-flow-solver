@@ -50,6 +50,14 @@ export const useChat = (userId?: string) => {
         .order('timestamp', { ascending: true });
 
       console.log('📊 Superjournal query result:', { entries: entries?.length, error });
+      
+      if (entries && entries.length > 0) {
+        console.log('🔍 First few entries for debugging:', entries.slice(-5).map(e => ({
+          entry_id: e.entry_id,
+          timestamp: e.timestamp,
+          user_content_preview: e.user_message_content?.substring(0, 50) + '...'
+        })));
+      }
 
       if (error) {
         console.error('❌ Error loading superjournal:', error);
@@ -64,6 +72,12 @@ export const useChat = (userId?: string) => {
         const superjournalMessages: Message[] = [];
         
         entries.forEach((entry, index) => {
+          console.log(`Processing entry ${index + 1}/${entries.length}:`, {
+            entry_id: entry.entry_id,
+            timestamp: entry.timestamp,
+            user_content: entry.user_message_content?.substring(0, 30) + '...'
+          });
+          
           // Add user message
           superjournalMessages.push({
             id: entry.entry_id + '-user',
@@ -90,6 +104,7 @@ export const useChat = (userId?: string) => {
         });
         
         console.log('🎯 Setting', superjournalMessages.length, 'messages in state');
+        console.log('📋 Message timestamps:', superjournalMessages.map(m => ({ id: m.id, timestamp: m.timestamp })));
         setMessages(superjournalMessages);
       } else {
         console.log('📭 No superjournal entries found');

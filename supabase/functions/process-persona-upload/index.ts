@@ -1,17 +1,12 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-
+import { createClient } from 'https:
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
-
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
-
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -22,23 +17,16 @@ Deno.serve(async (req) => {
         },
       }
     )
-
     const { uploadResults, category = 'persona' } = await req.json()
     console.log('Processing uploaded files:', { uploadResults, category })
-
     const results = []
-
     for (const uploadResult of uploadResults) {
       try {
-        // Fetch the file content from storage
         const response = await fetch(uploadResult.publicUrl)
         const content = await response.text()
-        
         console.log(`Processing file: ${uploadResult.fileName}`)
         console.log(`Content preview: ${content.substring(0, 100)}...`)
-
         if (category === 'boss' || uploadResult.fileName.toLowerCase().includes('boss')) {
-          // Process boss file - now stored in storage bucket, no database upsert needed
           console.log('✅ Boss profile processed and stored in boss bucket')
           results.push({ 
             fileName: uploadResult.fileName, 
@@ -47,9 +35,7 @@ Deno.serve(async (req) => {
             location: 'boss bucket'
           })
         } else {
-          // Process persona file
           const personaName = extractPersonaName(uploadResult.fileName, content)
-          
           if (!personaName) {
             results.push({ 
               fileName: uploadResult.fileName, 
@@ -58,8 +44,6 @@ Deno.serve(async (req) => {
             })
             continue
           }
-
-          // Upsert persona - now stored in storage bucket, no database upsert needed
           console.log(`✅ Persona ${personaName} processed and stored in personas bucket`)
           results.push({ 
             fileName: uploadResult.fileName, 
@@ -78,7 +62,6 @@ Deno.serve(async (req) => {
         })
       }
     }
-
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -90,7 +73,6 @@ Deno.serve(async (req) => {
         status: 200,
       }
     );
-
   } catch (error) {
     console.error('Error in process-persona-upload:', error)
     return new Response(
@@ -105,36 +87,25 @@ Deno.serve(async (req) => {
     );
   }
 })
-
 function extractPersonaName(fileName: string, content: string): string | null {
-  // Try to extract from filename first
-  const fileBaseName = fileName.replace(/\.md$/i, '').replace(/^.*\//, '')
-  
-  // Known persona names
+  const fileBaseName = fileName.replace(/\.md$/i, '').replace(/^.*\
   const knownPersonas = ['gunnar', 'kirby', 'samara', 'stefan']
   const lowerFileName = fileBaseName.toLowerCase()
-  
   for (const persona of knownPersonas) {
     if (lowerFileName.includes(persona)) {
       return persona.charAt(0).toUpperCase() + persona.slice(1)
     }
   }
-  
-  // Try to extract from content (look for ### PersonaName or # PersonaName patterns)
   const nameMatch = content.match(/###?\s*([A-Z][a-zA-Z]+)\s*[-–]\s*/)
   if (nameMatch) {
     return nameMatch[1]
   }
-  
   return null
 }
-
 function extractNameFromContent(content: string): string | null {
-  // Look for title patterns like "# **Boss – Founder and CEO of Oovar**"
   const titleMatch = content.match(/^#\s*\*?\*?([^*\n]+)\*?\*?/m)
   if (titleMatch) {
     return titleMatch[1].trim()
   }
-  
   return null
 }

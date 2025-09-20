@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { PersonaBadge } from './PersonaBadge';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { useToast } from '@/hooks/use-toast';
-
 interface Message {
   id: string;
   content: string;
@@ -19,16 +18,13 @@ interface Message {
     type: string;
   }[];
 }
-
 interface MessageListProps {
   messages: Message[];
 }
-
 export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollPendingRef = useRef(false);
   const { toast } = useToast();
-
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -43,9 +39,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
       });
     }
   };
-
   useEffect(() => {
-    // Debounce scroll using requestAnimationFrame to prevent flicker during streaming
     if (!scrollPendingRef.current) {
       scrollPendingRef.current = true;
       requestAnimationFrame(() => {
@@ -57,7 +51,6 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
       });
     }
   }, [messages]);
-
   return (
     <div className="message-list">
       {messages.map((message) => (

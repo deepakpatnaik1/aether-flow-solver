@@ -1,156 +1,102 @@
-# Aether Flow Solver - Project Documentation
+# Aether - Project Analysis
 
-## Project Overview
-**Aether** is a founder psychology and business strategy advisory platform designed for Boss (the founder/CEO). It provides AI-powered mentorship through multiple specialized personas, each offering distinct expertise in business strategy, operations, growth, and leadership.
+Based on reading the actual code, **Aether** (formerly Aether Flow Solver) is an AI-powered strategic advisory platform where a user (referred to as "Boss") can consult with multiple specialized AI personas for mentorship and business guidance.
 
-**Tech Stack**: React 18 + TypeScript + Vite + Tailwind CSS + Supabase + OpenAI
+## What This Project Actually Does
 
-## Business Context
-- **Primary User**: Boss - the founder who needs strategic guidance and mentorship
-- **User's Startup**: Oovar - European Urban Vehicle Access Regulation compliance platform
-- **Platform Purpose**: Provide on-demand business advisory through AI personas trained on founder psychology and business strategy
+### Core Purpose
+A sophisticated chat interface that connects a founder/CEO with AI-powered advisors, each with distinct personalities and expertise areas.
 
-## Core Architecture
+### The Personas
+- **Boss** (Red #C53030) - The user themselves
+- **Gunnar** (Blue #3B4DE8) - Operational discipline advisor
+- **Samara** (Purple #9333EA) - Growth strategy specialist
+- **Kirby** (Orange #D97706) - Product development expert
+- **Stefan** (Green #059669) - Content and regulatory specialist
 
-### 1. Dual-Call System
-The platform uses a sophisticated two-call architecture for each interaction:
-- **Call 1**: Real-time streaming response for immediate display to Boss
-- **Call 2**: Background "artisan cut" extraction that distills strategic insights for the journal/knowledge base
+### Dual-Call Architecture
+The system uses a unique two-call architecture for each conversation:
+1. **Primary Response** (Call 1) - Real-time streaming advice from the selected persona
+2. **Artisan Cut** (Call 2) - Background extraction that distills each conversation into strategic insights
 
-### 2. Multi-Persona Advisory System
-Five distinct AI advisors, each with specialized expertise:
+### Context Loading System
+Before responding, the system loads:
+- Turn protocol (instructions for handling context)
+- Boss profile (user context)
+- Selected persona profile
+- Past journals (historical conversations)
+- Journal entries (conversation history)
+- Persistent attachments (knowledge base files)
+- Ephemeral attachments (temporary uploads)
 
-#### Personas:
-- **Boss**: Founder/CEO perspective, strategic vision, market expansion
-- **Gunnar**: YC-style operational discipline, revenue focus, "default alive" mentality
-- **Samara**: Guerrilla growth tactics, asymmetric strategies, creative marketing
-- **Kirby**: First-principles product development, fleet optimization expert
-- **Stefan**: Content marketing specialist, EU mobility regulations expert
+### Key Features
 
-Each persona maintains:
-- Unique voice and communication style
-- Specialized domain expertise
-- Distinct advisory approach
-- Color-coded UI representation
+#### Multi-Persona Chat System
+- User's messages are labeled as coming from "Boss"
+- 4 AI Personas the user can select from, each with unique expertise
+- Each persona has its own profile loaded from Supabase storage
 
-### 3. Context Loading Hierarchy
-The system loads context in a specific sequence to ensure proper persona behavior:
-1. **Boss Profile** - Understanding the user's context and needs
-2. **Active Persona** - Loading the selected advisor's personality and expertise
-3. **Journal History** - Previous conversation memory for continuity
-4. **Persistent Attachments** - Knowledge base and reference documents
-5. **User Prompt** - The current question or request
+#### Model Selection
+Users can choose from multiple AI models:
+- GPT-4o Mini (Fast)
+- GPT-4o (Balanced)
+- GPT-5 variants (GPT-5-2025-08-07, GPT-5 Mini)
+- GPT-4.1-2025-04-14
+- O3-2025-04-16 (Reasoning model)
 
-## Data Architecture
+#### File Handling
+- Upload files as attachments to messages
+- Files can be categorized (persona, boss, journal, general)
+- Support for both persistent and ephemeral storage
 
-### Database Schema
-- **`superjournal_entries`**: Complete conversation history with turn tracking
-- **`journal_entries`**: Extracted strategic insights (artisan cuts)
-- **`personas`**: AI persona definitions and characteristics
-- **`boss`**: Boss profile information and context
-- **`knowledge_entries`**: Project knowledge and documentation
-- **`processes`**: Business process documentation
-- **`persistent_attachments`**: Long-term file storage (knowledge base)
-- **`ephemeral_attachments`**: Temporary file storage
-- **`google_tokens`**: OAuth tokens for Google Workspace integration
+#### Google Integration
+- OAuth2 integration with Google Workspace
+- Access to Gmail, Google Docs, Google Slides, Google Drive
+- Token storage and management
 
-### Storage Buckets
-- `boss`: Boss profile storage
-- `personas`: Persona definition files
-- `processes`: System processes (turn protocol, artisan cuts)
-- `past-journals`: Historical conversation archives
-- `persistent-attachments`: Categorized knowledge base files
-- `ephemeral-attachments`: Temporary file uploads
+### Data Persistence
+Two main storage mechanisms:
+- **superjournal_entries**: Complete conversation history with full responses
+- **journal_entries**: Extracted essences from the artisan cut process
 
-## Key Business Flows
+### Technical Implementation
+- **Frontend**: React + TypeScript with Vite, Tailwind CSS for styling
+- **Backend**: Supabase (PostgreSQL + Edge Functions)
+- **AI**: OpenAI API integration with streaming support
+- **Storage**: Supabase Storage buckets for files and profiles
+- **Auth**: Currently requires authentication but has security bypasses
+- **Timezone**: Berlin timezone for all timestamps
 
-### Conversation Flow
-1. Boss sends message with optional persona selection (e.g., "Gunnar, ...")
-2. System auto-detects persona from message prefix
-3. Call 1 loads full context package and streams response
-4. Response displays immediately with typing effect
-5. Call 2 (background) extracts strategic essence for journal
-6. Both calls write to superjournal for persistence
+### User Flow
+1. User types a message, optionally selecting a persona
+2. System loads all context (boss profile, persona, history, attachments)
+3. Sends to OpenAI with streaming response
+4. Displays response in real-time with color-coded personas
+5. Background process extracts essence for journal
+6. All conversations saved to database
 
-### File Upload System
-- **Categories**: persona, boss, journal, general
-- **Auto-processing**: Persona/boss/journal files convert to database entries
-- **Context inclusion**: Files loaded into Call 1 context for reference
+### Data Flow
+1. User sends message →
+2. System loads complete context package →
+3. OpenAI streams response with persona personality →
+4. Response saved to superjournal →
+5. Background process extracts essence to journal
 
-### Google Integration
-- OAuth 2.0 flow with popup authentication
-- Scopes: Gmail, Docs, Slides, Drive
-- Secure token storage via RPC functions
-- Enables personas to create/send documents
+The platform essentially creates a personalized board of advisors powered by AI, with each persona maintaining consistent personality and expertise while having access to the full context of the user's journey and business.
 
-## Code Quality Assessment
+## Security Notes
+- Hardcoded Supabase credentials in the codebase
+- Authentication bypassed with public access
+- All data publicly accessible without auth checks
+- API keys exposed in frontend code
 
-### Strengths ✅
-- TypeScript with proper interfaces
-- Component-based architecture
-- Modern React patterns (hooks, context)
-- Supabase integration with generated types
-- Real-time streaming implementation
-
-### Issues ⚠️
-- **Inconsistent error handling**: Silent failures throughout
-- **Hardcoded credentials**: API keys in frontend code
-- **Console logs**: 26 debug statements in production
-- **Performance**: No memoization, multiple re-renders
-- **Type safety gaps**: `any[]` types, missing error boundaries
-- **Security**: Exposed API keys should use environment variables
-
-### Overall Quality: 6/10
-Functional but needs refactoring for production readiness.
-
-## Critical Business Rules
-
-1. **Persona Persistence**: Selected persona saved in localStorage
-2. **Model Selection**: Multiple AI models with different capabilities
-3. **Authentication**: Protected routes with Supabase auth
-4. **Turn Protocol**: Specific context loading order for consistency
-5. **Artisan Cuts**: Strategic extraction happens asynchronously
-
-## Known Limitations
-- Single-user system (no multi-tenancy)
-- No error recovery UI
-- No token refresh for Google OAuth
-- Silent error handling reduces debuggability
-- Hardcoded URLs to lovableproject.com
-
-## Development Commands
-```bash
-npm install        # Install dependencies
-npm run dev       # Start development server
-npm run build     # Build for production
-npm run lint      # Run linter
-```
-
-## Environment Variables Required
-```
-VITE_SUPABASE_URL=<supabase-project-url>
-VITE_SUPABASE_ANON_KEY=<supabase-anon-key>
-```
-
-## Edge Functions (Supabase)
-- `chat-stream`: Main AI streaming endpoint
-- `artisan-cut-extraction`: Strategic insight extraction
-- `google-auth-url`: OAuth URL generation
-- `google-oauth`: OAuth callback handler
-- `upload-file`: File upload processor
-- `process-persona-upload`: Persona file processor
-- `superjournal`: Conversation persistence
-
-## Future Improvements Needed
-1. **Error Handling**: Implement proper error boundaries and user feedback
-2. **Security**: Move API keys to environment variables
-3. **Performance**: Add React.memo, useMemo, useCallback optimizations
-4. **Testing**: Add unit, integration, and e2e tests
-5. **Multi-tenancy**: Support multiple users/organizations
-6. **Token Refresh**: Implement Google OAuth token refresh
-7. **Monitoring**: Add error tracking and analytics
-8. **Documentation**: Add JSDoc comments and Storybook
+## Code Quality Issues Identified
+- 73 linting errors (56 errors, 17 warnings)
+- Excessive use of `any` types
+- No React optimization (no memo, useMemo, useCallback)
+- 255+ console.log statements in production
+- Silent error failures throughout
+- Missing error boundaries
 
 ---
-*Last updated: 2025-09-19*
-*This document is maintained for Claude AI to understand the project context and architecture.*
+*Analysis performed on 2025-09-19*

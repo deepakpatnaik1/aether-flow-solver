@@ -21,11 +21,14 @@ export const useChat = (userId?: string) => {
   const [journal, setJournal] = useState<Array<{persona: string, content: string}>>([]);
   const [isDataLoading, setIsDataLoading] = useState(false);
 
-  // Load data only when user is authenticated
+  // Use email as consistent identifier for boss-only system
+  const userIdentifier = 'deepakpatnaik1@gmail.com';
+
+  // Load data when user is authenticated
   useEffect(() => {
     console.log('📊 useChat effect - userId:', userId);
     if (userId) {
-      console.log('Loading data for authenticated user:', userId);
+      console.log('Loading data for authenticated user with email identifier:', userIdentifier);
       loadSuperjournalFromSupabase();
       loadJournalFromSupabase();
     } else {
@@ -47,7 +50,7 @@ export const useChat = (userId?: string) => {
       const { data: entries, error } = await supabase
         .from('superjournal_entries')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', userIdentifier)  // Use email identifier
         .order('timestamp', { ascending: true });
 
       if (error) {
@@ -117,7 +120,7 @@ export const useChat = (userId?: string) => {
       const { data: entries, error } = await supabase
         .from('journal_entries')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', userIdentifier)  // Use email identifier
         .order('timestamp', { ascending: true });
 
       if (error) {

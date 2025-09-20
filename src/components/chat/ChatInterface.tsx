@@ -9,6 +9,7 @@ import { FileUploadModal } from './FileUploadModal';
 import { AbortButton } from './AbortButton';
 import { RichMessageInput } from './RichMessageInput';
 import UserMenu from '@/components/UserMenu';
+import LoginForm from '@/components/LoginForm';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useChat } from '@/hooks/useChat';
@@ -525,16 +526,16 @@ const ChatInterface = () => {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4 p-8">
-          <div className="text-6xl mb-4">🔒</div>
-          <h2 className="text-2xl font-semibold text-foreground">Your Messages Are Protected</h2>
-          <p className="text-muted-foreground max-w-md">
-            Your chat history is safely stored and protected by authentication. 
-            Please log in to access your messages.
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Don't worry - all your previous conversations are preserved and will load once you authenticate.
-          </p>
+        <div className="w-full max-w-md p-8">
+          <div className="text-center mb-8">
+            <div className="text-6xl mb-4">🔒</div>
+            <h2 className="text-2xl font-semibold text-foreground mb-2">Welcome home, Boss!</h2>
+            <p className="text-muted-foreground">
+              Please sign in to access your messages
+            </p>
+          </div>
+          
+          <LoginForm />
         </div>
       </div>
     );

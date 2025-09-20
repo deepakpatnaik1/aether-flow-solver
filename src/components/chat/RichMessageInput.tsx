@@ -51,8 +51,10 @@ export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputPro
     const { urls, cleanText } = detectUrls(text);
     
     if (urls.length > 0) {
-      // Add new URL pills (starting in loading state)
+      // Add new URL pills (starting in loading state) 
       setUrlPills(prev => [...prev, ...urls]);
+      
+      // Set clean text in display (URLs are now condensed into pills)
       setDisplayText(cleanText);
       
       // Start fetching content for new URLs
@@ -112,9 +114,6 @@ export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputPro
         }
       });
       
-      // Reconstruct message with initial URL state
-      const fullMessage = reconstructMessage(cleanText, [...urlPills, ...urls]);
-      onChange(fullMessage);
     } else {
       setDisplayText(text);
       // Reconstruct message with existing pills

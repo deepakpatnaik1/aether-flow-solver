@@ -14,7 +14,6 @@ export const AbortButton: React.FC<AbortButtonProps> = ({ onAbort, isVisible }) 
     <Button
       onClick={onAbort}
       variant="outline"
-      size="sm"
       className="abort-button bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20 hover:border-destructive/30"
     >
       <X className="h-4 w-4 mr-1" />

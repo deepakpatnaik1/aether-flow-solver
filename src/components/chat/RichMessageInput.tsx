@@ -2,6 +2,8 @@ import React, { useState, useRef, useCallback, KeyboardEvent, forwardRef } from 
 import { Input } from '@/components/ui/input';
 import { UrlPill } from './UrlPill';
 import { detectUrls, reconstructMessage, ParsedUrl, URL_REGEX, fetchUrlContent } from '@/utils/urlUtils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface RichMessageInputProps {
   value: string;
@@ -11,6 +13,28 @@ interface RichMessageInputProps {
   disabled?: boolean;
   className?: string;
 }
+
+const handleGoogleSlidesOAuth = async () => {
+  try {
+    console.log('🔐 Initiating Google OAuth flow...');
+    
+    const { data, error } = await supabase.functions.invoke('google-oauth-init');
+    
+    if (error) {
+      console.error('OAuth init error:', error);
+      toast.error('Failed to initialize Google authentication');
+      return;
+    }
+    
+    if (data?.authUrl) {
+      console.log('🌐 Redirecting to Google OAuth...');
+      window.location.href = data.authUrl;
+    }
+  } catch (error) {
+    console.error('OAuth flow error:', error);
+    toast.error('Failed to start Google authentication');
+  }
+};
 
 export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputProps>(({
   value,
@@ -35,6 +59,23 @@ export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputPro
       urls.forEach(async (url) => {
         try {
           const result = await fetchUrlContent(url.url);
+          
+          // Handle special case: Google authentication required
+          if (result.error === 'Google authentication required') {
+            setUrlPills(prev => prev.map(pill => 
+              pill.id === url.id 
+                ? { 
+                    ...pill, 
+                    error: result.error, 
+                    isLoading: false,
+                    requiresAuth: true // Special flag for auth needed
+                  }
+                : pill
+            ));
+            
+            toast.error('Google authentication required for accessing slides');
+            return;
+          }
           
           // Update the specific URL pill with content or error
           setUrlPills(prev => prev.map(pill => 

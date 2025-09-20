@@ -11,6 +11,7 @@ export interface ParsedUrl {
   content?: string; // Store fetched content
   isLoading?: boolean; // Track loading state
   error?: string; // Track any fetch errors
+  requiresAuth?: boolean; // Flag for authentication required
 }
 
 export const parseUrl = (url: string): ParsedUrl => {
@@ -54,25 +55,65 @@ export const parseUrl = (url: string): ParsedUrl => {
   }
 };
 
-// Fetch URL content using Lovable's fetch website tool
+// Fetch Google Slides content using the existing OAuth integration
 export const fetchUrlContent = async (url: string): Promise<{ content?: string; error?: string }> => {
   try {
-    console.log('🌐 Fetching content for URL:', url);
+    console.log('🎯 Fetching Google Slides content for:', url);
     
-    // Note: In a real implementation, you'd make an API call to a backend service
-    // that can fetch website content. For now, we'll simulate this.
+    // Check if this is a Google Slides URL
+    const googleSlidesRegex = /https:\/\/docs\.google\.com\/presentation\/d\/[a-zA-Z0-9-_]+(?:\/[^?\s]*)?(?:\?[^#\s]*)?(?:#[^\s]*)?/g;
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    if (!googleSlidesRegex.test(url)) {
+      return {
+        error: 'Only Google Slides URLs are supported'
+      };
+    }
     
-    // For now, return a placeholder - this would be replaced with actual content fetching
-    return {
-      content: `[Website content from ${url} would be fetched here]`
-    };
+    // Use the Supabase client to call the Google Slides OAuth function
+    const { supabase } = await import('@/integrations/supabase/client');
+    
+    const response = await supabase.functions.invoke('google-slides-oauth', {
+      body: { presentationUrl: url }
+    });
+    
+    if (response.error) {
+      console.error('Google Slides fetch error:', response.error);
+      
+      if (response.error.message?.includes('No valid Google OAuth tokens') || 
+          response.error.message?.includes('re-authenticate')) {
+        return {
+          error: 'Google authentication required'
+        };
+      } else {
+        return {
+          error: response.error.message || 'Failed to fetch Google Slides'
+        };
+      }
+    } else {
+      console.log('✅ Google Slides content fetched:', response.data?.title);
+      
+      // Return the slides content in a formatted way
+      const slides = response.data?.slides || [];
+      const title = response.data?.title || 'Untitled Presentation';
+      
+      let content = `# ${title}\n\n`;
+      
+      slides.forEach((slide: any, index: number) => {
+        content += `## Slide ${index + 1}\n`;
+        if (slide.text) {
+          content += `${slide.text}\n\n`;
+        }
+        if (slide.notes) {
+          content += `**Speaker Notes:** ${slide.notes}\n\n`;
+        }
+      });
+      
+      return { content };
+    }
   } catch (error) {
-    console.error('Failed to fetch URL content:', error);
+    console.error('Failed to fetch Google Slides content:', error);
     return {
-      error: 'Failed to fetch website content'
+      error: 'Failed to connect to Google Slides service'
     };
   }
 };

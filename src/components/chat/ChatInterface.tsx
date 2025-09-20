@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Paperclip, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MessageList } from './MessageList';
 import { PersonaBadge } from './PersonaBadge';
 import { FileUploadModal } from './FileUploadModal';
 import { AbortButton } from './AbortButton';
+import { RichMessageInput } from './RichMessageInput';
 import UserMenu from '@/components/UserMenu';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -578,10 +578,10 @@ const ChatInterface = () => {
                 isVisible={isLoading}
               />
               
-              <Input
+              <RichMessageInput
                 ref={inputRef}
                 value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                onChange={setMessage}
                 onKeyDown={handleKeyDown}
                 placeholder="Type a message..."
                 className="chat-input flex-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-primary"

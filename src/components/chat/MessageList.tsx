@@ -25,6 +25,20 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollPendingRef = useRef(false);
   const { toast } = useToast();
+
+  // Debug logging for message rendering
+  console.log('🎬 MessageList render - Total messages:', messages.length);
+  if (messages.length > 0) {
+    console.log('🔍 Last 5 messages being rendered:', 
+      messages.slice(-5).map(m => ({
+        id: m.id,
+        timestamp: m.timestamp,
+        isUser: m.isUser,
+        persona: m.persona,
+        content_preview: m.content.substring(0, 30) + '...'
+      }))
+    );
+  }
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);

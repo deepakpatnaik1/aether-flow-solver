@@ -3,22 +3,6 @@ interface PersonaBadgeProps {
   persona: string;
 }
 export const PersonaBadge: React.FC<PersonaBadgeProps> = ({ persona }) => {
-  const getPersonaColor = (persona: string) => {
-    switch (persona.toLowerCase()) {
-      case 'boss':
-        return '#000000';
-      case 'gunnar':
-        return '#3B4DE8'; 
-      case 'samara':
-        return '#9333EA'; 
-      case 'kirby':
-        return '#D97706'; 
-      case 'stefan':
-        return '#059669'; 
-      default:
-        return '#6B7280'; 
-    }
-  };
   const getPersonaName = (persona: string) => {
     switch (persona.toLowerCase()) {
       case 'boss':
@@ -35,11 +19,26 @@ export const PersonaBadge: React.FC<PersonaBadgeProps> = ({ persona }) => {
         return persona;
     }
   };
+
+  const getPersonaClass = (persona: string) => {
+    switch (persona.toLowerCase()) {
+      case 'boss':
+        return 'persona-badge persona-badge-boss';
+      case 'gunnar':
+        return 'persona-badge persona-badge-gunnar';
+      case 'samara':
+        return 'persona-badge persona-badge-samara';
+      case 'kirby':
+        return 'persona-badge persona-badge-kirby';
+      case 'stefan':
+        return 'persona-badge persona-badge-stefan';
+      default:
+        return 'persona-badge';
+    }
+  };
+
   return (
-    <div 
-      className="persona-badge"
-      style={{ backgroundColor: getPersonaColor(persona) }}
-    >
+    <div className={getPersonaClass(persona)}>
       {getPersonaName(persona)}
     </div>
   );

@@ -141,20 +141,28 @@ export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputPro
     e.preventDefault();
     
     const pastedText = e.clipboardData.getData('text');
+    console.log('🍃 Pasted text:', pastedText);
+    
     const currentValue = displayText;
     const input = (ref as React.RefObject<HTMLInputElement>)?.current;
     const cursorPos = input?.selectionStart || currentValue.length;
     
     // Check if pasted text contains URLs
     const { urls, cleanText } = detectUrls(pastedText);
+    console.log('🔍 Detected URLs:', urls.length, 'Clean text:', cleanText);
     
     if (urls.length > 0) {
-      // Add URL pills immediately
-      setUrlPills(prev => [...prev, ...urls]);
-      
-      // Insert only the clean text (without URLs) into input
+      // Insert only the clean text (without URLs) into input first
       const newValue = currentValue.slice(0, cursorPos) + cleanText + currentValue.slice(cursorPos);
+      console.log('✨ Setting display text to:', newValue);
       setDisplayText(newValue);
+      
+      // Add URL pills immediately after setting clean text
+      setUrlPills(prev => {
+        const updated = [...prev, ...urls];
+        console.log('💊 Adding pills, total:', updated.length);
+        return updated;
+      });
       
       // Start fetching content for URLs
       urls.forEach(async (url) => {

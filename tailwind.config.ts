@@ -66,6 +66,13 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        persona: {
+          boss: "hsl(var(--persona-boss))",
+          gunnar: "hsl(var(--persona-gunnar))",
+          samara: "hsl(var(--persona-samara))",
+          kirby: "hsl(var(--persona-kirby))",
+          stefan: "hsl(var(--persona-stefan))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

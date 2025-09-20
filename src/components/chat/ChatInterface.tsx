@@ -38,9 +38,9 @@ const ChatInterface = () => {
     const storedModel = localStorage.getItem('selectedModel');
     console.log('🔄 Initializing model from localStorage:', storedModel);
     const models = [
-      { id: 'gpt-4o-mini', name: 'GPT-4o Mini (Fast)' },
-      { id: 'gpt-4o', name: 'GPT-4o (Balanced)' },
-      { id: 'gpt-5-2025-08-07', name: 'GPT-5 (Most Capable)' },
+      { id: 'gpt-4o-mini', name: 'GPT-4o Mini' },
+      { id: 'gpt-4o', name: 'GPT-4o' },
+      { id: 'gpt-5-2025-08-07', name: 'GPT-5' },
       { id: 'gpt-5-mini-2025-08-07', name: 'GPT-5 Mini' },
       { id: 'gpt-4.1-2025-04-14', name: 'GPT-4.1' },
       { id: 'o3-2025-04-16', name: 'O3 Reasoning' }
@@ -463,12 +463,12 @@ const ChatInterface = () => {
                 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="model-selector hover:bg-primary/5 hover:text-primary">
+                    <Button variant="ghost" size="sm" className="model-selector hover:bg-primary/5 hover:text-primary text-xs">
                       <ChevronDown className="h-3 w-3 mr-1" />
                       {models.find(m => m.id === selectedModel)?.name || 'GPT-5'}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-background border" onCloseAutoFocus={(e) => e.preventDefault()}>
+                  <DropdownMenuContent className="bg-background border text-xs" onCloseAutoFocus={(e) => e.preventDefault()}>
                     {models.map((model) => (
                       <DropdownMenuItem
                         key={model.id}
@@ -479,6 +479,7 @@ const ChatInterface = () => {
                             inputRef.current?.focus();
                           }, 0);
                         }}
+                        className="text-xs"
                       >
                         {model.name}
                       </DropdownMenuItem>
@@ -488,16 +489,17 @@ const ChatInterface = () => {
                 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="model-selector hover:bg-primary/5 hover:text-primary">
+                    <Button variant="ghost" size="sm" className="model-selector hover:bg-primary/5 hover:text-primary text-xs">
                       <ChevronDown className="h-3 w-3 mr-1" />
                       {personas.find(p => p.id === selectedPersona)?.name || 'Gunnar'}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-background border" onCloseAutoFocus={(e) => e.preventDefault()}>
+                  <DropdownMenuContent className="bg-background border text-xs" onCloseAutoFocus={(e) => e.preventDefault()}>
                     {personas.map((persona) => (
                       <DropdownMenuItem
                         key={persona.id}
                         onClick={() => handlePersonaSelect(persona.id)}
+                        className="text-xs"
                       >
                         {persona.name}
                       </DropdownMenuItem>

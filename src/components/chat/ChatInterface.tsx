@@ -504,6 +504,11 @@ const ChatInterface = () => {
               </div>
             )}
             <div className="flex items-center gap-1 ml-3 relative">
+              <AbortButton 
+                onAbort={handleAbort}
+                isVisible={isLoading}
+              />
+              
               <Input
                 ref={inputRef}
                 value={message}
@@ -513,20 +518,13 @@ const ChatInterface = () => {
                 className="chat-input flex-1 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
               />
               
-              <div className="flex items-center gap-1">
-                <Button 
-                  onClick={handleSendMessage}
-                  disabled={!message.trim() || isLoading}
-                  className="send-btn focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/10 hover:text-primary"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-                
-                <AbortButton 
-                  onAbort={handleAbort}
-                  isVisible={isLoading}
-                />
-              </div>
+              <Button 
+                onClick={handleSendMessage}
+                disabled={!message.trim() || isLoading}
+                className="send-btn focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/10 hover:text-primary"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
             </div>
           </div>
           

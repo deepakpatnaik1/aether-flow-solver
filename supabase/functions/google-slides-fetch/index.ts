@@ -40,52 +40,73 @@ serve(async (req) => {
   }
 
   try {
-    const { presentationUrl } = await req.json();
+    console.log('🚀 Google Slides fetch function started');
+    const requestBody = await req.json();
+    console.log('📋 Request body:', requestBody);
+    
+    const { presentationUrl } = requestBody;
+    
+    if (!presentationUrl) {
+      console.error('❌ No presentation URL provided');
+      throw new Error('Presentation URL is required');
+    }
+    
+    console.log('🔍 Processing URL:', presentationUrl);
     
     // Extract presentation ID from URL
     const presentationIdMatch = presentationUrl.match(/\/presentation\/d\/([a-zA-Z0-9-_]+)/);
     if (!presentationIdMatch) {
+      console.error('❌ Invalid URL format:', presentationUrl);
       throw new Error('Invalid Google Slides URL format');
     }
     
     const presentationId = presentationIdMatch[1];
-    console.log('🎯 Fetching Google Slides presentation:', presentationId);
+    console.log('🎯 Extracted presentation ID:', presentationId);
 
     // Get Google API key from secrets
     const googleApiKey = Deno.env.get('GOOGLE_API_KEY');
     if (!googleApiKey) {
+      console.error('❌ Google API key not found in environment');
       throw new Error('Google API key not configured');
     }
+    console.log('✅ Google API key found');
 
     // Fetch presentation from Google Slides API
     const apiUrl = `https://slides.googleapis.com/v1/presentations/${presentationId}?key=${googleApiKey}`;
+    console.log('🌐 Making API call to:', apiUrl);
+    
     const response = await fetch(apiUrl);
+    console.log('📊 Google API response status:', response.status);
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Google Slides API error:', response.status, errorText);
+      console.error('❌ Google Slides API error:', response.status, errorText);
       throw new Error(`Google Slides API error: ${response.status} - ${errorText}`);
     }
 
     const presentation: GoogleSlidesPresentation = await response.json();
-    console.log('📊 Fetched presentation:', presentation.title);
+    console.log('📊 Fetched presentation:', presentation.title, 'with', presentation.slides?.length || 0, 'slides');
 
     // Convert to markdown format
     const markdown = convertPresentationToMarkdown(presentation, presentationUrl);
+    console.log('📝 Generated markdown length:', markdown.length);
 
     // Save to Supabase Storage
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
     if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('❌ Supabase configuration missing');
       throw new Error('Supabase configuration missing');
     }
+    console.log('✅ Supabase configuration found');
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
     // Create filename from title or use presentation ID
     const filename = `${sanitizeFilename(presentation.title || presentationId)}.md`;
     const filePath = `presentations/${filename}`;
+    console.log('💾 Saving to storage path:', filePath);
     
     // Upload to persistent-attachments bucket
     const { error: uploadError } = await supabase.storage
@@ -95,11 +116,11 @@ serve(async (req) => {
       });
 
     if (uploadError) {
-      console.error('Storage upload error:', uploadError);
+      console.error('❌ Storage upload error:', uploadError);
       throw new Error(`Failed to save presentation: ${uploadError.message}`);
     }
 
-    console.log('✅ Saved Google Slides presentation to storage:', filePath);
+    console.log('✅ Successfully saved Google Slides presentation');
 
     return new Response(JSON.stringify({ 
       success: true, 
@@ -112,6 +133,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Google Slides fetch error:', error);
+    console.error('❌ Error stack:', error.stack);
     return new Response(JSON.stringify({ 
       error: error.message 
     }), {

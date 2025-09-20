@@ -125,11 +125,9 @@ export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputPro
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     
-    // Check if user typed a space or finished a URL
-    const lastChar = newValue[newValue.length - 1];
-    const hadSpace = lastChar === ' ';
-    
-    if (hadSpace && URL_REGEX.test(newValue)) {
+    // Check if this input contains URLs
+    if (URL_REGEX.test(newValue)) {
+      // Process URLs immediately - this will handle setting displayText to clean version
       processUrls(newValue);
     } else {
       setDisplayText(newValue);

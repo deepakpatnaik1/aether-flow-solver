@@ -15,16 +15,10 @@ verify_jwt = true
 [functions.process-persona-upload]
 verify_jwt = true
 
-[functions.google-slides-test]
-verify_jwt = true
-
 [functions.artisan-cut-call2]
 verify_jwt = true
 
 [functions.abort-message-turn]
-verify_jwt = true
-
-[functions.google-slides-fetch]
 verify_jwt = true
 
 [functions.google-oauth-init]

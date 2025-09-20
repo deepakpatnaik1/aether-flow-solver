@@ -31,7 +31,7 @@ serve(async (req) => {
       throw new Error('Entry ID is required');
     }
 
-    // Delete from superjournal_entries
+    // Delete from superjournal_entries (aborted messages never reach journal_entries)
     const { error: superjournalError } = await supabase
       .from('superjournal_entries')
       .delete()
@@ -43,17 +43,7 @@ serve(async (req) => {
       console.log('✅ Deleted from superjournal_entries');
     }
 
-    // Delete from journal_entries
-    const { error: journalError } = await supabase
-      .from('journal_entries')
-      .delete()
-      .eq('entry_id', entryId);
-
-    if (journalError) {
-      console.error('❌ Error deleting from journal_entries:', journalError);
-    } else {
-      console.log('✅ Deleted from journal_entries');
-    }
+    // Note: No need to delete from journal_entries since aborted messages never reach Call 2
 
     // Delete ephemeral attachments associated with this message
     const { error: attachmentError } = await supabase

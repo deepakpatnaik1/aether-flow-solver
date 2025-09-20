@@ -35,6 +35,7 @@ const ChatInterface = () => {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentTurnId, setCurrentTurnId] = useState<string | null>(null);
+  const [currentUserMessageId, setCurrentUserMessageId] = useState<string | null>(null);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   
   // Initialize from localStorage with true persistence - no defaults after first choice
@@ -162,7 +163,7 @@ const ChatInterface = () => {
   };
 
   const handleAbort = async () => {
-    console.log('🛑 Aborting current message turn:', currentTurnId);
+    console.log('🛑 Aborting entire message turn - User:', currentUserMessageId, 'AI:', currentTurnId);
     
     // Cancel the fetch request
     if (abortController) {
@@ -170,17 +171,17 @@ const ChatInterface = () => {
       setAbortController(null);
     }
     
+    // Remove both user and AI messages from UI immediately
+    setMessages(prev => prev.filter(msg => 
+      msg.id !== currentUserMessageId && msg.id !== currentTurnId
+    ));
+    
     // Clean up backend data if we have a turn ID
     if (currentTurnId) {
       try {
         await supabase.functions.invoke('abort-message-turn', {
           body: { entryId: currentTurnId }
         });
-        
-        // Remove the partial messages from UI
-        setMessages(prev => prev.filter(msg => 
-          !msg.id.startsWith(currentTurnId) && msg.id !== currentTurnId
-        ));
         
         toast.success('Message aborted successfully');
       } catch (error) {
@@ -191,6 +192,7 @@ const ChatInterface = () => {
     
     // Reset states
     setCurrentTurnId(null);
+    setCurrentUserMessageId(null);
     setIsLoading(false);
   };
 
@@ -276,8 +278,9 @@ const ChatInterface = () => {
       }
     }
 
+    const userMessageId = Date.now().toString();
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: userMessageId,
       content: messageToSend,
       persona: 'Boss',
       timestamp: getBerlinTime(),
@@ -293,6 +296,7 @@ const ChatInterface = () => {
     // Create AI message placeholder for streaming
     const aiMessageId = crypto.randomUUID();
     setCurrentTurnId(aiMessageId);
+    setCurrentUserMessageId(userMessageId);
     const aiMessage: Message = {
       id: aiMessageId,
       content: '', // Start empty for streaming
@@ -412,6 +416,7 @@ const ChatInterface = () => {
     } finally {
       setIsLoading(false);
       setCurrentTurnId(null);
+      setCurrentUserMessageId(null);
       setAbortController(null);
     }
   };

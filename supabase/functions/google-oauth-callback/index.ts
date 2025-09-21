@@ -14,17 +14,22 @@ serve(async (req) => {
 
   try {
     console.log('🚀 Google OAuth callback function started');
+    console.log('📝 Full request URL:', req.url);
     
     const url = new URL(req.url);
     const code = url.searchParams.get('code');
     const state = url.searchParams.get('state');
     const error = url.searchParams.get('error');
 
+    console.log('📋 URL Parameters:', { code: code ? 'present' : 'missing', state: state ? 'present' : 'missing', error });
+
     if (error) {
+      console.error('❌ OAuth error from Google:', error);
       throw new Error(`OAuth error: ${error}`);
     }
 
     if (!code || !state) {
+      console.error('❌ Missing parameters:', { code: !!code, state: !!state });
       throw new Error('Missing authorization code or state');
     }
 
@@ -68,27 +73,54 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
     
     // Get the authorized user ID (boss-only application)
-    const { data: user } = await supabase.auth.admin.listUsers();
+    console.log('👤 Looking up authorized user...');
+    const { data: user, error: userError } = await supabase.auth.admin.listUsers();
+    console.log('👤 User lookup result:', { userCount: user?.users?.length || 0, error: userError });
+    
     const authorizedUser = user?.users?.find(u => u.email === 'deepakpatnaik1@gmail.com');
     
     if (!authorizedUser) {
+      console.error('❌ Authorized user not found in:', user?.users?.map(u => ({ id: u.id, email: u.email })));
       throw new Error('Authorized user not found');
     }
     
-    const { error: storageError } = await supabase
+    console.log('✅ Found authorized user:', { id: authorizedUser.id, email: authorizedUser.email });
+    
+    console.log('💾 Preparing to store tokens for user:', authorizedUser.id);
+    
+    // First check if user already has tokens and delete them
+    const { error: deleteError } = await supabase
       .from('google_tokens')
-      .insert({
-        access_token: tokenData.access_token,
-        refresh_token: tokenData.refresh_token,
-        expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
-        token_type: tokenData.token_type,
-        scope: tokenData.scope,
-        user_id: authorizedUser.id
-      });
-
-    if (storageError && storageError.code !== '42P01') { // Ignore table not found
-      console.error('Failed to store tokens:', storageError);
+      .delete()
+      .eq('user_id', authorizedUser.id);
+    
+    if (deleteError) {
+      console.log('⚠️ Could not delete existing tokens (might not exist):', deleteError);
     }
+    
+    const tokenPayload = {
+      access_token: tokenData.access_token,
+      refresh_token: tokenData.refresh_token,
+      expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
+      token_type: tokenData.token_type || 'Bearer',
+      scope: tokenData.scope,
+      user_id: authorizedUser.id
+    };
+    
+    console.log('💾 Inserting tokens with payload:', { ...tokenPayload, access_token: 'REDACTED', refresh_token: 'REDACTED' });
+    
+    const { data: insertedToken, error: storageError } = await supabase
+      .from('google_tokens')
+      .insert(tokenPayload)
+      .select()
+      .single();
+
+    if (storageError) {
+      console.error('❌ Failed to store tokens:', storageError);
+      throw new Error(`Token storage failed: ${storageError.message}`);
+    }
+    
+    console.log('✅ Successfully stored tokens:', { id: insertedToken.id, expires_at: insertedToken.expires_at });
 
     // Redirect back to the app with success
     const redirectUrl = `${Deno.env.get('APP_URL') || 'http://localhost:5173'}?oauth_success=true`;

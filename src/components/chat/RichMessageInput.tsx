@@ -2,7 +2,6 @@ import React, { useState, useRef, useCallback, KeyboardEvent, forwardRef } from 
 import { Input } from '@/components/ui/input';
 import { UrlPill } from './UrlPill';
 import { detectUrls, reconstructMessage, ParsedUrl, URL_REGEX, fetchUrlContent } from '@/utils/urlUtils';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface RichMessageInputProps {
@@ -13,28 +12,6 @@ interface RichMessageInputProps {
   disabled?: boolean;
   className?: string;
 }
-
-const handleGoogleSlidesOAuth = async () => {
-  try {
-    console.log('🔐 Initiating Google OAuth flow...');
-    
-    const { data, error } = await supabase.functions.invoke('google-oauth-init');
-    
-    if (error) {
-      console.error('OAuth init error:', error);
-      toast.error('Failed to initialize Google authentication');
-      return;
-    }
-    
-    if (data?.authUrl) {
-      console.log('🌐 Redirecting to Google OAuth...');
-      window.location.href = data.authUrl;
-    }
-  } catch (error) {
-    console.error('OAuth flow error:', error);
-    toast.error('Failed to start Google authentication');
-  }
-};
 
 export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputProps>(({
   value,
@@ -62,20 +39,20 @@ export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputPro
         try {
           const result = await fetchUrlContent(url.url);
           
-          // Handle special case: Google authentication required
+          // Handle special case: Google authentication no longer available
           if (result.error === 'Google authentication required') {
             setUrlPills(prev => prev.map(pill => 
               pill.id === url.id 
                 ? { 
                     ...pill, 
-                    error: result.error, 
+                    error: 'Google authentication not available', 
                     isLoading: false,
-                    requiresAuth: true // Special flag for auth needed
+                    requiresAuth: true
                   }
                 : pill
             ));
             
-            toast.error('Google authentication required for accessing slides');
+            toast.error('Google authentication functionality has been removed');
             return;
           }
           
@@ -170,75 +147,39 @@ export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputPro
         try {
           const result = await fetchUrlContent(url.url);
           
-          // Handle special case: Google authentication required - auto-trigger OAuth
+          // Handle special case: Google authentication no longer available
           if (result.autoAuth) {
-            console.log('🔐 Auto-triggering Google OAuth flow...');
+            console.log('🚫 Google OAuth functionality has been removed');
             
-            // Show loading state while redirecting
             setUrlPills(prev => prev.map(pill => 
               pill.id === url.id 
                 ? { 
                     ...pill, 
-                    error: 'Redirecting to Google...', 
-                    isLoading: true
-                  }
-                : pill
-            ));
-            
-            // Automatically start OAuth flow
-            try {
-              const { data, error } = await supabase.functions.invoke('google-oauth-init');
-              
-              if (error) {
-                console.error('OAuth init error:', error);
-                toast.error('Failed to initialize Google authentication');
-                setUrlPills(prev => prev.map(pill => 
-                  pill.id === url.id 
-                    ? { 
-                        ...pill, 
-                        error: 'Failed to start authentication', 
-                        isLoading: false
-                      }
-                    : pill
-                ));
-                return;
-              }
-              
-              if (data?.authUrl) {
-                console.log('🌐 Auto-redirecting to Google OAuth...');
-                toast.success('Redirecting to Google for authentication...');
-                window.location.href = data.authUrl;
-              }
-            } catch (error) {
-              console.error('OAuth flow error:', error);
-              toast.error('Failed to start Google authentication');
-              setUrlPills(prev => prev.map(pill => 
-                pill.id === url.id 
-                  ? { 
-                      ...pill, 
-                      error: 'Authentication failed', 
-                      isLoading: false
-                    }
-                  : pill
-              ));
-            }
-            return;
-          }
-          
-          // Handle other authentication required cases (fallback)
-          if (result.error === 'Google authentication required') {
-            setUrlPills(prev => prev.map(pill => 
-              pill.id === url.id 
-                ? { 
-                    ...pill, 
-                    error: result.error, 
+                    error: 'Google authentication not available', 
                     isLoading: false,
                     requiresAuth: true
                   }
                 : pill
             ));
             
-            toast.error('Google authentication required for accessing slides');
+            toast.error('Google authentication functionality has been removed');
+            return;
+          }
+          
+          // Handle other authentication required cases
+          if (result.error === 'Google authentication required') {
+            setUrlPills(prev => prev.map(pill => 
+              pill.id === url.id 
+                ? { 
+                    ...pill, 
+                    error: 'Google authentication not available', 
+                    isLoading: false,
+                    requiresAuth: true
+                  }
+                : pill
+            ));
+            
+            toast.error('Google authentication functionality has been removed');
             return;
           }
           

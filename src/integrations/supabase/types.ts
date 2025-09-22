@@ -44,42 +44,6 @@ export type Database = {
         }
         Relationships: []
       }
-      google_tokens: {
-        Row: {
-          access_token: string
-          created_at: string
-          expires_at: string
-          id: string
-          refresh_token: string | null
-          scope: string | null
-          token_type: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          access_token: string
-          created_at?: string
-          expires_at: string
-          id?: string
-          refresh_token?: string | null
-          scope?: string | null
-          token_type?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          access_token?: string
-          created_at?: string
-          expires_at?: string
-          id?: string
-          refresh_token?: string | null
-          scope?: string | null
-          token_type?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       journal_entries: {
         Row: {
           ai_response_content: string
@@ -116,27 +80,6 @@ export type Database = {
           user_message_attachments?: Json | null
           user_message_content?: string
           user_message_persona?: string
-        }
-        Relationships: []
-      }
-      oauth_states: {
-        Row: {
-          created_at: string
-          expires_at: string
-          id: string
-          state: string
-        }
-        Insert: {
-          created_at?: string
-          expires_at: string
-          id?: string
-          state: string
-        }
-        Update: {
-          created_at?: string
-          expires_at?: string
-          id?: string
-          state?: string
         }
         Relationships: []
       }
@@ -220,10 +163,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      cleanup_expired_oauth_states: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       is_authorized_boss: {
         Args: Record<PropertyKey, never>
         Returns: boolean

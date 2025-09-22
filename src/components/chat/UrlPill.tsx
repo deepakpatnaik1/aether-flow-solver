@@ -2,35 +2,11 @@ import React from 'react';
 import { X, Loader2, Check, AlertCircle, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ParsedUrl } from '@/utils/urlUtils';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 interface UrlPillProps {
   url: ParsedUrl;
   onRemove: (id: string) => void;
 }
-
-const handleGoogleAuth = async () => {
-  try {
-    console.log('🔐 Initiating Google OAuth flow...');
-    
-    const { data, error } = await supabase.functions.invoke('google-oauth-init');
-    
-    if (error) {
-      console.error('OAuth init error:', error);
-      toast.error('Failed to initialize Google authentication');
-      return;
-    }
-    
-    if (data?.authUrl) {
-      console.log('🌐 Redirecting to Google OAuth...');
-      window.location.href = data.authUrl;
-    }
-  } catch (error) {
-    console.error('OAuth flow error:', error);
-    toast.error('Failed to start Google authentication');
-  }
-};
 
 export const UrlPill: React.FC<UrlPillProps> = ({ url, onRemove }) => {
   const getStatusIcon = () => {
@@ -50,24 +26,22 @@ export const UrlPill: React.FC<UrlPillProps> = ({ url, onRemove }) => {
   };
 
   const getStatusText = () => {
-    if (url.isLoading) return "Fetching Google Slides content...";
-    if (url.requiresAuth) return "Click to authenticate with Google";
+    if (url.isLoading) return "Loading content...";
+    if (url.requiresAuth) return "Authentication no longer available";
     if (url.error) return `Error: ${url.error}`;
-    if (url.content) return "Google Slides content loaded";
+    if (url.content) return "Content loaded";
     return url.displayText;
   };
 
   const handlePillClick = () => {
-    if (url.requiresAuth) {
-      handleGoogleAuth();
-    }
+    // Pills are now just informational, no authentication needed
   };
 
   return (
     <span 
       className={`inline-flex items-center gap-1 px-2 py-1 mx-1 border rounded-md text-sm max-w-xs ${
         url.requiresAuth 
-          ? 'bg-amber-50 border-amber-200 cursor-pointer hover:bg-amber-100' 
+          ? 'bg-muted border-border' 
           : url.error 
             ? 'bg-destructive/10 border-destructive/20' 
             : url.content 

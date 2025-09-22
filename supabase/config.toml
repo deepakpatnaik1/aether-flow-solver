@@ -20,6 +20,3 @@ verify_jwt = true
 
 [functions.abort-message-turn]
 verify_jwt = true
-
-[functions.google-slides-oauth]
-verify_jwt = true

@@ -184,16 +184,30 @@ const LoginForm = () => {
               variant="outline"
               size="sm"
               onClick={() => {
-                toast.success("Clearing cache...");
-                setTimeout(() => hardReload(), 1000);
+                console.log('🧹 Force clearing all caches...');
+                // Clear all possible caches
+                if ('caches' in window) {
+                  caches.keys().then(names => {
+                    names.forEach(name => {
+                      console.log('🗑️ Deleting cache:', name);
+                      caches.delete(name);
+                    });
+                  });
+                }
+                localStorage.clear();
+                sessionStorage.clear();
+                toast.success("All caches cleared! Reloading...");
+                setTimeout(() => {
+                  window.location.reload();
+                }, 1000);
               }}
               className="w-full flex items-center gap-2"
             >
               <RefreshCw className="h-4 w-4" />
-              Clear Cache & Reload
+              Force Clear All Caches & Reload
             </Button>
             <p className="text-xs text-muted-foreground text-center mt-2">
-              Use this if you're having login issues
+              This will clear browser caches, service workers, and all stored data
             </p>
           </div>
         </div>

@@ -126,22 +126,6 @@ const ChatInterface = () => {
     localStorage.setItem('selectedPersona', selectedPersona);
   }, [selectedPersona]);
 
-  // Handle OAuth callback on component mount
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const oauthSuccess = urlParams.get('oauth_success');
-    const oauthError = urlParams.get('oauth_error');
-    
-    if (oauthSuccess === 'true') {
-      toast.success('Google authentication successful! You can now share Google Slides.');
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (oauthError) {
-      toast.error(`Google authentication failed: ${decodeURIComponent(oauthError)}`);
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, []);
 
   // Focus management
   useEffect(() => {
@@ -269,80 +253,12 @@ const ChatInterface = () => {
     }
   };
 
-  const extractGoogleSlidesUrls = (messageText: string): string[] => {
-    console.log('🔍 Input message:', messageText);
-    const googleSlidesRegex = /https:\/\/docs\.google\.com\/presentation\/d\/[a-zA-Z0-9-_]+(?:\/[^?\s]*)?(?:\?[^#\s]*)?(?:#[^\s]*)?/g;
-    const matches = messageText.match(googleSlidesRegex) || [];
-    console.log('🔍 Regex pattern:', googleSlidesRegex.toString());
-    console.log('🔍 Found matches:', matches);
-    return matches;
-  };
-
-  const handleGoogleSlidesOAuth = async () => {
-    try {
-      console.log('🔐 Initiating Google OAuth flow...');
-      
-      const { data, error } = await supabase.functions.invoke('google-oauth-init');
-      
-      if (error) {
-        console.error('OAuth init error:', error);
-        toast.error('Failed to initialize Google authentication');
-        return;
-      }
-      
-      if (data?.authUrl) {
-        console.log('🌐 Redirecting to Google OAuth...');
-        window.location.href = data.authUrl;
-      }
-    } catch (error) {
-      console.error('OAuth flow error:', error);
-      toast.error('Failed to start Google authentication');
-    }
-  };
-
   const handleSendMessage = async () => {
     if (!message.trim() || isLoading) return;
 
     const messageToSend = message.trim();
-    
-    // Check for Google Slides URLs and handle OAuth flow
-    const googleSlidesUrls = extractGoogleSlidesUrls(messageToSend);
-    console.log('📋 Google Slides URLs detected:', googleSlidesUrls);
-    if (googleSlidesUrls.length > 0) {
-      try {
-        for (const url of googleSlidesUrls) {
-          console.log('🎯 Fetching Google Slides with OAuth:', url);
-          const response = await supabase.functions.invoke('google-slides-oauth', {
-            body: { presentationUrl: url }
-          });
-          
-          if (response.error) {
-            console.error('Google Slides OAuth error:', response.error);
-            
-            // If no valid tokens, initiate OAuth flow
-            if (response.error.message?.includes('No valid Google OAuth tokens')) {
-              toast.error('Google authentication required. Redirecting...');
-              await handleGoogleSlidesOAuth();
-              return;
-            } else if (response.error.message?.includes('re-authenticate')) {
-              toast.error('Google authentication expired. Redirecting...');
-              await handleGoogleSlidesOAuth();
-              return;
-            } else {
-              toast.error(`Failed to fetch Google Slides: ${response.error.message}`);
-            }
-          } else {
-            console.log('✅ Google Slides fetched with OAuth:', response.data);
-            toast.success(`Google Slides "${response.data.title}" saved to persistent attachments`);
-          }
-        }
-      } catch (error) {
-        console.error('Google Slides OAuth integration error:', error);
-        toast.error('Failed to process Google Slides links');
-      }
-    }
-
     const userMessageId = Date.now().toString();
+    
     const userMessage: Message = {
       id: userMessageId,
       content: messageToSend,

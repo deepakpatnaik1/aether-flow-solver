@@ -16,7 +16,7 @@ export const clearAuthCache = () => {
     sessionStorage.removeItem(key);
   });
 
-  // Clear any Google OAuth remnants
+  // Clear any authentication remnants
   const allKeys = Object.keys(localStorage);
   allKeys.forEach(key => {
     if (key.includes('google') || key.includes('oauth')) {

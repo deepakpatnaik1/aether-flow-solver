@@ -21,11 +21,5 @@ verify_jwt = true
 [functions.abort-message-turn]
 verify_jwt = true
 
-[functions.google-oauth-init]
-verify_jwt = true
-
-[functions.google-oauth-callback]
-verify_jwt = false
-
 [functions.google-slides-oauth]
 verify_jwt = true

@@ -21,22 +21,12 @@ export const useChat = (userId?: string) => {
   const [journal, setJournal] = useState<Array<{persona: string, content: string}>>([]);
   const [isDataLoading, setIsDataLoading] = useState(false);
 
-  // For boss-only system, always use the email identifier regardless of auth.uid()
-  const userIdentifier = 'deepakpatnaik1@gmail.com';
-
-  // Load data when user is authenticated (any valid userId means they're logged in)
+  // Load all data since RLS is disabled and no authentication required
   useEffect(() => {
-    console.log('📊 useChat effect - userId:', userId);
-    if (userId) {
-      console.log('🎯 Loading data for boss with email identifier:', userIdentifier);
-      loadSuperjournalFromSupabase();
-      loadJournalFromSupabase();
-    } else {
-      console.log('No authenticated user, skipping data load');
-      setMessages([]);
-      setJournal([]);
-    }
-  }, [userId]);
+    console.log('📊 useChat effect - loading all data without authentication');
+    loadSuperjournalFromSupabase();
+    loadJournalFromSupabase();
+  }, []);
 
   const loadSuperjournalFromSupabase = async () => {
     console.log('🔍 Loading superjournal entries...');
@@ -46,7 +36,6 @@ export const useChat = (userId?: string) => {
       const { data: entries, error } = await supabase
         .from('superjournal_entries')
         .select('*')
-        .eq('user_id', userIdentifier)
         .order('timestamp', { ascending: true });
 
       console.log('📊 Superjournal query result:', { entries: entries?.length, error });
@@ -124,7 +113,6 @@ export const useChat = (userId?: string) => {
       const { data: entries, error } = await supabase
         .from('journal_entries')
         .select('*')
-        .eq('user_id', userIdentifier)
         .order('timestamp', { ascending: true });
 
       console.log('📊 Journal query result:', { entries: entries?.length, error });

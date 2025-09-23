@@ -39,20 +39,17 @@ export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputPro
         try {
           const result = await fetchUrlContent(url.url);
           
-          // Handle special case: Google authentication no longer available
-          if (result.error === 'Google authentication required') {
+          // Handle any content fetching errors
+          if (result.error) {
             setUrlPills(prev => prev.map(pill => 
               pill.id === url.id 
                 ? { 
                     ...pill, 
-                    error: 'Google authentication not available', 
-                    isLoading: false,
-                    requiresAuth: true
+                    error: result.error, 
+                    isLoading: false
                   }
                 : pill
             ));
-            
-            toast.error('Google authentication functionality has been removed');
             return;
           }
           
@@ -147,39 +144,17 @@ export const RichMessageInput = forwardRef<HTMLInputElement, RichMessageInputPro
         try {
           const result = await fetchUrlContent(url.url);
           
-          // Handle special case: Google authentication no longer available
-          if (result.autoAuth) {
-            console.log('🚫 Google OAuth functionality has been removed');
-            
+          // Handle any content fetching errors
+          if (result.error || result.autoAuth) {
             setUrlPills(prev => prev.map(pill => 
               pill.id === url.id 
                 ? { 
                     ...pill, 
-                    error: 'Google authentication not available', 
-                    isLoading: false,
-                    requiresAuth: true
+                    error: result.error || 'Content not accessible', 
+                    isLoading: false
                   }
                 : pill
             ));
-            
-            toast.error('Google authentication functionality has been removed');
-            return;
-          }
-          
-          // Handle other authentication required cases
-          if (result.error === 'Google authentication required') {
-            setUrlPills(prev => prev.map(pill => 
-              pill.id === url.id 
-                ? { 
-                    ...pill, 
-                    error: 'Google authentication not available', 
-                    isLoading: false,
-                    requiresAuth: true
-                  }
-                : pill
-            ));
-            
-            toast.error('Google authentication functionality has been removed');
             return;
           }
           

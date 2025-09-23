@@ -22,8 +22,8 @@ export const parseUrl = (url: string): ParsedUrl => {
     // Generate unique ID for this URL instance
     const id = `url-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
-    // Get favicon from Google's favicon service
-    const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=16`;
+    // Get favicon using DuckDuckGo's favicon service
+    const favicon = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
     
     // Create display text (domain + path preview)
     let displayText = domain;
@@ -48,14 +48,14 @@ export const parseUrl = (url: string): ParsedUrl => {
       id: `url-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       url,
       domain: domain.substring(0, 30),
-      favicon: `https://www.google.com/s2/favicons?domain=${domain}&sz=16`,
+      favicon: `https://icons.duckduckgo.com/ip3/${domain}.ico`,
       displayText: domain.substring(0, 30),
       isLoading: true
     };
   }
 };
 
-// Simplified URL content fetching (Google Slides functionality removed)
+// URL content fetching
 export const fetchUrlContent = async (url: string): Promise<{ content?: string; error?: string; autoAuth?: boolean }> => {
   return {
     error: 'URL content fetching is no longer supported'

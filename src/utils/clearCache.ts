@@ -19,7 +19,7 @@ export const clearAuthCache = () => {
   // Clear any authentication remnants
   const allKeys = Object.keys(localStorage);
   allKeys.forEach(key => {
-    if (key.includes('google') || key.includes('oauth')) {
+    if (key.includes('auth') && !key.includes('aether-boss-auth')) {
       localStorage.removeItem(key);
     }
   });

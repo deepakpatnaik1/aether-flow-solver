@@ -8,9 +8,6 @@ import { PersonaBadge } from './PersonaBadge';
 import { FileUploadModal } from './FileUploadModal';
 import { AbortButton } from './AbortButton';
 import { RichMessageInput } from './RichMessageInput';
-import UserMenu from '@/components/UserMenu';
-import LoginForm from '@/components/LoginForm';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useChat } from '@/hooks/useChat';
 import { getBerlinTime } from '@/lib/timezone';
@@ -31,8 +28,7 @@ interface Message {
 }
 
 const ChatInterface = () => {
-  const { user, loading: authLoading } = useAuth();
-  const { messages, journal, setMessages, setJournal, isDataLoading, saveToSuperjournal } = useChat(user?.id);
+  const { messages, journal, setMessages, setJournal, isDataLoading, saveToSuperjournal } = useChat('anonymous-user');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentTurnId, setCurrentTurnId] = useState<string | null>(null);
@@ -302,10 +298,6 @@ const ChatInterface = () => {
       
       console.log('🚀 Sending to backend - Model:', selectedModel, 'Persona:', selectedPersona);
       
-      // For Supabase functions, we need to handle streaming differently
-      // Since functions.invoke doesn't support streaming, we'll use fetch with auth headers
-      const { data: { session } } = await supabase.auth.getSession();
-      
       // Create abort controller for this request
       const controller = new AbortController();
       setAbortController(controller);
@@ -314,7 +306,6 @@ const ChatInterface = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
           'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bmNnZ2xiaGVpbGtlaW13dXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzQzNDEsImV4cCI6MjA3MzQ1MDM0MX0.Ua6POs3Agm3cuZOWzrQSrVG7w7rC3a49C38JclWQ9wA',
         },
         signal: controller.signal,
@@ -426,32 +417,12 @@ const ChatInterface = () => {
     }
   };
 
-  if (authLoading || isDataLoading) {
+  if (isDataLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">
-            {authLoading ? 'Authenticating...' : 'Loading your messages...'}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-full max-w-md p-8">
-          <div className="text-center mb-8">
-            <div className="text-6xl mb-4">🔒</div>
-            <h2 className="text-2xl font-semibold text-foreground mb-2">Welcome home, Boss!</h2>
-            <p className="text-muted-foreground">
-              Please sign in to access your messages
-            </p>
-          </div>
-          
-          <LoginForm />
+          <p className="text-muted-foreground">Loading your messages...</p>
         </div>
       </div>
     );
@@ -459,9 +430,6 @@ const ChatInterface = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background relative">
-      <div className="absolute top-4 right-4 z-50">
-        <UserMenu />
-      </div>
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">
